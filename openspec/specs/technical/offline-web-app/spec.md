@@ -28,6 +28,14 @@ The application SHALL store progress locally, separate it by pilot, and preserve
 - **WHEN** the browser rejects or limits storage, including Safari private mode
 - **THEN** the application handles the error safely and communicates the limitation without deliberately deleting other data
 
+#### Scenario: iOS local-file distribution
+- **WHEN** an iPhone or iPad user opens the self-contained HTML directly from the Files app or another `file://` location
+- **THEN** the application warns that local progress may not persist reliably and directs the user to the HTTPS deployment
+
+#### Scenario: iOS HTTPS distribution
+- **WHEN** an iPhone or iPad user opens the application from the HTTPS deployment
+- **THEN** progress is scoped to that HTTPS origin and may persist according to Safari storage policies
+
 ### Requirement: The production distribution is self-contained
 The production distribution SHALL provide a single `index.html` with CSS, JavaScript, translations, and required resources embedded, without requiring adjacent files to run the application.
 
