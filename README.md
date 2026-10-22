@@ -1,12 +1,12 @@
 # TT Rocket Stars 🚀
 
-Juego educativo offline-first de multiplicaciones y divisiones (tablas 1–12) con misiones espaciales, planetas, recompensas, cohetes y perfiles de piloto. Sin anuncios ni cuentas.
+Offline-first educational multiplication and division game (tables 1–12) with space missions, planets, rewards, rockets, and pilot profiles. No ads or accounts.
 
-**Versión semántica:** `0.1.1`. El prototipo histórico **v190** es el punto de partida, no una versión SemVer.
+**Semantic version:** `0.1.1`. Historical prototype **v190** is the starting point, not a SemVer version.
 
-## Desarrollo
+## Development
 
-Requiere Node.js 22:
+Requires Node.js 22:
 
 ```bash
 npm install
@@ -18,65 +18,66 @@ npm run build
 npm run preview
 ```
 
-## Crear una release
+## Creating a release
 
-Tras documentar los cambios en `CHANGELOG.md` bajo `Unreleased`, crea el HTML distribuible con uno de estos comandos:
+After documenting changes under `Unreleased` in `CHANGELOG.md`, generate the distributable HTML with one of these commands:
 
 ```bash
 npm run release -- patch
 npm run release -- minor
 npm run release -- major
-# o una versión concreta mayor que la actual:
+# or an explicit version greater than the current one:
 npm run release -- 0.2.0
 ```
 
-El comando valida la versión SemVer, ejecuta `npm run check`, actualiza `package.json`, `package-lock.json`, `README.md` y `CHANGELOG.md`, y genera `releases/tt-rocket-stars-vX.Y.Z.html`. No crea commits, etiquetas de Git ni publica nada.
+The command validates the SemVer, runs `npm run check`, updates `package.json`, `package-lock.json`, `README.md`, and `CHANGELOG.md`, and generates `releases/tt-rocket-stars-vX.Y.Z.html`. It does not create commits, Git tags, or publications.
 
-Después, confirma esos cambios en Git y sube el tag correspondiente para publicar el mismo HTML como descarga de una GitHub Release:
+After committing those changes, push the corresponding tag to publish the same HTML as a GitHub Release:
 
 ```bash
 git tag vX.Y.Z
 git push origin vX.Y.Z
 ```
 
-El workflow exige que el tag coincida exactamente con `package.json` y que exista la entrada de esa versión en `CHANGELOG.md`.
+The workflow requires the tag to match `package.json` exactly and requires a matching entry in `CHANGELOG.md`.
 
-La aplicación publicada para móviles está en [GitHub Pages](https://mdeniz.github.io/tt_rocket_stars/). Cada push a `main` vuelve a construir y desplegar el HTML autocontenido mediante el workflow de Pages.
+The mobile application is published at [GitHub Pages](https://mdeniz.github.io/tt_rocket_stars/). Every push to `main` rebuilds and deploys the self-contained HTML through the Pages workflow.
 
-Vite sirve la aplicación normalmente en http://localhost:5173. `npm run build` genera una distribución autocontenida en `dist/index.html`: CSS, JavaScript y recursos visuales quedan embebidos, por lo que se puede copiar o abrir sin archivos adyacentes. No abras el `index.html` de desarrollo directamente: Vite inyecta traducciones durante dev/build. El repositorio incluye `package-lock.json` y la CI usa `npm ci` para instalaciones reproducibles.
+Vite serves the application at http://localhost:5173. `npm run build` generates a self-contained distribution at `dist/index.html`: CSS, JavaScript, and visual resources are embedded, so it can be copied or opened without adjacent files. Do not open the development `index.html` directly: Vite injects translations during development and build. The repository includes `package-lock.json`, and CI uses `npm ci` for reproducible installations.
 
-## Estructura
+## Structure
 
 ```text
-index.html                   Entrada HTML de Vite
-vite.config.mjs              Configuración y traducciones
-src/styles/legacy.css        CSS legado, orden original
-public/legacy/scripts/       32 scripts clásicos ordenados
-src/locales/{es,en}.json     Traducciones declarativas
-src/data/                    Datos de dominio (migración pendiente)
-src/assets/                  SVG, audio, imágenes (migración pendiente)
-scripts/                     Herramientas de validación e i18n
-tests/unit/                  Tests unitarios
-tests/e2e/                   Playwright Chromium/Firefox/WebKit
+index.html                   Vite HTML entry point
+vite.config.mjs              Vite configuration and translations
+src/styles/legacy.css        Legacy CSS, original order
+public/legacy/scripts/       32 ordered classic scripts
+src/locales/{es,en}.json     Declarative translations
+src/data/                    Domain data (migration pending)
+src/assets/                  SVG, audio, and images (migration pending)
+scripts/                     Validation and i18n tools
+tests/unit/                  Unit tests
+tests/e2e/                   Playwright Chromium/Firefox/WebKit tests
 .github/workflows/ci.yml     CI
-AGENTS.md                    Guía de agentes
-CHANGELOG.md                 SemVer y cambios
+AGENTS.md                    Agent instructions
+CHANGELOG.md                 SemVer and changes
+openspec/                    Product and technical specifications
 ```
 
-La v190 era un único HTML. Se han extraído los estilos y scripts manteniendo orden y semántica. La modularización de lógica, datos, SVG inline y textos dinámicos debe hacerse progresivamente, sin duplicar fuentes de verdad.
+v190 was a single HTML file. Styles and scripts have been extracted while preserving order and semantics. Logic, data, inline SVG, and dynamic text must be modularized progressively without duplicating sources of truth.
 
-## Calidad y navegadores
+## Quality and browsers
 
-`npm run check` valida sintaxis de los 32 scripts, traducciones y build. `npm run test:e2e` comprueba el arranque y la navegación en Chromium, Firefox, WebKit y WebKit móvil. WebKit en Linux no sustituye Safari real en iPhone. Validar en iOS el primer toque, audio, fullscreen, almacenamiento restringido y orientación.
+`npm run check` validates the syntax of the 32 scripts, translations, and build. `npm run test:e2e` checks startup and navigation in Chromium, Firefox, WebKit, and mobile WebKit. Linux WebKit does not replace real iPhone Safari testing. Validate the first tap, audio, fullscreen, restricted storage, and orientation on iOS.
 
-## Versionado
+## Versioning
 
-Seguimos MAJOR.MINOR.PATCH. PATCH: correcciones compatibles; MINOR: funcionalidades y cambios documentados durante 0.x; MAJOR: contrato estable o cambios incompatibles tras 1.0. Actualizar `package.json`, lockfile y `CHANGELOG.md`, ejecutar pruebas y crear tag `vX.Y.Z`. No continuar numerando HTML como v191, v192.
+Use MAJOR.MINOR.PATCH. PATCH means compatible fixes; MINOR means features and documented changes during 0.x; MAJOR means a stable contract or incompatible changes after 1.0. Update `package.json`, the lockfile, and `CHANGELOG.md`, run the tests, and create a `vX.Y.Z` tag. Do not continue numbering HTML files as v191 or v192.
 
-## Privacidad y datos
+## Privacy and data
 
-Progreso guardado localmente por piloto, sin sincronización entre dispositivos. Borrar los datos del navegador puede eliminarlo; usar copias de seguridad.
+Progress is stored locally per pilot, with no cross-device synchronization. Clearing browser data may delete it; use backups.
 
-## Licencia
+## License
 
-No hay licencia open-source definida. Repositorio privado, derechos reservados.
+No open-source license is defined. All rights reserved.
