@@ -1,3 +1,3 @@
 # Source assets
 
-Destino para SVG, imágenes, iconos y audio. La v190 usa SVG inline y audio sintetizado: extraer incrementalmente sin alterar visuales ni introducir dependencias remotas.
+Destination for SVG, images, icons, and audio. v190 uses inline SVG and synthesized audio: extract incrementally without changing visuals or introducing remote dependencies.

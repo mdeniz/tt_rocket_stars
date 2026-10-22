@@ -1,21 +1,21 @@
 # Changelog
 
-Formato [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) y [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
 ## [0.1.1] - 2026-10-22
 ### Changed
-- La distribución de producción se genera como un único `dist/index.html` autocontenido.
+- Production distribution is generated as a single self-contained `dist/index.html`.
 
 ## [0.1.0] - 2026-10-22
 ### Added
-- Vite como herramienta de desarrollo y build.
-- CSS y 32 scripts JS extraídos preservando orden.
-- Catálogos de traducción español/inglés e inyección compatible con runtime existente.
-- Pruebas unitarias, Playwright y CI de navegadores.
-- Documentación de arquitectura y guía de agentes.
+- Vite as the development and build tool.
+- Extracted CSS and 32 JS scripts while preserving their order.
+- Spanish/English translation catalogs and runtime-compatible injection.
+- Unit tests, Playwright tests, and browser CI.
+- Architecture documentation and agent instructions.
 
 ### Known limitations
-- Código de dominio, SVG y traducciones dinámicas aún parcialmente incrustados en el runtime legado.
-- WebKit Linux no sustituye pruebas reales en Safari iOS.
+- Domain code, SVG, and dynamic translations remain partially embedded in the legacy runtime.
+- Linux WebKit does not replace real Safari iOS testing.

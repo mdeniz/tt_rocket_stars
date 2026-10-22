@@ -1,3 +1,3 @@
 # Domain data
 
-Destino para planetas, misiones, preguntas, recompensas y logros. Extraer cada dominio del runtime legado, conectar al nuevo módulo y eliminar duplicados. Añadir tests de esquema y corrección matemática. No mantener dos fuentes de verdad.
+Destination for planets, missions, questions, rewards, and achievements. Extract each domain from the legacy runtime, connect it to the new module, and remove duplicates. Add schema and mathematical-correctness tests. Do not maintain two sources of truth.

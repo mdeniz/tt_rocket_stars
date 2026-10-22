@@ -1,16 +1,25 @@
 # AGENTS.md — TT Rocket Stars
 
-## Objetivo y principios
-Juego educativo de multiplicaciones y divisiones 1–12 para niños, offline-first, sin anuncios, cuentas, telemetría ni peticiones de red obligatorias. Conservar misiones, planetas, cohetes, monedas, logros, progreso y perfiles. Mobile/tablet first; táctil, orientación horizontal/vertical, safe areas, accesibilidad, contraste y reduced-motion.
+## Language
+- Write all source code, comments, identifiers, commit messages, technical documentation, OpenSpec artifacts, and specifications in technical English.
+- User-facing translated content is the only exception: maintain Spanish and English strings in `src/locales/`.
+- Do not put product copy, implementation notes, or specifications in Spanish outside translation sources.
 
-## Flujo de trabajo del agente
-1. Leer README, CHANGELOG, este documento y los archivos implicados.
-2. Trabajar en rama y PR pequeño, nunca directamente en main sin autorización.
-3. Describir el comportamiento a cambiar, riesgos y contratos de datos.
-4. Implementar con tests unitarios/E2E. Ejecutar `npm run check` y `npm run test:e2e` y reportar resultados reales, nunca inventados.
-5. Mantener CHANGELOG y proponer bump SemVer para releases.
+## Product constraints
+- Educational multiplication and division game for tables 1–12; offline-first; no ads, accounts, telemetry, or mandatory network requests.
+- Preserve missions, planets, rockets, coins, achievements, progress, and pilot profiles.
+- Mobile/tablet first: touch interaction, both orientations, safe areas, accessibility, contrast, and reduced motion.
 
-## Comandos
+## Workflow
+- Read `README.md`, `CHANGELOG.md`, this file, relevant code, and relevant OpenSpec artifacts before editing.
+- Work in a branch and keep pull requests small; do not modify `main` without authorization.
+- Describe behavioral changes, risks, and data contracts in technical English.
+- Use OpenSpec for product or technical behavior changes: `openspec/changes/` for proposals and `openspec/specs/` for accepted capabilities.
+- Keep `CHANGELOG.md` and propose a SemVer bump for releases.
+
+## Package manager and commands
+Use npm with the committed `package-lock.json`. Node.js 22 is required.
+
 ```bash
 npm ci
 npm run dev
@@ -20,35 +29,40 @@ npx playwright install
 npm run test:e2e
 npm run build
 ```
-Node 22. El lockfile debe estar actualizado y comprometido para que `npm ci` funcione.
 
-## Arquitectura
-- `index.html`: HTML de entrada de Vite; scripts clásicos **ordenados**.
-- `src/styles/legacy.css`: CSS legado, cascada conservada.
-- `public/legacy/scripts/00.js` a `31.js`: lógica global original, dependiente del orden y de los handlers inline. **No** cambiar ciegamente a `type=module`.
-- `src/locales/es.json` y `en.json`: fuente de verdad de traducciones declarativas. `data-i18n` se transforma por Vite en `data-es` y `data-en` para compatibilidad. No duplicar strings.
-- `src/data/`: extraer aquí planetas, misiones, preguntas, recompensas y logros, **un dominio a la vez**; eliminar el origen legado al conectar el nuevo módulo.
-- `src/assets/`: extraer SVG/audio/imágenes inline gradualmente, con pruebas visuales.
-- `tests/unit/`: lógica pura, esquemas y contratos; `tests/e2e/`: recorridos completos y persistencia.
+## Architecture
+- `index.html`: Vite entry point; preserve the ordered classic scripts.
+- `src/styles/legacy.css`: legacy CSS; preserve cascade behavior.
+- `public/legacy/scripts/00.js`–`31.js`: ordered global scripts that depend on inline handlers. Do not blindly convert them to ES modules.
+- `src/locales/es.json` and `en.json`: declarative translation sources. Vite transforms `data-i18n` into `data-es` and `data-en` for compatibility; do not duplicate strings.
+- `src/data/`: extract planets, missions, questions, rewards, and achievements one domain at a time; remove the legacy source only after connecting the replacement.
+- `src/assets/`: extract inline SVG, audio, and images incrementally with visual tests.
+- `tests/unit/`: pure logic, schemas, and contracts. `tests/e2e/`: complete flows and persistence.
 
-Los 91 bloques CSS y 32 bloques JS originales se separaron preservando orden, no se refactorizaron. La migración profesional es **incremental**: módulos ESM en `src/`, adaptadores a globals, tests antes de borrar código legado. No crear scaffolding vacío como sustituto de código funcional.
+The 91 CSS blocks and 32 JS blocks were separated without refactoring. Migrate incrementally: add ESM modules and global adapters, test before deleting legacy code, and do not replace working behavior with empty scaffolding.
 
-## Contratos críticos
-- Progreso independiente por piloto. Conservar claves localStorage/sessionStorage, compatibilidad de backups y migraciones de datos. Nunca borrar progreso como arreglo.
-- Safari puede bloquear almacenamiento y autoplay: mantener shim y gestos de usuario para audio/fullscreen. Validar modo privado en dispositivo real.
-- Arranque desde splash con **un toque**, sin pantalla negra ni excepciones JS.
-- Traducciones español/inglés completas, incluyendo textos dinámicos al migrarlos. Nuevas claves descriptivas; `ui.NNN` es transitorio.
-- Preguntas matemáticamente correctas y acordes con tablas 1–12.
-- Sin CDNs, fuentes remotas ni recursos externos en producción; `dist/` autocontenido.
+## Critical contracts
+- Keep progress independent per pilot. Preserve `localStorage`/`sessionStorage` keys, backup compatibility, and data migrations. Never delete progress as a fix.
+- Safari may restrict storage and autoplay. Preserve shims and user gestures for audio/fullscreen; validate private mode on a real device.
+- Start from the splash screen with one tap, without a black screen or uncaught JavaScript exceptions.
+- Keep Spanish and English translations complete, including dynamic text. Use descriptive new keys; `ui.NNN` is transitional.
+- Keep mathematical questions correct and within tables 1–12.
+- Production must have no CDNs, remote fonts, or external resources; `dist/` must be self-contained.
 
 ## Definition of done
-`npm run check` y E2E sin fallos (o documentar exactamente qué no se pudo ejecutar); arranque con un toque; navegación, perfiles, misiones, ajustes, sonido, backups y tutorial sin regresiones; UI responsive y accesible; traducciones correctas; changelog y versión coherentes. Playwright WebKit no equivale a Safari de iOS.
+- `npm run check` and E2E pass, or the exact unavailable checks are documented.
+- No regressions in startup, navigation, profiles, missions, settings, sound, backups, or tutorial.
+- Responsive and accessible UI; correct translations; coherent changelog and version.
+- Playwright WebKit is not equivalent to real iOS Safari.
 
-## Prioridades técnicas
-1. Reproducir problemas de splash Safari y SVG malformados con tests.
-2. E2E de misión, historial, guardado/restauración y perfiles.
-3. Extraer datos y traducciones dinámicas; aislar persistencia.
-4. Extraer SVG/audio; separar UI y lógica por feature.
-5. Convertir gradualmente globals a módulos sin perder compatibilidad.
+## Priorities
+1. Reproduce Safari splash and malformed SVG issues with tests.
+2. Add E2E coverage for missions, history, backup/restore, and profiles.
+3. Extract dynamic data and translations; isolate persistence.
+4. Extract SVG/audio; separate UI and logic by feature.
+5. Convert globals to modules gradually without breaking compatibility.
 
-**Ante la duda: preservar datos y funcionamiento antes que refactorizar por estética.**
+## Commit attribution
+AI-authored commits must include a `Co-Authored-By` trailer identifying the agent.
+
+Preserve data and working behavior before refactoring for aesthetics.
