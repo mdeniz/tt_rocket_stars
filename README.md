@@ -41,6 +41,8 @@ git push origin vX.Y.Z
 
 El workflow exige que el tag coincida exactamente con `package.json` y que exista la entrada de esa versión en `CHANGELOG.md`.
 
+La aplicación publicada para móviles está en [GitHub Pages](https://mdeniz.github.io/tt_rocket_stars/). Cada push a `main` vuelve a construir y desplegar el HTML autocontenido mediante el workflow de Pages.
+
 Vite sirve la aplicación normalmente en http://localhost:5173. `npm run build` genera una distribución autocontenida en `dist/index.html`: CSS, JavaScript y recursos visuales quedan embebidos, por lo que se puede copiar o abrir sin archivos adyacentes. No abras el `index.html` de desarrollo directamente: Vite inyecta traducciones durante dev/build. El repositorio incluye `package-lock.json` y la CI usa `npm ci` para instalaciones reproducibles.
 
 ## Estructura
