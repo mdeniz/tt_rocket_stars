@@ -11,6 +11,7 @@ const escapeClosingTag = (contents, tagName) => contents.replace(
 function inlineReleaseAssets() {
   let isBuild = false;
   let outDir = '';
+  let publicSupabaseConfig = { url: '', anonKey: '' };
 
   return {
     name: 'tt-inline-release-assets',
@@ -18,6 +19,10 @@ function inlineReleaseAssets() {
     configResolved(config) {
       isBuild = config.command === 'build';
       outDir = config.build.outDir;
+      publicSupabaseConfig = {
+        url: config.env.VITE_SUPABASE_URL || '',
+        anonKey: config.env.VITE_SUPABASE_ANON_KEY || '',
+      };
     },
     transformIndexHtml: {
       order: 'pre',
@@ -29,6 +34,11 @@ function inlineReleaseAssets() {
         let output = html.replace(
           '<link rel="stylesheet" href="./src/styles/legacy.css">',
           `<style>${css}</style>`,
+        );
+
+        output = output.replace(
+          '<!-- TT_SUPABASE_CONFIG -->',
+          `<script>window.__TT_SUPABASE_CONFIG__=${JSON.stringify(publicSupabaseConfig)};</script>`,
         );
 
         output = output.replace(
