@@ -67,5 +67,19 @@
   "ui.066": "🎯 Practicar estos errores",
   "ui.067": "🚀 Nueva misión",
   "ui.068": "🔁 Repetir misión",
-  "ui.069": "🔁 Repetir misión"
+  "ui.069": "🔁 Repetir misión",
+  "ui.070": "Acceso en la nube",
+  "ui.071": "Inicia sesión con un email invitado para usar el mismo perfil en varios dispositivos. El juego local funciona sin conexión.",
+  "ui.072": "Dirección de email",
+  "ui.073": "Enviar enlace mágico",
+  "ui.074": "Cerrar sesión",
+  "ui.075": "Introduce una dirección de email invitada.",
+  "ui.076": "Revisa tu email para encontrar el enlace de acceso. Si la dirección está invitada, llegará en breve.",
+  "ui.077": "Has iniciado sesión.",
+  "ui.078": "Has cerrado sesión. Tus pilotos y progresos locales no han cambiado.",
+  "ui.079": "Este email no puede solicitar acceso. Pide una invitación a un administrador.",
+  "ui.080": "El enlace ha caducado o no es válido. Solicita uno nuevo.",
+  "ui.081": "Demasiadas solicitudes. Espera un momento y vuelve a intentarlo.",
+  "ui.082": "El acceso en la nube no está disponible. Puedes seguir jugando sin conexión.",
+  "ui.083": "Sesión iniciada como"
 }

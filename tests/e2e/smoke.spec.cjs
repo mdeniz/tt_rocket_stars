@@ -20,3 +20,16 @@ test('drawer can be opened and closed',async({page})=>{
  await page.locator('#sideDrawer .drawerClose').click();
  await expect(page.locator('#sideDrawer')).not.toHaveClass(/open/);
 });
+test('settings exposes optional auth without replacing local gameplay',async({page})=>{
+ await page.goto('/');await page.locator('#launchSplash').click();
+ await expect(page.locator('#launchSplash')).toBeHidden();
+ const skip=page.locator('#ttTourSkip');
+ await page.locator('#ttTourShade').waitFor({state:'visible',timeout:3000}).catch(()=>{});
+ if(await skip.isVisible().catch(()=>false))await skip.click();
+ await page.locator('#menuBtn').click();
+ await page.locator('#sideDrawer [data-section="settings"]').click();
+ await expect(page.locator('#settings')).toBeVisible();
+ await expect(page.locator('#ttAuthPanel')).toBeVisible();
+ await expect(page.locator('#ttAuthEmail')).toHaveAttribute('type','email');
+ await expect(page.locator('#ttAuthPanel [data-i18n="ui.070"]')).toHaveAttribute('data-es','Acceso en la nube');
+});

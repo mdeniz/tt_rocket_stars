@@ -67,5 +67,19 @@
   "ui.066": "🎯 Practice these mistakes",
   "ui.067": "🚀 New Mission",
   "ui.068": "🔁 Repeat Mission",
-  "ui.069": "🔁 Replay mission"
+  "ui.069": "🔁 Replay mission",
+  "ui.070": "Cloud access",
+  "ui.071": "Sign in with an invited email to use the same profile on multiple devices. Local gameplay always works offline.",
+  "ui.072": "Email address",
+  "ui.073": "Send magic link",
+  "ui.074": "Sign out",
+  "ui.075": "Enter an invited email address.",
+  "ui.076": "Check your email for a sign-in link. If this address is invited, the link will arrive shortly.",
+  "ui.077": "You are signed in.",
+  "ui.078": "You have been signed out. Your local pilots and progress are unchanged.",
+  "ui.079": "This email cannot request access. Ask an administrator for an invitation.",
+  "ui.080": "The link has expired or is invalid. Request a new one.",
+  "ui.081": "Too many requests. Please wait a moment and try again.",
+  "ui.082": "Cloud access is unavailable. You can keep playing offline.",
+  "ui.083": "Signed in as"
 }
