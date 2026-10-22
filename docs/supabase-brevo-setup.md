@@ -25,6 +25,12 @@ the browser bundle, or GitHub Actions logs.
 3. Set `VITE_APP_SITE_URL` to `http://localhost:5173/`.
 4. Keep `.env.local` untracked.
 
+The optional browser client is created through `src/lib/supabase.js`. It
+returns `null` when the public variables are absent or invalid, so builds with
+no Supabase configuration continue to use the offline-first application.
+Only the anonymous public key is accepted by this boundary; authentication
+admin operations remain outside the browser.
+
 ## Production URL configuration
 
 The production application is served from:
