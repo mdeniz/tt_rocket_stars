@@ -1,5 +1,5 @@
 import { defineConfig } from 'vite';
-import i18n from './scripts/i18n.cjs';
+import * as i18n from './scripts/i18n.mjs';
 export default defineConfig({
   base: './',
   plugins: [{ name: 'tt-locales', transformIndexHtml(html) {

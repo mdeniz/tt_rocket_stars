@@ -18,7 +18,7 @@ npm run build
 npm run preview
 ```
 
-Vite sirve la aplicación normalmente en http://localhost:5173. La versión compilada está en `dist/`. No abras el `index.html` de desarrollo directamente: Vite inyecta traducciones durante dev/build. **Pendiente:** generar y versionar `package-lock.json` con `npm install`; después usar `npm ci` en CI.
+Vite sirve la aplicación normalmente en http://localhost:5173. La versión compilada está en `dist/`. No abras el `index.html` de desarrollo directamente: Vite inyecta traducciones durante dev/build. El repositorio incluye `package-lock.json` y la CI usa `npm ci` para instalaciones reproducibles.
 
 ## Estructura
 

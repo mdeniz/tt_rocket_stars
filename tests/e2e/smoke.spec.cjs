@@ -10,7 +10,11 @@ test('one-tap splash opens dashboard without uncaught JS errors',async({page})=>
 test('drawer can be opened and closed',async({page})=>{
  await page.goto('/');await page.locator('#launchSplash').click();
  await expect(page.locator('#launchSplash')).toBeHidden();
- const skip=page.locator('#ttTourSkip');if(await skip.isVisible().catch(()=>false))await skip.click();
+ const tour=page.locator('#ttTourShade');
+ const skip=page.locator('#ttTourSkip');
+ await tour.waitFor({state:'visible',timeout:2000}).catch(()=>{});
+ if(await skip.isVisible().catch(()=>false))await skip.click();
+ await expect(tour).not.toHaveClass(/ttTourVisible/);
  await page.locator('#menuBtn').click();
  await expect(page.locator('#sideDrawer')).toHaveClass(/open/);
  await page.locator('#sideDrawer .drawerClose').click();
