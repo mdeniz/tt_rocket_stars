@@ -45,6 +45,10 @@ The mobile application is published at [GitHub Pages](https://mdeniz.github.io/t
 
 Vite serves the application at http://localhost:5173. `npm run build` generates a self-contained distribution at `dist/index.html`: CSS, JavaScript, and visual resources are embedded, so it can be copied or opened without adjacent files. Do not open the development `index.html` directly: Vite injects translations during development and build. The repository includes `package-lock.json`, and CI uses `npm ci` for reproducible installations.
 
+### iPhone and iPad distribution
+
+Do not distribute the HTML by asking iPhone or iPad users to open it directly from the Files app or another `file://` location. iOS Safari can assign local files an opaque origin and restrict or isolate browser storage, so locally saved progress is not a reliable persistence mechanism in that context. Use the HTTPS GitHub Pages URL or another HTTPS deployment instead. The self-contained HTML remains useful for downloads and archival distribution, but it must be served from a compatible origin when local progress is required.
+
 ## Structure
 
 ```text
