@@ -4,6 +4,10 @@ Formato [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) y [Semantic Ver
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-10-22
+### Changed
+- La distribución de producción se genera como un único `dist/index.html` autocontenido.
+
 ## [0.1.0] - 2026-10-22
 ### Added
 - Vite como herramienta de desarrollo y build.
