@@ -1,6 +1,24 @@
 const { test, expect } = require('@playwright/test');
 const { installCloudFixture } = require('./cloud-fixture.cjs');
 
+test('invited users can request password recovery with English feedback', async ({ page }) => {
+  const fixture = await installCloudFixture(page);
+  await fixture.openCloudSettings();
+  await page.locator('#ttAuthEmail').fill('pilot@example.com');
+  await page.locator('#ttAuthRecovery').click();
+  await expect(page.locator('#ttAuthStatus')).toContainText('Check your email for a password recovery link.');
+  expect(fixture.state.authRequests.some(request => request.path === '/auth/v1/recover')).toBe(true);
+});
+
+test('invited users can request password recovery with Spanish feedback', async ({ page }) => {
+  const fixture = await installCloudFixture(page, { language: 'es' });
+  await fixture.openCloudSettings();
+  await page.locator('#ttAuthEmail').fill('piloto@example.com');
+  await page.locator('#ttAuthRecovery').click();
+  await expect(page.locator('#ttAuthStatus')).toContainText('Revisa tu email para encontrar el enlace de recuperación.');
+  expect(fixture.state.authRequests.some(request => request.path === '/auth/v1/recover')).toBe(true);
+});
+
 test('invited account setup can return to password login without blocking local play', async ({ page }) => {
   const fixture = await installCloudFixture(page);
   await page.goto('/?token_hash=invite-token&type=invite');
