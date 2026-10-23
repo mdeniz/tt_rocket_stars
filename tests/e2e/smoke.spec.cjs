@@ -1,4 +1,15 @@
 const {test,expect}=require('@playwright/test');
+
+async function installFullscreenProbe(page,{touch=false}={}){
+ await page.addInitScript(({touch})=>{
+  Object.defineProperty(Navigator.prototype,'maxTouchPoints',{configurable:true,value:touch?5:0});
+  const originalMatchMedia=window.matchMedia.bind(window);
+  window.matchMedia=query=>query==='(pointer: coarse)'?{matches:touch,media:query,onchange:null,addListener(){},removeListener(){},addEventListener(){},removeEventListener(){},dispatchEvent(){return false}}:originalMatchMedia(query);
+  window.__ttFullscreenRequests=0;
+  Object.defineProperty(Element.prototype,'requestFullscreen',{configurable:true,value(){window.__ttFullscreenRequests+=1;return Promise.resolve()}});
+ },{touch});
+}
+
 test('one-tap splash opens dashboard without uncaught JS errors',async({page})=>{
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto('/');await expect(page).toHaveTitle(/TT Rocket Stars/);
@@ -6,6 +17,24 @@ test('one-tap splash opens dashboard without uncaught JS errors',async({page})=>
  await splash.click();await expect(splash).toBeHidden({timeout:8000});
  await expect(page.locator('#dashboard')).toBeVisible();
  expect(errors,errors.join('\n')).toEqual([]);
+});
+
+test('desktop splash entry stays windowed, including at a narrow viewport',async({page})=>{
+ await installFullscreenProbe(page);
+ await page.setViewportSize({width:390,height:844});
+ await page.goto('/');
+ await page.locator('#launchSplash').click();
+ await expect(page.locator('#dashboard')).toBeVisible();
+ await expect.poll(()=>page.evaluate(()=>window.__ttFullscreenRequests)).toBe(0);
+});
+
+test('touch-oriented splash entry requests fullscreen without blocking navigation',async({page})=>{
+ await installFullscreenProbe(page,{touch:true});
+ await page.goto('/');
+ await page.locator('#launchSplash').click();
+ await expect(page.locator('#dashboard')).toBeVisible();
+ await expect.poll(()=>page.evaluate(()=>window.__ttFullscreenRequests)).toBe(1);
+ // Browser emulation verifies capability routing only; it is not real iOS Safari.
 });
 test('drawer can be opened and closed',async({page})=>{
  await page.goto('/');await page.locator('#launchSplash').click();
