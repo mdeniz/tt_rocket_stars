@@ -24,10 +24,10 @@ jobs:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
       # GitHub-hosted Ubuntu provides nearly all browser system libraries.
-      # Install only the WebKit runtime library missing from the current image;
-      # avoid the full Playwright OS dependency installer, which can stall.
+      # Install only the WebKit runtime libraries missing from the current
+      # image; avoid the full Playwright OS dependency installer, which can stall.
       - name: Install WebKit runtime library
-        run: sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends libevent-2.1-7t64
+        run: sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends libevent-2.1-7t64 libopus0
       - run: npx playwright install chromium firefox webkit
       - run: npm run check
       - run: npm run test:e2e
