@@ -6,6 +6,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 
 ### Added
 - Credential-free Playwright coverage for invited authentication, local-first cloud synchronization, restore, conflict recovery, retries, deletion, and offline gameplay.
+- A consent-aware, provider-independent telemetry boundary with allowlisted aggregate events and no default network activity.
 
 ## [0.1.1] - 2026-10-22
 ### Changed
