@@ -79,6 +79,32 @@
     const session = { access_token: accessToken, refresh_token: refreshToken, expires_at: Math.floor(Date.now() / 1000) + Number(hash.get('expires_in') || 3600), user: null };
     history.replaceState(null, document.title, `${location.pathname}${location.search}`);return session;
   };
+  const consumeTokenHashSession = async () => {
+    const params = new URLSearchParams(window.location.search);
+    const tokenHash = params.get('token_hash');
+    if (!tokenHash) return null;
+    const type = params.get('type') || 'email';
+    try {
+      const response = await fetch(api('/verify'), {
+        method: 'POST',
+        headers: headers(),
+        body: JSON.stringify({ token_hash: tokenHash, type })
+      });
+      if (!response.ok) throw await parseError(response);
+      const session = await response.json();
+      params.delete('token_hash');
+      params.delete('type');
+      const query = params.toString();
+      history.replaceState(null, document.title, `${location.pathname}${query ? `?${query}` : ''}${location.hash}`);
+      return session;
+    } catch (error) {
+      params.delete('token_hash');
+      params.delete('type');
+      const query = params.toString();
+      history.replaceState(null, document.title, `${location.pathname}${query ? `?${query}` : ''}${location.hash}`);
+      throw error;
+    }
+  };
   const updateSessionUi = session => {
     const user = session?.user;form.classList.toggle('hidden', Boolean(user));signOut.classList.toggle('hidden', !user);
     if (user) { status.textContent = `${text('as')}. ${text('signedIn')}`;status.dataset.state = 'success';setCloudStatus('syncIdle', 'info'); }
@@ -115,7 +141,15 @@
   syncNow.addEventListener('click', syncCloud);deleteCloud.addEventListener('click', deleteCloudData);
   async function restoreSession() {
     if (!config.url || !config.anonKey) { form.classList.add('hidden');setStatus('missing', 'info');updateCloudControls(null);return; }
-    let session = consumeRedirectSession() || readSession();if (!session?.access_token)return;
+    let session;
+    try {
+      session = await consumeTokenHashSession();
+    } catch (error) {
+      setStatus(classifyError(error), 'error');
+      updateCloudControls(null);
+      return;
+    }
+    session = session || consumeRedirectSession() || readSession();if (!session?.access_token)return;
     try { const response = await fetch(api('/user'), { headers: headers(session.access_token) });if (!response.ok) throw new Error('invalid session');session.user = await response.json();saveSession(session);updateSessionUi(session); }
     catch (_) { clearSession();setStatus('expired', 'error');updateCloudControls(null); }
   }
