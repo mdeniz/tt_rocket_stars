@@ -16,6 +16,7 @@
 - Describe behavioral changes, risks, and data contracts in technical English.
 - Use OpenSpec for product or technical behavior changes: `openspec/changes/` for proposals and `openspec/specs/` for accepted capabilities.
 - Keep `CHANGELOG.md` and propose a SemVer bump for releases.
+- Treat the issue acceptance criteria and OpenSpec scenarios as the source of truth for completion. Apply `status:done` only after every required criterion is implemented, verified, reviewed, integrated, and free of unresolved dependencies. Use `status:verification` or `status:blocked` when any criterion, evidence, provider/device check, or dependency remains incomplete.
 - After CI passes and the technical review is complete, project PRs may be marked ready and approved/merged using the configured repository ruleset bypass when required.
 - For web UI behavior, verify every implemented OpenSpec scenario with Chrome DevTools MCP when available. Record the URL, action, observed result, and console/network evidence; mark the check unavailable rather than claiming it passed when the integration cannot connect.
 
@@ -57,6 +58,7 @@ The 91 CSS blocks and 32 JS blocks were separated without refactoring. Migrate i
 - Responsive and accessible UI; correct translations; coherent changelog and version.
 - Playwright WebKit is not equivalent to real iOS Safari.
 - Automated browser tests are not a substitute for empirical verification: the `verify` workflow phase must exercise the implemented behavior in the running application and map evidence to each OpenSpec scenario.
+- A passing implementation phase alone is not completion. The final workflow audit must account for every issue checkbox, OpenSpec requirement, CI result, review finding, security finding, and required empirical check before the ticket can become `status:done`.
 
 ## Priorities
 1. Reproduce Safari splash and malformed SVG issues with tests.
