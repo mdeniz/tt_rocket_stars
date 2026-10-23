@@ -77,7 +77,7 @@
     const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));const accessToken = hash.get('access_token');const refreshToken = hash.get('refresh_token');
     if (!accessToken || !refreshToken) return null;
     const session = { access_token: accessToken, refresh_token: refreshToken, expires_at: Math.floor(Date.now() / 1000) + Number(hash.get('expires_in') || 3600), user: null };
-    history.replaceState(null, document.title, `${location.pathname}${location.search}`);return session;
+    window.history.replaceState(null, document.title, `${location.pathname}${location.search}`);return session;
   };
   const consumeTokenHashSession = async () => {
     const params = new URLSearchParams(window.location.search);
@@ -97,13 +97,13 @@
       params.delete('token_hash');
       params.delete('type');
       const query = params.toString();
-      history.replaceState(null, document.title, `${location.pathname}${query ? `?${query}` : ''}${location.hash}`);
+      window.history.replaceState(null, document.title, `${location.pathname}${query ? `?${query}` : ''}${location.hash}`);
       return session;
     } catch (error) {
       params.delete('token_hash');
       params.delete('type');
       const query = params.toString();
-      history.replaceState(null, document.title, `${location.pathname}${query ? `?${query}` : ''}${location.hash}`);
+      window.history.replaceState(null, document.title, `${location.pathname}${query ? `?${query}` : ''}${location.hash}`);
       throw error;
     }
   };

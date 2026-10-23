@@ -27,5 +27,9 @@ test('cloud access consumes token-hash callbacks from the static app URL', () =>
   assert.match(cloud, /token_hash/);
   assert.match(cloud, /api\('\/verify'\)/);
   assert.match(cloud, /redirect_to/);
-  assert.match(cloud, /history\.replaceState/);
+  assert.match(cloud, /window\.history\.replaceState/);
+});
+
+test('token-hash callback bypasses the game history binding', () => {
+  assert.doesNotMatch(cloud, /(?<!window\.)\bhistory\.replaceState/);
 });
