@@ -1,5 +1,6 @@
 const { readdirSync, readFileSync, statSync } = require('node:fs');
 const { join } = require('node:path');
+const packageJson = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf8'));
 
 const dist = join(__dirname, '..', 'dist');
 const files = readdirSync(dist);
@@ -11,6 +12,9 @@ const output = join(dist, 'index_next.html');
 if (!statSync(output).isFile()) throw Error('dist/index_next.html is not a file');
 
 const html = readFileSync(output, 'utf8');
+if (!html.includes(`window.__TT_APP_VERSION__=${JSON.stringify(packageJson.version)}`)) {
+  throw Error(`Release HTML does not contain package version ${packageJson.version}`);
+}
 if (/<script\b[^>]*\bsrc=/i.test(html)) throw Error('Release HTML has an external script');
 if (/<link\b[^>]*\brel=["']stylesheet["']/i.test(html)) {
   throw Error('Release HTML has an external stylesheet');
