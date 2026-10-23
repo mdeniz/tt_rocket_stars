@@ -45,3 +45,96 @@ test('is safe when cloud access is not configured', async () => {
   assert.equal((await adapter.upload()).status, 'disabled');
   assert.equal((await adapter.download()).status, 'disabled');
 });
+
+test('does not touch cloud storage while signed out', async () => {
+  const { createCloudSync } = await cloudSync;
+  let cloudCalls = 0;
+  const client = {
+    auth: { getSession: async () => ({ data: { session: null } }) },
+    from: () => { cloudCalls += 1; throw new Error('cloud access must be short-circuited'); },
+  };
+  const adapter = createCloudSync({ client, getLocalPilot: () => ({ id: 'pilot-1' }) });
+
+  assert.equal((await adapter.upload()).status, 'signed-out');
+  assert.equal((await adapter.download()).status, 'signed-out');
+  assert.equal(cloudCalls, 0);
+});
+
+test('returns not-found without replacing the local pilot', async () => {
+  const { createCloudSync } = await cloudSync;
+  let applied = false;
+  const client = {
+    auth: { getSession: async () => ({ data: { session: { user: { id: 'user-1' } } } }) },
+    from: () => ({
+      select: () => ({
+        eq: () => ({
+          eq: () => ({ maybeSingle: async () => ({ data: null, error: null }) }),
+        }),
+      }),
+    }),
+  };
+  const adapter = createCloudSync({
+    client,
+    getLocalPilot: () => ({ id: 'pilot-1', updatedAt: '2026-01-02T00:00:00.000Z' }),
+    applyRemotePilot: () => { applied = true; },
+  });
+
+  assert.equal((await adapter.download()).status, 'not-found');
+  assert.equal(applied, false);
+});
+
+test('keeps the local pilot when a remote download repeatedly fails', async () => {
+  const { createCloudSync } = await cloudSync;
+  let attempts = 0;
+  let applied = false;
+  const client = {
+    auth: { getSession: async () => ({ data: { session: { user: { id: 'user-1' } } } }) },
+    from: () => ({
+      select: () => ({
+        eq: () => ({
+          eq: () => ({ maybeSingle: async () => {
+            attempts += 1;
+            return { data: null, error: Error('offline') };
+          } }),
+        }),
+      }),
+    }),
+  };
+  const adapter = createCloudSync({
+    client,
+    retries: 2,
+    getLocalPilot: () => ({ id: 'pilot-1' }),
+    applyRemotePilot: () => { applied = true; },
+  });
+
+  const result = await adapter.download();
+  assert.equal(result.status, 'failed');
+  assert.equal(attempts, 3);
+  assert.equal(applied, false);
+});
+
+test('does not overwrite a newer local snapshot', async () => {
+  const { createCloudSync } = await cloudSync;
+  let applied = false;
+  const client = {
+    auth: { getSession: async () => ({ data: { session: { user: { id: 'user-1' } } } }) },
+    from: () => ({
+      select: () => ({
+        eq: () => ({
+          eq: () => ({ maybeSingle: async () => ({
+            data: { id: 'pilot-remote', payload: { score: 1 }, updated_at: '2026-01-01T00:00:00.000Z' },
+            error: null,
+          }) }),
+        }),
+      }),
+    }),
+  };
+  const adapter = createCloudSync({
+    client,
+    getLocalPilot: () => ({ id: 'pilot-1', updatedAt: '2026-01-02T00:00:00.000Z', payload: { score: 2 } }),
+    applyRemotePilot: () => { applied = true; },
+  });
+
+  assert.equal((await adapter.download()).status, 'local-newer');
+  assert.equal(applied, false);
+});
