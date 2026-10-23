@@ -14,6 +14,7 @@ function inlineReleaseAssets() {
   let outDir = '';
   let publicSupabaseConfig = { url: '', anonKey: '', siteUrl: '' };
   let cloudAccessEnabled = false;
+  let appVersion = '';
 
   return {
     name: 'tt-inline-release-assets',
@@ -27,6 +28,7 @@ function inlineReleaseAssets() {
         siteUrl: config.env.VITE_APP_SITE_URL || '',
       };
       cloudAccessEnabled = config.env.VITE_ENABLE_CLOUD_ACCESS === 'true';
+      appVersion = JSON.parse(fs.readFileSync(path.resolve('package.json'), 'utf8')).version;
     },
     transformIndexHtml: {
       order: 'pre',
@@ -47,6 +49,10 @@ function inlineReleaseAssets() {
         output = output.replace(
           '<!-- TT_TELEMETRY_RUNTIME -->',
           `<script>${escapeClosingTag(telemetry, 'script')}</script>`,
+        );
+        output = output.replace(
+          '<!-- TT_APP_VERSION -->',
+          `<script>window.__TT_APP_VERSION__=${JSON.stringify(appVersion)};</script>`,
         );
         output = output.replace(
           '<!-- TT_FEATURE_FLAGS -->',

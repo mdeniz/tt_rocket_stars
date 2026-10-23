@@ -1,4 +1,5 @@
 const {test,expect}=require('@playwright/test');
+const packageJson=require('../../package.json');
 
 async function installFullscreenProbe(page,{touch=false}={}){
  await page.addInitScript(({touch})=>{
@@ -48,6 +49,19 @@ test('drawer can be opened and closed',async({page})=>{
  await expect(page.locator('#sideDrawer')).toHaveClass(/open/);
  await page.locator('#sideDrawer .drawerClose').click();
  await expect(page.locator('#sideDrawer')).not.toHaveClass(/open/);
+});
+test('About displays the canonical version in English and Spanish', async ({ page }) => {
+ await page.goto('/');await page.locator('#launchSplash').click();
+ await expect(page.locator('#launchSplash')).toBeHidden();
+ const skip=page.locator('#ttTourSkip');
+ await page.locator('#ttTourShade').waitFor({state:'visible',timeout:3000}).catch(()=>{});
+ if(await skip.isVisible().catch(()=>false))await skip.click();
+ await page.locator('#menuBtn').click();await page.locator('#sideDrawer [data-section="about"]').click();
+ await expect(page.locator('#ttAppVersion')).toHaveText(packageJson.version);
+ await expect(page.locator('#about [data-i18n="ui.088"]')).toHaveText('Version');
+ await page.evaluate(() => window.setLanguage('es'));
+ await expect(page.locator('#about [data-i18n="ui.088"]')).toHaveText('Versión');
+ await expect(page.locator('#ttAppVersion')).toHaveText(packageJson.version);
 });
 test('settings hides unfinished cloud access without replacing local gameplay',async({page})=>{
  await page.goto('/');await page.locator('#launchSplash').click();
