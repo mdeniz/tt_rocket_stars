@@ -16,6 +16,7 @@
 - Describe behavioral changes, risks, and data contracts in technical English.
 - Use OpenSpec for product or technical behavior changes: `openspec/changes/` for proposals and `openspec/specs/` for accepted capabilities.
 - Keep `CHANGELOG.md` and propose a SemVer bump for releases.
+- After CI passes and the technical review is complete, project PRs may be marked ready and approved/merged using the configured repository ruleset bypass when required.
 
 ## Package manager and commands
 Use npm with the committed `package-lock.json`. Node.js 22 is required.

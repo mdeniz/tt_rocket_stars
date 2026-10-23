@@ -49,16 +49,18 @@ redirect. Do not use a `file://` URL for authentication.
 
 ## Invite-only authentication
 
-Disable public new-user signups in Supabase Auth. The public application may
-request a sign-in link only for an already invited account. Issue invitations
-from the Supabase Dashboard or from a trusted server using the Auth admin API.
+Disable public new-user signups in Supabase Auth. The public application never
+creates accounts. Issue invitations from the Supabase Dashboard or from a
+trusted server using the Auth admin API.
 
 The privileged key required for invitations must never be exposed to the
 browser. Initially, dashboard-issued invitations are sufficient; an Edge
 Function or other trusted server can automate invitations later.
 
 Use a generic user-facing response for unknown email addresses so the public
-form does not reveal whether an account exists.
+form does not reveal whether an account exists. The invitation link is used only
+to establish the initial password. Subsequent access uses email and password;
+email links are used only for password recovery.
 
 ## Gmail SMTP
 
@@ -73,17 +75,18 @@ provider:
 - Do not commit or paste the app password into the repository, issue tracker,
   logs, or browser bundle.
 
-The magic-link template must send a token hash to the app callback instead of
+The invitation and recovery templates must send a token hash to the app callback instead of
 using `{{ .ConfirmationURL }}`. This avoids relying on a stale Site URL when
 the app supplies a path-specific redirect:
 
 ```html
-<p><a href="{{ if .RedirectTo }}{{ .RedirectTo }}{{ else }}{{ .SiteURL }}{{ end }}?token_hash={{ .TokenHash }}&type=email">Sign in</a></p>
+<p><a href="{{ if .RedirectTo }}{{ .RedirectTo }}{{ else }}{{ .SiteURL }}{{ end }}?token_hash={{ .TokenHash }}&type={{ .EmailType }}">Continue</a></p>
 ```
 
 The static app verifies `token_hash` through Supabase Auth and removes it from
 the browser URL after verification. Keep email-provider link tracking disabled;
-authentication links are single-use and must not be rewritten.
+authentication links are single-use and must not be rewritten. Brevo must not
+be used for this flow while its click tracker rewrites authentication URLs.
 
 Gmail sender limits and account policies can change. Treat quota exhaustion or
 SMTP delivery failure as an authentication-delivery outage; local gameplay and

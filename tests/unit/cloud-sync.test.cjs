@@ -138,3 +138,27 @@ test('does not overwrite a newer local snapshot', async () => {
   assert.equal((await adapter.download()).status, 'local-newer');
   assert.equal(applied, false);
 });
+
+test('coalesces queued uploads and reports bounded lifecycle states', async () => {
+  const { createCloudSync } = await cloudSync;
+  const statuses = [];
+  let uploads = 0;
+  const client = {
+    auth: { getSession: async () => ({ data: { session: { user: { id: 'user-1' } } } }) },
+    from: () => ({
+      upsert: () => ({ select: () => ({ single: async () => ({ data: { id: `pilot-${++uploads}` }, error: null }) }) }),
+    }),
+    rpc: async () => ({ data: { version: uploads }, error: null }),
+  };
+  const adapter = createCloudSync({
+    client,
+    getLocalPilot: () => ({ id: 'pilot-1', name: 'Ada', payload: {} }),
+    onStatus: event => statuses.push(event.status),
+  });
+  const first = adapter.queueUpload(0);
+  const second = adapter.queueUpload(0);
+  assert.equal((await first).status, 'coalesced');
+  assert.equal((await second).status, 'uploaded');
+  assert.equal(uploads, 1);
+  assert.deepEqual(statuses, ['pending', 'pending', 'pending', 'syncing', 'synced']);
+});

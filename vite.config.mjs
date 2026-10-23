@@ -28,11 +28,19 @@ function inlineReleaseAssets() {
     transformIndexHtml: {
       order: 'pre',
       handler(html) {
-        if (!isBuild) return html;
-
         const read = file => fs.readFileSync(path.resolve(file), 'utf8');
-        const css = escapeClosingTag(read('src/styles/legacy.css'), 'style');
+        const cloudSync = read('src/lib/cloud-sync.js')
+          .replace(/^export /gm, '')
+          .replace(/\nexport \{ SYNC_METADATA_KEY \};\s*$/, '')
+          + '\nwindow.TTCloudSync={createCloudSync,chooseSnapshot,serializePilot,SYNC_METADATA_KEY};';
         let output = html.replace(
+          '<!-- TT_CLOUD_SYNC_RUNTIME -->',
+          `<script>${escapeClosingTag(cloudSync, 'script')}</script>`,
+        );
+        if (!isBuild) return output;
+
+        const css = escapeClosingTag(read('src/styles/legacy.css'), 'style');
+        output = output.replace(
           '<link rel="stylesheet" href="./src/styles/legacy.css">',
           `<style>${css}</style>`,
         );
