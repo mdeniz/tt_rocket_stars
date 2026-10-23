@@ -85,7 +85,9 @@
     if (!tokenHash) return null;
     const type = params.get('type') || 'email';
     try {
-      const response = await fetch(api('/verify'), {
+      const redirectTo = String(config.siteUrl || `${location.origin}${location.pathname}`).trim();
+      const verificationUrl = `${api('/verify')}?${new URLSearchParams({ redirect_to: redirectTo })}`;
+      const response = await fetch(verificationUrl, {
         method: 'POST',
         headers: headers(),
         body: JSON.stringify({ token_hash: tokenHash, type })

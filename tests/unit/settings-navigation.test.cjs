@@ -26,5 +26,6 @@ test('cloud access controls include sync and deletion affordances', () => {
 test('cloud access consumes token-hash callbacks from the static app URL', () => {
   assert.match(cloud, /token_hash/);
   assert.match(cloud, /api\('\/verify'\)/);
+  assert.match(cloud, /redirect_to/);
   assert.match(cloud, /history\.replaceState/);
 });
