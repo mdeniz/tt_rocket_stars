@@ -162,3 +162,55 @@ test('coalesces queued uploads and reports bounded lifecycle states', async () =
   assert.equal(uploads, 1);
   assert.deepEqual(statuses, ['pending', 'pending', 'pending', 'syncing', 'synced']);
 });
+
+test('surfaces a stale write with the current remote snapshot instead of overwriting it', async () => {
+  const { createCloudSync } = await cloudSync;
+  let rpcCalls = 0;
+  const client = {
+    auth: { getSession: async () => ({ data: { session: { user: { id: 'user-1' } } } }) },
+    from(table) {
+      if (table === 'pilots') return {
+        upsert: () => ({ select: () => ({ single: async () => ({ data: { id: 'pilot-remote' }, error: null }) }) }),
+        select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { id: 'pilot-remote' }, error: null }) }) }),
+      };
+      return { select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { version: 4, payload: { localId: 'pilot-1', payload: { score: 9 } }, updated_at: '2026-01-03T00:00:00.000Z' }, error: null }) }) }) };
+    },
+    rpc: async () => rpcCalls++ === 0
+      ? { data: null, error: { code: '40001', message: 'snapshot version conflict' } }
+      : { data: { version: 5 }, error: null },
+  };
+  const adapter = createCloudSync({ client, getLocalPilot: () => ({ id: 'pilot-1', payload: { score: 10 } }) });
+  const result = await adapter.upload();
+  assert.equal(result.status, 'conflict');
+  assert.equal(result.remote.version, 4);
+  assert.equal(result.remote.payload.score, 9);
+  assert.equal(rpcCalls, 1);
+});
+
+test('restores a conflict choice only after creating a recovery backup', async () => {
+  const { createCloudSync } = await cloudSync;
+  const applied = [];
+  const backups = [];
+  const client = {
+    auth: { getSession: async () => ({ data: { session: { user: { id: 'user-1' } } } }) },
+    from(table) {
+      if (table === 'pilots') return {
+        upsert: () => ({ select: () => ({ single: async () => ({ data: { id: 'pilot-remote' }, error: null }) }) }),
+        select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { id: 'pilot-remote' }, error: null }) }) }),
+      };
+      return { select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { version: 4, payload: { localId: 'pilot-1', payload: { score: 9 } }, updated_at: '2026-01-03T00:00:00.000Z' }, error: null }) }) }) };
+    },
+    rpc: async () => ({ data: null, error: { code: '40001', message: 'snapshot version conflict' } }),
+  };
+  const adapter = createCloudSync({
+    client,
+    getLocalPilot: () => ({ id: 'pilot-1', payload: { score: 10 } }),
+    createRecoveryBackup: async reason => { backups.push(reason); return true; },
+    applyRemotePilot: snapshot => applied.push(snapshot),
+    onConflict: async () => 'remote',
+  });
+  const result = await adapter.upload();
+  assert.equal(result.status, 'resolved-remote');
+  assert.deepEqual(backups, ['Before cloud conflict restore']);
+  assert.equal(applied[0].payload.score, 9);
+});

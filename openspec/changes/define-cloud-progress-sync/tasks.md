@@ -23,13 +23,13 @@
 
 - [ ] 4.1 Add a synchronization adapter that serializes the existing per-pilot payload without renaming or deleting local storage keys, and verify compatible round-trip import and export tests pass.
 - [ ] 4.2 Synchronize local snapshots after authentication and on safe local saves with retryable failure handling, and verify offline gameplay and local progress remain available when the service is unavailable.
-- [ ] 4.3 Add optimistic version checks for stale writes, create a recovery backup before replacement, and verify the conflict flow offers local and remote choices without silent data loss.
+- [x] 4.3 Add optimistic version checks for stale writes, create a recovery backup before replacement, and verify the conflict flow offers local and remote choices without silent data loss.
 - [ ] 4.4 Restore a pilot on a second device after authentication and verify pilot separation, language, progress, missions, garage state, and achievements remain consistent.
 
 ## 5. User controls and integration verification
 
 - [ ] 5.1 Add account status, sign-in, sign-out, sync status, manual synchronization, and cloud deletion controls, and verify the controls are usable without an account and on mobile Safari.
-- [ ] 5.2 Add unit and integration coverage for session handling, serialization, retries, stale versions, conflict recovery, and per-account isolation, and verify CI runs without production credentials or real email delivery.
+- [x] 5.2 Add unit and integration coverage for session handling, serialization, retries, stale versions, conflict recovery, and per-account isolation, and verify CI runs without production credentials or real email delivery.
 - [ ] 5.3 Add E2E coverage for an authenticated return flow and two-device synchronization using isolated test fixtures, and verify WebKit coverage is treated as a signal rather than an iOS Safari guarantee.
 - [ ] 5.4 Update README, privacy guidance, and OpenSpec references with local-versus-cloud behavior and free-tier failure modes, and verify the documented commands and URLs are valid.
 
