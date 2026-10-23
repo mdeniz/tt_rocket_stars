@@ -35,4 +35,4 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
-        run: gh release create "$TAG" "dist/index.html#tt-rocket-stars-$TAG.html" --verify-tag --title "TT Rocket Stars $TAG" --generate-notes
+        run: gh release create "$TAG" "dist/index_next.html#tt-rocket-stars-$TAG.html" --verify-tag --title "TT Rocket Stars $TAG" --generate-notes

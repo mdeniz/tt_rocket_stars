@@ -112,6 +112,7 @@ test('local-only startup does not require a cloud request', async ({ page }) => 
   if (await skip.isVisible().catch(() => false)) await skip.click();
   await page.locator('#menuBtn').click();
   await page.locator('#sideDrawer [data-section="settings"]').click();
-  await expect(page.locator('#ttAuthPanel')).toBeVisible();
+  await expect(page.locator('#ttAuthPanel')).toBeHidden();
+  await expect(page.locator('#settings .ttSettingsTab').filter({ hasText: 'Cloud access' })).toHaveCount(0);
   expect(requests).toEqual([]);
 });

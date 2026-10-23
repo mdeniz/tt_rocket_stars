@@ -49,7 +49,7 @@ test('drawer can be opened and closed',async({page})=>{
  await page.locator('#sideDrawer .drawerClose').click();
  await expect(page.locator('#sideDrawer')).not.toHaveClass(/open/);
 });
-test('settings exposes optional auth without replacing local gameplay',async({page})=>{
+test('settings hides unfinished cloud access without replacing local gameplay',async({page})=>{
  await page.goto('/');await page.locator('#launchSplash').click();
  await expect(page.locator('#launchSplash')).toBeHidden();
  const skip=page.locator('#ttTourSkip');
@@ -58,12 +58,11 @@ test('settings exposes optional auth without replacing local gameplay',async({pa
  await page.locator('#menuBtn').click();
  await page.locator('#sideDrawer [data-section="settings"]').click();
  await expect(page.locator('#settings')).toBeVisible();
- await expect(page.locator('#ttAuthPanel')).toBeVisible();
- await expect(page.locator('#ttAuthEmail')).toHaveAttribute('type','email');
- await expect(page.locator('#ttAuthPanel [data-i18n="ui.070"]')).toHaveAttribute('data-es','Acceso en la nube');
+ await expect(page.locator('#ttAuthPanel')).toBeHidden();
+ await expect(page.locator('#settings .ttSettingsTab').filter({hasText:'Cloud access'})).toHaveCount(0);
 });
 
-test('settings navigation isolates cloud access from every local category', async ({ page }) => {
+test('settings navigation isolates local categories', async ({ page }) => {
  test.setTimeout(60000);
  await page.goto('/');await page.locator('#launchSplash').click();
  await expect(page.locator('#launchSplash')).toBeHidden();
@@ -72,14 +71,10 @@ test('settings navigation isolates cloud access from every local category', asyn
  if(await skip.isVisible().catch(()=>false))await skip.click();
  await page.locator('#menuBtn').click();await page.locator('#sideDrawer [data-section="settings"]').click();
  const tabs=page.locator('#settings .ttSettingsBottomNav .ttSettingsTab');
- await expect(tabs).toHaveCount(7);
+ await expect(tabs).toHaveCount(6);
  for(const label of ['Sound','Pilot','Language','Theme','Backups','Reset']){
   await tabs.filter({hasText:label}).click();
   await expect(page.locator('#ttAuthPanel')).not.toHaveClass(/ttSettingsActive/);
  }
- await tabs.filter({hasText:'Cloud access'}).click();
- await expect(page.locator('#ttAuthPanel')).toHaveClass(/ttSettingsActive/);
- await expect(page.locator('#ttCloudSyncNow')).toBeVisible();
- await expect(page.locator('#ttCloudList')).toBeVisible();
- await expect(page.locator('#ttCloudDelete')).toBeVisible();
+ await expect(page.locator('#ttAuthPanel')).toBeHidden();
 });
