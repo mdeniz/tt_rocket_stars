@@ -16,6 +16,12 @@
     Object.entries(texts).forEach(([id,value])=>{const el=document.getElementById(id);if(el)el.textContent=value});
   }
   let splashSoundStarted=false;
+  function isTouchOrCoarsePointerDevice(){
+    try{
+      if(Number(navigator.maxTouchPoints)>0)return true;
+      return typeof window.matchMedia==='function'&&window.matchMedia('(pointer: coarse)').matches;
+    }catch(e){return false}
+  }
   function enterGame(){
     if(entered)return;
     // Mobile browsers reject audible autoplay. The first gesture starts the
@@ -37,7 +43,7 @@
     }
     entered=true;
     // This must be called synchronously from the tap/click, before any await.
-    try{if(!document.fullscreenElement && document.documentElement.requestFullscreen){
+    try{if(isTouchOrCoarsePointerDevice()&&!document.fullscreenElement&&document.documentElement.requestFullscreen){
       const promise=document.documentElement.requestFullscreen({navigationUI:'hide'});
       if(promise&&promise.catch)promise.catch(()=>{});
     }}catch(e){}
@@ -81,4 +87,3 @@
 
 document.addEventListener('fullscreenchange',updateFullscreenMenu);
 updateFullscreenMenu();
-
