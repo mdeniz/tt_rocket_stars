@@ -8,7 +8,7 @@ permissions:
   contents: read
 jobs:
   browser-tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v5
@@ -23,13 +23,19 @@ jobs:
         with:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
-      # GitHub-hosted Ubuntu already provides the browser system libraries.
-      # Installing OS packages here can hang during runner image migrations;
-      # browser binaries are restored by the cache above and installed only
-      # when the cache is cold.
-      - run: npx playwright install --with-deps chromium firefox webkit
+      # Install dependencies for the only browser whose system libraries are
+      # not guaranteed by the hosted runner. Keep Chromium and Firefox cached
+      # without installing their unrelated OS packages.
+      - name: Install WebKit system dependencies
+        run: npx playwright install-deps webkit
+      - run: npx playwright install chromium firefox webkit
       - run: npm run check
       - run: npm run test:e2e
+      - name: Run mobile WebKit checks
+        env:
+          PLAYWRIGHT_MOBILE: '1'
+          PLAYWRIGHT_WORKERS: '1'
+        run: npx playwright test --project=webkit-mobile
       - if: always()
         uses: actions/upload-artifact@v6
         with:

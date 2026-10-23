@@ -30,7 +30,7 @@
 
 - [ ] 5.1 Add account status, sign-in, sign-out, sync status, manual synchronization, and cloud deletion controls, and verify the controls are usable without an account and on mobile Safari.
 - [x] 5.2 Add unit and integration coverage for session handling, serialization, retries, stale versions, conflict recovery, and per-account isolation, and verify CI runs without production credentials or real email delivery.
-- [ ] 5.3 Add E2E coverage for an authenticated return flow and two-device synchronization using isolated test fixtures, and verify WebKit coverage is treated as a signal rather than an iOS Safari guarantee.
+- [x] 5.3 Add E2E coverage for an authenticated return flow and two-device synchronization using isolated test fixtures, and verify WebKit coverage is treated as a signal rather than an iOS Safari guarantee. The Playwright fixture intercepts public Auth/REST/RPC requests without production credentials; real provider delivery and iOS Safari remain deployment checks.
 - [ ] 5.4 Update README, privacy guidance, and OpenSpec references with local-versus-cloud behavior and free-tier failure modes, and verify the documented commands and URLs are valid.
 
 ## Workflow follow-up
