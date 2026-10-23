@@ -19,6 +19,7 @@ test('settings navigation maps labels by stable panel identity', () => {
 
 test('cloud access controls include sync and deletion affordances', () => {
   assert.match(cloud, /ttCloudSyncNow/);
+  assert.match(cloud, /ttCloudRestore/);
   assert.match(cloud, /ttCloudDelete/);
   assert.match(cloud, /ui\.084/);
 });
