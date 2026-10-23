@@ -46,6 +46,7 @@ The mobile application is published at [GitHub Pages](https://mdeniz.github.io/t
 Vite serves the application at http://localhost:5173. `npm run build` generates a self-contained distribution at `dist/index.html`: CSS, JavaScript, and visual resources are embedded, so it can be copied or opened without adjacent files. Do not open the development `index.html` directly: Vite injects translations during development and build. The repository includes `package-lock.json`, and CI uses `npm ci` for reproducible installations.
 
 Cloud synchronization setup is documented in [`docs/supabase-brevo-setup.md`](docs/supabase-brevo-setup.md). It is optional: local gameplay and backups remain available without a Supabase project or an authenticated account.
+Operational behavior, privacy boundaries, failure fallback, deletion, and traceability are documented in [`docs/cloud-operations.md`](docs/cloud-operations.md).
 
 ## Structure
 
@@ -78,7 +79,7 @@ Use MAJOR.MINOR.PATCH. PATCH means compatible fixes; MINOR means features and do
 
 ## Privacy and data
 
-Progress is stored locally per pilot, with no cross-device synchronization. Clearing browser data may delete it; use backups.
+Progress is stored locally per pilot by default. Invited users may opt into cloud synchronization; clearing browser data may delete local progress, so use backups. Cloud data is account-owned and can be deleted from Settings without clearing local data. See [`docs/cloud-operations.md`](docs/cloud-operations.md) for the full privacy and retention boundary.
 
 ## License
 
