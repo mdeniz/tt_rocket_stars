@@ -1,4 +1,5 @@
 const DEFAULT_MAX_QUEUE_SIZE = 100;
+const DEFAULT_RETENTION_MS = 24 * 60 * 60 * 1000;
 
 const EVENT_DEFINITIONS = Object.freeze({
   app_open: Object.freeze({
@@ -7,10 +8,22 @@ const EVENT_DEFINITIONS = Object.freeze({
   session_started: Object.freeze({
     surface: Object.freeze(['game', 'settings', 'profiles']),
   }),
+  mission_started: Object.freeze({
+    mode: Object.freeze(['practice', 'speed', 'timed', 'exam']),
+    operation: Object.freeze(['mul', 'div', 'mix']),
+  }),
   mission_completed: Object.freeze({
+    mode: Object.freeze(['practice', 'speed', 'timed', 'exam']),
+    operation: Object.freeze(['mul', 'div', 'mix']),
     table: Object.freeze({ type: 'integer', min: 1, max: 12 }),
     attempted: Object.freeze({ type: 'integer', min: 1, max: 100 }),
     correct: Object.freeze({ type: 'integer', min: 0, max: 100 }),
+    accuracyBucket: Object.freeze(['zero', 'low', 'medium', 'high']),
+    elapsedBucket: Object.freeze(['under_60', '60_300', 'over_300']),
+  }),
+  runtime_error: Object.freeze({
+    code: Object.freeze(['legacy_runtime', 'cloud_sync', 'telemetry']),
+    source: Object.freeze(['startup', 'gameplay', 'cloud']),
   }),
 });
 
@@ -48,19 +61,33 @@ function sanitizeFields(eventName, fields) {
 export function createTelemetryService({
   consent = false,
   maxQueueSize = DEFAULT_MAX_QUEUE_SIZE,
+  retentionMs = DEFAULT_RETENTION_MS,
+  sampleRate = 1,
   sink = null,
   now = () => Date.now(),
+  random = () => Math.random(),
 } = {}) {
   if (!Number.isInteger(maxQueueSize) || maxQueueSize < 1) {
     throw new TypeError('maxQueueSize must be a positive integer');
+  }
+  if (!Number.isInteger(retentionMs) || retentionMs < 1) {
+    throw new TypeError('retentionMs must be a positive integer');
+  }
+  if (typeof sampleRate !== 'number' || !Number.isFinite(sampleRate) || sampleRate < 0 || sampleRate > 1) {
+    throw new TypeError('sampleRate must be between 0 and 1');
   }
   if (sink !== null && typeof sink !== 'function') {
     throw new TypeError('sink must be a function or null');
   }
   if (typeof now !== 'function') throw new TypeError('now must be a function');
+  if (typeof random !== 'function') throw new TypeError('random must be a function');
 
   let hasConsent = consent === true;
   const queue = [];
+  const prune = () => {
+    const cutoff = now() - retentionMs;
+    while (queue.length > 0 && queue[0].recordedAt < cutoff) queue.shift();
+  };
 
   return {
     hasConsent: () => hasConsent,
@@ -68,11 +95,14 @@ export function createTelemetryService({
     setConsent(value) {
       hasConsent = value === true;
       if (!hasConsent) queue.length = 0;
+      else prune();
       return hasConsent;
     },
 
     record(eventName, fields = {}) {
+      prune();
       if (!hasConsent || !Object.hasOwn(EVENT_DEFINITIONS, eventName)) return false;
+      if (random() >= sampleRate) return false;
       const sanitizedFields = sanitizeFields(eventName, fields);
       if (sanitizedFields === null) return false;
       queue.push(Object.freeze({
@@ -85,6 +115,7 @@ export function createTelemetryService({
     },
 
     getQueuedEvents() {
+      prune();
       return clone(queue);
     },
 
@@ -93,6 +124,7 @@ export function createTelemetryService({
     },
 
     async flush() {
+      prune();
       if (!hasConsent || queue.length === 0 || sink === null) {
         return { sent: 0, remaining: queue.length };
       }
@@ -109,4 +141,4 @@ export function createTelemetryService({
   };
 }
 
-export { DEFAULT_MAX_QUEUE_SIZE, EVENT_DEFINITIONS };
+export { DEFAULT_MAX_QUEUE_SIZE, DEFAULT_RETENTION_MS, EVENT_DEFINITIONS };

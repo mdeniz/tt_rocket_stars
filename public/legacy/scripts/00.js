@@ -10,6 +10,7 @@
    nativeStore.removeItem(test);
    return nativeStore;
   }catch(error){
+   window.TTTelemetry?.record('runtime_error',{code:'legacy_runtime',source:'startup'});
    return {
     getItem:function(k){return Object.prototype.hasOwnProperty.call(memory,k)?memory[k]:null},
     setItem:function(k,v){memory[String(k)]=String(v)},
@@ -24,3 +25,5 @@
  window.TTSessionStore=safeStore('sessionStorage');
 })();
 
+window.addEventListener('error',function(){window.TTTelemetry?.record('runtime_error',{code:'legacy_runtime',source:'gameplay'})});
+window.addEventListener('unhandledrejection',function(){window.TTTelemetry?.record('runtime_error',{code:'legacy_runtime',source:'gameplay'})});

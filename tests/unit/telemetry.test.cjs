@@ -67,6 +67,37 @@ test('does not call a sink by default and isolates sink failures', async () => {
   assert.equal(calls, 1);
 });
 
+test('supports aggregate mission and sanitized runtime error events', async () => {
+  const { createTelemetryService } = await telemetry;
+  const service = createTelemetryService({ consent: true });
+  assert.equal(service.record('mission_started', { mode: 'timed', operation: 'mix' }), true);
+  assert.equal(service.record('mission_completed', {
+    mode: 'timed', operation: 'mix', table: 7, attempted: 10, correct: 9,
+    accuracyBucket: 'high', elapsedBucket: '60_300',
+  }), true);
+  assert.equal(service.record('runtime_error', { code: 'legacy_runtime', source: 'startup', message: 'secret' }), false);
+  assert.equal(service.record('runtime_error', { code: 'legacy_runtime', source: 'startup' }), true);
+  assert.equal(service.getQueuedEvents().length, 3);
+});
+
+test('applies deterministic sampling and retention without throwing', async () => {
+  const { createTelemetryService } = await telemetry;
+  let currentTime = 10_000;
+  const sampled = createTelemetryService({ consent: true, sampleRate: 0.5, random: () => 0.5 });
+  assert.equal(sampled.record('app_open', { surface: 'game' }), false);
+  const retained = createTelemetryService({ consent: true, retentionMs: 100, now: () => currentTime });
+  assert.equal(retained.record('app_open', { surface: 'game' }), true);
+  currentTime = 10_101;
+  assert.deepEqual(retained.getQueuedEvents(), []);
+});
+
+test('rejects invalid sampling and retention configuration', async () => {
+  const { createTelemetryService } = await telemetry;
+  assert.throws(() => createTelemetryService({ sampleRate: -1 }), TypeError);
+  assert.throws(() => createTelemetryService({ sampleRate: 1.1 }), TypeError);
+  assert.throws(() => createTelemetryService({ retentionMs: 0 }), TypeError);
+});
+
 test('flushes a copied batch and removes it only after sink success', async () => {
   const { createTelemetryService } = await telemetry;
   let received;
