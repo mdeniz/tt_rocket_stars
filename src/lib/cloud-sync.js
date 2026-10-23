@@ -43,6 +43,7 @@ async function retry(operation, retries, wait) {
   let attempt = 0;
   while (true) {
     try { return await operation(); } catch (error) {
+      if (error?.noRetry) throw error;
       if (attempt >= retries) throw error;
       attempt += 1;
       await wait(attempt, error);
@@ -62,13 +63,45 @@ function sessionFrom(client) {
   return client?.auth?.getSession?.().then(result => result?.data?.session || null);
 }
 
-export function createCloudSync({ client, store, getLocalPilot, applyRemotePilot, now = () => new Date().toISOString(), retries = 2, wait = async () => {}, onStatus = () => {} } = {}) {
+export function createCloudSync({ client, store, getLocalPilot, applyRemotePilot, createRecoveryBackup, onConflict, now = () => new Date().toISOString(), retries = 2, wait = async () => {}, onStatus = () => {} } = {}) {
   const result = (status, extra = {}) => ({ status, ...extra });
   const report = (status, extra = {}) => { try { onStatus({ ...extra, status }); } catch { /* status reporting must never affect gameplay */ } };
   const session = async () => sessionFrom(client);
   const active = () => serializePilot(getLocalPilot?.(), now());
 
-  async function upload() {
+  const isConflictError = error => {
+    const code = String(error?.code || error?.error?.code || '');
+    const message = `${error?.message || ''} ${error?.error?.message || ''}`.toLowerCase();
+    return code === '40001' || message.includes('snapshot version conflict');
+  };
+  const readRemoteSnapshot = async pilotId => {
+    const { data: remote, error } = await client.from('progress_snapshots')
+      .select('version,payload,updated_at').eq('pilot_id', pilotId).maybeSingle();
+    if (error) throw error;
+    return remote ? { ...remote.payload, version: remote.version, updatedAt: remote.updated_at } : null;
+  };
+  const writeVersion = (localId, snapshot) => {
+    if (!snapshot) return;
+    const metadata = readMetadata(store);
+    writeMetadata(store, { ...metadata, [localId]: { version: Number(snapshot.version || 0), updatedAt: snapshot.updatedAt } });
+  };
+  async function resolveConflict(conflict, options = {}) {
+    report('conflict', conflict);
+    if (typeof onConflict !== 'function') return conflict;
+    const choice = await onConflict(conflict);
+    if (choice === 'remote') {
+      const backedUp = typeof createRecoveryBackup !== 'function' || await createRecoveryBackup('Before cloud conflict restore');
+      if (!backedUp) return result('failed', { error: new Error('Recovery backup failed.'), conflict });
+      applyRemotePilot?.(conflict.remote);
+      writeVersion(conflict.local.localId, conflict.remote);
+      const resolved = result('resolved-remote', { conflict, snapshot: conflict.remote });
+      report('synced', resolved);
+      return resolved;
+    }
+    if (choice === 'local') return upload({ ...options, expectedVersion: Number(conflict.remote?.version || 0), skipConflictHandling: true });
+    return conflict;
+  }
+  async function upload(options = {}) {
     report('pending');
     if (!client) { report('disabled'); return result('disabled'); }
     const authSession = await session();
@@ -88,7 +121,9 @@ export function createCloudSync({ client, store, getLocalPilot, applyRemotePilot
       const { data: pilot, error: pilotError } = await pilotQuery;
       if (pilotError) throw pilotError;
       const metadata = readMetadata(store);
-      const expectedVersion = Number(metadata[local.localId]?.version || 0);
+      const expectedVersion = options.expectedVersion === undefined
+        ? Number(metadata[local.localId]?.version || 0)
+        : Number(options.expectedVersion || 0);
       let version = expectedVersion + 1;
       if (typeof client.rpc === 'function') {
         const { data: snapshot, error: snapshotError } = await client.rpc('upsert_my_progress_snapshot', {
@@ -96,7 +131,10 @@ export function createCloudSync({ client, store, getLocalPilot, applyRemotePilot
           p_expected_version: expectedVersion,
           p_payload: local,
         });
-        if (snapshotError) throw snapshotError;
+        if (snapshotError) {
+          if (isConflictError(snapshotError)) snapshotError.noRetry = true;
+          throw snapshotError;
+        }
         version = Number(snapshot?.version || version);
       } else {
         const snapshotQuery = client.from('progress_snapshots').upsert({
@@ -113,7 +151,19 @@ export function createCloudSync({ client, store, getLocalPilot, applyRemotePilot
       const uploaded = result('uploaded', { version, updatedAt: local.updatedAt });
       report('synced', uploaded);
       return uploaded;
-    }, retries, wait).catch(error => { const failed = result('failed', { error }); report('failed', failed); return failed; });
+    }, retries, wait).catch(async error => {
+      if (!options.skipConflictHandling && isConflictError(error)) {
+        try {
+          const remote = await readRemoteSnapshot(error.pilotId || (await client.from('pilots').select('id').eq('local_id', local.localId).maybeSingle())?.data?.id);
+          if (remote) return resolveConflict(result('conflict', { local, remote, error }), options);
+        } catch (remoteError) {
+          const failed = result('failed', { error: remoteError });
+          report('failed', failed);
+          return failed;
+        }
+      }
+      const failed = result('failed', { error }); report('failed', failed); return failed;
+    });
   }
 
   async function download() {
@@ -135,7 +185,12 @@ export function createCloudSync({ client, store, getLocalPilot, applyRemotePilot
       if (snapshotError) throw snapshotError;
       const remoteSnapshot = remote?.payload || { ...pilot.payload, updatedAt: pilot.updated_at, version: remote?.version };
       const decision = chooseSnapshot(local, remoteSnapshot);
-      if (decision?.source === 'remote') applyRemotePilot?.(decision.snapshot);
+      if (decision?.source === 'remote') {
+        const backedUp = typeof createRecoveryBackup !== 'function' || await createRecoveryBackup('Before cloud restore');
+        if (!backedUp) return result('failed', { error: new Error('Recovery backup failed.') });
+        applyRemotePilot?.(decision.snapshot);
+        writeVersion(local.localId, decision.snapshot);
+      }
       const downloaded = result(decision?.source === 'remote' ? 'downloaded' : 'local-newer', { snapshot: decision?.snapshot });
       report('synced', downloaded);
       return downloaded;

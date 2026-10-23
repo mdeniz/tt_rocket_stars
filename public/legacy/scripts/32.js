@@ -118,6 +118,14 @@
       active.payload = payload;
       window.TTProfiles.sync?.();
     },
+    createRecoveryBackup: reason => typeof window.saveBackup !== 'function' || window.saveBackup(reason),
+    onConflict: conflict => {
+      const remoteDate = conflict.remote?.updatedAt ? new Date(conflict.remote.updatedAt).toLocaleString() : 'unknown time';
+      const restoreRemote = window.confirm(language() === 'es'
+        ? `Hay cambios distintos en otro dispositivo (${remoteDate}). Pulsa Aceptar para recuperar la nube con una copia local de seguridad; pulsa Cancelar para conservar este dispositivo y subirlo como nueva versión.`
+        : `Another device has different changes (${remoteDate}). Choose OK to restore the cloud copy after a local backup, or Cancel to keep this device and upload it as the new version.`);
+      return restoreRemote ? 'remote' : 'local';
+    },
     onStatus: event => {
       if (event.status === 'pending' || event.status === 'syncing') setCloudStatus('syncPending', 'pending');
       if (event.status === 'synced') setCloudStatus('syncSuccess', 'success');
