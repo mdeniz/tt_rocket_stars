@@ -12,6 +12,8 @@ test('rejects malformed definitions and TTL values', async () => {
   const { createFeatureFlagService } = await featureFlags;
   assert.throws(() => createFeatureFlagService({ definitions: { stable: {} } }), TypeError);
   assert.throws(() => createFeatureFlagService({ definitions, ttlMs: 0 }), TypeError);
+  assert.throws(() => createFeatureFlagService({ definitions: { targeted: { defaultEnabled: false, targeting: { allowlist: ['pilot-name'] } } } }), TypeError);
+  assert.throws(() => createFeatureFlagService({ definitions: { targeted: { defaultEnabled: false, targeting: { rolloutPercentage: 101 } } } }), TypeError);
 });
 
 test('evaluates defaults and fails closed for unknown flags', async () => {
@@ -69,4 +71,33 @@ test('continues evaluating when storage adapters throw', async () => {
   assert.equal(service.evaluate('stable'), true);
   assert.equal(service.setPayload({ fetchedAt: Date.now(), values: { stable: false } }), true);
   assert.equal(service.evaluate('stable'), false);
+});
+
+test('targets allowlisted accounts by UUID without accepting pilot names', async () => {
+  const { createFeatureFlagService } = await featureFlags;
+  const service = createFeatureFlagService({ definitions: {
+    targeted: {
+      defaultEnabled: false,
+      targeting: { allowlist: ['00000000-0000-4000-8000-000000000001'] },
+    },
+  } });
+  assert.equal(service.evaluate('targeted', { accountId: '00000000-0000-4000-8000-000000000001' }), true);
+  assert.equal(service.evaluate('targeted', { accountId: '00000000-0000-4000-8000-000000000002' }), false);
+  assert.equal(service.evaluate('targeted', { accountId: 'Pilot One' }), false);
+  assert.equal(service.evaluate('targeted'), false);
+});
+
+test('assigns percentage rollouts deterministically per flag and account', async () => {
+  const { createFeatureFlagService } = await featureFlags;
+  const definitions = {
+    rollout: { defaultEnabled: false, targeting: { rolloutPercentage: 100 } },
+    disabled: { defaultEnabled: true, targeting: { rolloutPercentage: 0 } },
+  };
+  const first = createFeatureFlagService({ definitions });
+  const second = createFeatureFlagService({ definitions });
+  const accountId = '00000000-0000-4000-8000-000000000001';
+  assert.equal(first.evaluate('rollout', { accountId }), true);
+  assert.equal(first.evaluate('disabled', { accountId }), false);
+  assert.equal(first.evaluate('rollout', { accountId }), second.evaluate('rollout', { accountId }));
+  assert.equal(first.evaluate('rollout'), false);
 });
