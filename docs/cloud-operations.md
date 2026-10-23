@@ -16,6 +16,10 @@ local gameplay and local backups usable.
 - The browser receives only the Supabase URL and public anonymous key. Row-level
   security (RLS) and the authenticated deletion function enforce ownership on
   the server.
+- Authenticated browser clients can read only their own rows. Snapshot writes
+  and cloud deletion use ownership-aware authenticated functions; anonymous
+  clients have no table or function privileges. Pilot upserts remain protected
+  by the existing authenticated RLS insert/update policies.
 - The application does not display the account email as part of the gameplay
   profile and does not send gameplay data to analytics or advertising systems.
 
@@ -59,6 +63,8 @@ backup before deletion when they may need to restore a local pilot.
 
 1. Follow [`docs/supabase-brevo-setup.md`](supabase-brevo-setup.md).
 2. Apply the migration and verify RLS policies in the Supabase SQL editor.
+   Apply all migrations in timestamp order, including the cloud access
+   hardening migration, before enabling production synchronization.
 3. Configure `https://mdeniz.github.io/tt_rocket_stars/` and
    `http://localhost:5173/` as the production and local authentication origins.
 4. Invite a test address from the trusted Supabase environment.
