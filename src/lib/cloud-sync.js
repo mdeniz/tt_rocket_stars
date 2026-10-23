@@ -62,16 +62,19 @@ function sessionFrom(client) {
   return client?.auth?.getSession?.().then(result => result?.data?.session || null);
 }
 
-export function createCloudSync({ client, store, getLocalPilot, applyRemotePilot, now = () => new Date().toISOString(), retries = 2, wait = async () => {} } = {}) {
+export function createCloudSync({ client, store, getLocalPilot, applyRemotePilot, now = () => new Date().toISOString(), retries = 2, wait = async () => {}, onStatus = () => {} } = {}) {
   const result = (status, extra = {}) => ({ status, ...extra });
+  const report = (status, extra = {}) => { try { onStatus({ ...extra, status }); } catch { /* status reporting must never affect gameplay */ } };
   const session = async () => sessionFrom(client);
   const active = () => serializePilot(getLocalPilot?.(), now());
 
   async function upload() {
-    if (!client) return result('disabled');
+    report('pending');
+    if (!client) { report('disabled'); return result('disabled'); }
     const authSession = await session();
-    if (!authSession?.user?.id) return result('signed-out');
+    if (!authSession?.user?.id) { report('signed-out'); return result('signed-out'); }
     const local = active();
+    report('syncing', { localId: local.localId });
     return retry(async () => {
       const pilotQuery = client.from('pilots').upsert({
         user_id: authSession.user.id,
@@ -85,26 +88,41 @@ export function createCloudSync({ client, store, getLocalPilot, applyRemotePilot
       const { data: pilot, error: pilotError } = await pilotQuery;
       if (pilotError) throw pilotError;
       const metadata = readMetadata(store);
-      const version = Number(metadata[local.localId]?.version || 0) + 1;
-      const snapshotQuery = client.from('progress_snapshots').upsert({
-        user_id: authSession.user.id,
-        pilot_id: pilot.id,
-        version,
-        payload: local,
-        updated_at: local.updatedAt,
-      }, { onConflict: 'pilot_id' });
-      const { error: snapshotError } = await snapshotQuery;
-      if (snapshotError) throw snapshotError;
+      const expectedVersion = Number(metadata[local.localId]?.version || 0);
+      let version = expectedVersion + 1;
+      if (typeof client.rpc === 'function') {
+        const { data: snapshot, error: snapshotError } = await client.rpc('upsert_my_progress_snapshot', {
+          p_pilot_id: pilot.id,
+          p_expected_version: expectedVersion,
+          p_payload: local,
+        });
+        if (snapshotError) throw snapshotError;
+        version = Number(snapshot?.version || version);
+      } else {
+        const snapshotQuery = client.from('progress_snapshots').upsert({
+          user_id: authSession.user.id,
+          pilot_id: pilot.id,
+          version,
+          payload: local,
+          updated_at: local.updatedAt,
+        }, { onConflict: 'pilot_id' });
+        const { error: snapshotError } = await snapshotQuery;
+        if (snapshotError) throw snapshotError;
+      }
       writeMetadata(store, { ...metadata, [local.localId]: { version, updatedAt: local.updatedAt } });
-      return result('uploaded', { version, updatedAt: local.updatedAt });
-    }, retries, wait).catch(error => result('failed', { error }));
+      const uploaded = result('uploaded', { version, updatedAt: local.updatedAt });
+      report('synced', uploaded);
+      return uploaded;
+    }, retries, wait).catch(error => { const failed = result('failed', { error }); report('failed', failed); return failed; });
   }
 
   async function download() {
-    if (!client) return result('disabled');
+    report('pending');
+    if (!client) { report('disabled'); return result('disabled'); }
     const authSession = await session();
-    if (!authSession?.user?.id) return result('signed-out');
+    if (!authSession?.user?.id) { report('signed-out'); return result('signed-out'); }
     const local = active();
+    report('syncing', { localId: local.localId });
     return retry(async () => {
       const { data: pilot, error: pilotError } = await client.from('pilots')
         .select('id,payload,updated_at').eq('user_id', authSession.user.id)
@@ -118,11 +136,27 @@ export function createCloudSync({ client, store, getLocalPilot, applyRemotePilot
       const remoteSnapshot = remote?.payload || { ...pilot.payload, updatedAt: pilot.updated_at, version: remote?.version };
       const decision = chooseSnapshot(local, remoteSnapshot);
       if (decision?.source === 'remote') applyRemotePilot?.(decision.snapshot);
-      return result(decision?.source === 'remote' ? 'downloaded' : 'local-newer', { snapshot: decision?.snapshot });
-    }, retries, wait).catch(error => result('failed', { error }));
+      const downloaded = result(decision?.source === 'remote' ? 'downloaded' : 'local-newer', { snapshot: decision?.snapshot });
+      report('synced', downloaded);
+      return downloaded;
+    }, retries, wait).catch(error => { const failed = result('failed', { error }); report('failed', failed); return failed; });
   }
 
-  return { upload, download, sync: async () => { const pushed = await upload(); return pushed.status === 'uploaded' ? pushed : download(); } };
+  let queueTimer = null;
+  let queuedResolve = null;
+  const queueUpload = (delay = 1200) => new Promise(resolve => {
+    if (queueTimer) clearTimeout(queueTimer);
+    if (queuedResolve) queuedResolve(result('coalesced'));
+    queuedResolve = resolve;
+    report('pending');
+    queueTimer = setTimeout(async () => {
+      queueTimer = null;
+      const currentResolve = queuedResolve;
+      queuedResolve = null;
+      currentResolve?.(await upload());
+    }, Math.max(0, Number(delay) || 0));
+  });
+  return { upload, download, queueUpload, sync: async () => { const pushed = await upload(); return pushed.status === 'uploaded' ? pushed : download(); } };
 }
 
 export { SYNC_METADATA_KEY };

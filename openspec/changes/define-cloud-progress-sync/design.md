@@ -36,11 +36,13 @@ spec deltas define the observable behavior.
 
 ### Use a managed authentication and database boundary
 
-Use Supabase Auth for invite-only passwordless email sessions and Supabase
+Use Supabase Auth for invite-only email-and-password authentication and Supabase
 Postgres with Row Level Security for account-owned data. Disable public new-user
 signups. Invitations are issued from the Supabase Dashboard or a trusted server
-using the privileged Auth API; the browser only requests sign-in for existing
-accounts. Use an external transactional SMTP provider for Auth email delivery.
+using the privileged Auth API; the browser never creates accounts. The invitation
+link is used only to establish the initial password. Subsequent access uses the
+email-and-password flow, with email links reserved for password recovery. Use an
+external transactional SMTP provider for Auth email delivery.
 The browser receives only the public Supabase URL and anonymous client key;
 service-role credentials remain in provider configuration.
 
@@ -143,9 +145,11 @@ rows to a compromised or modified client.
 - The first conflict flow presents a local-versus-remote choice after creating
   a recovery backup. Automatic counter merging is deferred until the progress
   model has explicit merge semantics.
-- Brevo is the initial transactional email provider. A verified project sender
-  identity and domain are deployment prerequisites, while provider credentials
-  remain outside the repository.
+- The SMTP provider is deployment-configurable. Brevo is not an acceptable
+  production choice while its click tracker rewrites one-time Auth URLs. The
+  selected provider must preserve Auth links, or provide a verified way to
+  disable rewriting. A verified sender identity is a deployment prerequisite,
+  while provider credentials remain outside the repository.
 - Account creation is invite-only. The Supabase Dashboard or a trusted server
   is the only place allowed to issue invitations; the public client must not
   contain an Auth admin key.

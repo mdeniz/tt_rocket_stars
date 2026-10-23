@@ -26,17 +26,19 @@ The schema and ownership policies are defined in
 ## Invite-only access and recovery
 
 Public sign-ups remain disabled. A maintainer invites an address from the
-Supabase Dashboard (or a future trusted server). The public form requests a
-magic link with `create_user: false`, so an unknown address receives a generic
-response and is not disclosed as registered or unregistered.
+Supabase Dashboard (or a future trusted server). The invitation link is used to
+set the initial password; all later access uses email and password. An unknown
+address receives a generic response and is not disclosed as registered or
+unregistered.
 
-The supported recovery path is to request a new link. Expired or invalid links
-are discarded, and signing out removes the local browser session without
-removing local pilots or backups.
+The supported recovery path is to request a password recovery email. Expired or
+invalid links are discarded, and signing out removes the local browser session
+without removing local pilots or backups.
 
 ## Local and cloud failure behavior
 
-Cloud sync is an explicit user action. On a failed request the local payload is
+Cloud sync runs after authentication and safe local saves, with a manual retry
+available in the Cloud access section. On a failed request the local payload is
 not overwritten and the UI reports that local progress is safe. If Supabase or
 SMTP is disabled, continue using the app offline and use the Backups section to
 move progress manually between browsers.

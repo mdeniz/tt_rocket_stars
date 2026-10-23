@@ -23,17 +23,27 @@ progress without creating an account or reaching the synchronization service.
 
 ### Requirement: Authentication sessions are explicit and recoverable
 
-The application SHALL provide invite-only passwordless account access through a
-user-controlled email address and SHALL make the session state and sign-out
+The application SHALL provide invite-only account access through a
+user-controlled email address and password. An invitation link SHALL be limited
+to initial account activation and password setup; subsequent sign-in SHALL use
+email and password. The application SHALL make session state and sign-out
 behavior explicit.
 
-#### Scenario: Request a sign-in link for an invited account
-- **WHEN** an invited account holder submits the invited email address
-- **THEN** the application requests a one-time sign-in link and communicates that the user must check their email
+#### Scenario: Accept an invitation
+- **WHEN** an invited account holder opens a valid invitation link
+- **THEN** the application allows the user to establish a password and complete the account activation flow
 
-#### Scenario: Request access with an uninvited email
-- **WHEN** a visitor submits an email address that has not been invited
+#### Scenario: Sign in with a password
+- **WHEN** an activated invited account submits the correct email and password
+- **THEN** the application establishes an authenticated session
+
+#### Scenario: Reject public registration
+- **WHEN** a visitor attempts to create an account without an invitation
 - **THEN** the application does not create an account or authenticated session and communicates the access restriction without exposing account-enumeration details
+
+#### Scenario: Recover a password
+- **WHEN** an activated account holder requests password recovery
+- **THEN** the application sends a one-time recovery email and allows a new password to be established without exposing administrative credentials
 
 #### Scenario: Restore a session
 - **WHEN** an authenticated user reopens the application on the same origin

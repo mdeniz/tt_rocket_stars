@@ -10,8 +10,9 @@ local-first gameplay and the existing backup format.
 
 ## What Changes
 
-- Define optional invite-only passwordless authentication and session lifecycle
-  for cloud synchronization.
+- Define optional invite-only email-and-password authentication and session
+  lifecycle for cloud synchronization. Invitation links are limited to account
+  activation and initial password setup.
 - Define a user-owned data model for pilots, progress snapshots, and sync
   metadata.
 - Define local-to-cloud synchronization boundaries and deterministic conflict

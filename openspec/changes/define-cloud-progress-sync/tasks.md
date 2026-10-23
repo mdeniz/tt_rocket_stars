@@ -3,14 +3,14 @@
 ## 1. Provider and configuration boundary
 
 - [x] 1.1 Add public Supabase URL and anonymous-key placeholders to the environment configuration, document local and GitHub Pages redirect URLs, and verify that no service-role credential is present with repository secret scanning.
-- [ ] 1.2 Configure Brevo SMTP and the verified sender outside the repository, document the free-tier delivery limits, and verify a magic-link email reaches an external test address.
+- [ ] 1.2 Select an SMTP provider that preserves Supabase Auth URLs, configure its verified sender outside the repository, document delivery limits, and verify invitation and password-recovery emails reach an external test address without link rewriting.
 - [ ] 1.3 Disable public Supabase signups, document the trusted invitation process, and verify that an uninvited address cannot create an account while an invited address can receive a link.
-- [ ] 1.4 Add a developer setup document for Supabase and Brevo, including secret ownership, sender verification, invitation management, and rollback steps, and verify every documented dashboard value has a corresponding application setting.
+- [ ] 1.4 Add a developer setup document for Supabase and the selected SMTP provider, including secret ownership, sender verification, invitation management, and rollback steps, and verify every documented dashboard value has a corresponding application setting.
 
 ## 2. Optional authentication
 
 - [ ] 2.1 Add the browser Supabase client with safe configuration validation and verify the app remains playable when configuration is absent.
-- [ ] 2.2 Add invite-only passwordless magic-link sign-in, session restoration, expiration handling, sign-out, and HTTPS redirects, and verify invited and uninvited flows on the GitHub Pages deployment and a local Vite origin.
+- [ ] 2.2 Add invite-only invitation acceptance, initial password setup, email-and-password sign-in, session restoration, password recovery, sign-out, expiration handling, and HTTPS redirects, and verify invited and uninvited flows on the GitHub Pages deployment and a local Vite origin.
 - [ ] 2.3 Add Spanish and English authentication and synchronization messages and verify translation validation reports no missing keys.
 
 ## 3. Cloud data model and authorization
