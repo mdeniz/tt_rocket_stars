@@ -81,5 +81,8 @@
   "ui.080": "The link has expired or is invalid. Request a new one.",
   "ui.081": "Too many requests. Please wait a moment and try again.",
   "ui.082": "Cloud access is unavailable. You can keep playing offline.",
-  "ui.083": "Signed in as"
+  "ui.083": "Signed in as",
+  "ui.084": "Cloud sync is ready.",
+  "ui.085": "Sync now",
+  "ui.086": "Delete cloud data"
 }

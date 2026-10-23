@@ -1297,7 +1297,7 @@ body::before{animation:cosmicOrbitalDrift 90s ease-in-out infinite!important;tra
 #settings .ttSettingsBottomNav{
  position:fixed;bottom:0;left:50%;transform:translateX(-50%);
  width:min(100%,900px);z-index:100;
- display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;
+ display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;
  padding:9px max(10px,env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));
  background:rgba(12,21,48,.96);border:1px solid rgba(164,195,255,.23);
  border-bottom:0;border-radius:18px 18px 0 0;
@@ -1315,6 +1315,11 @@ body::before{animation:cosmicOrbitalDrift 90s ease-in-out infinite!important;tra
  #settings .ttSettingsTab small{font-size:10px}
  #settings .ttSettingsTab>span{font-size:20px}
 }
+
+.ttCloudControls{margin-top:16px;padding-top:15px;border-top:1px solid #ffffff2b}
+.ttCloudStatus{margin:0 0 12px;color:#dce7ff;font-size:14px}
+.ttCloudStatus[data-state="error"]{color:#ffb5bd}.ttCloudStatus[data-state="success"]{color:#b8f5d7}
+.ttCloudActions{display:flex;gap:10px;flex-wrap:wrap}.ttCloudActions button:disabled{opacity:.55;cursor:not-allowed}
 
 
 /* Original <style> block 54 */

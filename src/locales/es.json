@@ -81,5 +81,8 @@
   "ui.080": "El enlace ha caducado o no es válido. Solicita uno nuevo.",
   "ui.081": "Demasiadas solicitudes. Espera un momento y vuelve a intentarlo.",
   "ui.082": "El acceso en la nube no está disponible. Puedes seguir jugando sin conexión.",
-  "ui.083": "Sesión iniciada como"
+  "ui.083": "Sesión iniciada como",
+  "ui.084": "La sincronización está lista.",
+  "ui.085": "Sincronizar ahora",
+  "ui.086": "Borrar datos de la nube"
 }
