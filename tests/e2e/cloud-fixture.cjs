@@ -66,6 +66,12 @@ async function installCloudFixture(page, options = {}) {
     'cosmotablas-history-v1': '[]',
     'tt-rocket-garage-v1': '{}',
   };
+  if (options.language) {
+    initialStorage['cosmotablas-language'] = options.language;
+    const profiles = JSON.parse(initialStorage['tt-rocket-profiles-v1']);
+    profiles.forEach(profile => { profile.language = options.language; });
+    initialStorage['tt-rocket-profiles-v1'] = JSON.stringify(profiles);
+  }
   state.pilots.set(remotePilot.localId, pilotFromSnapshot(remotePilot));
   state.snapshots.set(remotePilot.localId, {
     pilot_id: `remote-${remotePilot.localId}`,
