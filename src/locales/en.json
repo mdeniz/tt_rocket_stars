@@ -84,5 +84,6 @@
   "ui.083": "Signed in as",
   "ui.084": "Cloud sync is ready.",
   "ui.085": "Sync now",
-  "ui.086": "Delete cloud data"
+  "ui.086": "Delete cloud data",
+  "ui.087": "Cloud access is optional. Your local progress stays on this device, and cloud data belongs to your invited account."
 }

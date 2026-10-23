@@ -31,6 +31,10 @@ no Supabase configuration continue to use the offline-first application.
 Only the anonymous public key is accepted by this boundary; authentication
 admin operations remain outside the browser.
 
+Verify local configuration with `npm run dev` and the Settings > Cloud access
+section. Never use a `file://` origin for authentication; magic-link redirects
+require an allowed HTTP(S) origin.
+
 ## Production URL configuration
 
 The production application is served from:
@@ -67,9 +71,15 @@ Configure Brevo as Supabase Auth's custom SMTP provider:
   Supabase Auth SMTP settings.
 - Customize the magic-link template without tracking or marketing links.
 
-Brevo's free plan currently provides 300 transactional or campaign email sends
-per day. Treat quota exhaustion as an authentication-delivery outage; local
-gameplay and existing sessions must continue to work.
+Brevo's free plan is subject to a provider-defined daily email quota. Confirm
+the current quota and sender requirements in the Brevo dashboard before
+launching; provider terms can change. Treat quota exhaustion as an
+authentication-delivery outage; local gameplay and existing sessions must
+continue to work.
+
+See [`cloud-operations.md`](cloud-operations.md) for the persistence boundary,
+privacy behavior, deletion contract, recovery steps, and provider-failure
+fallback.
 
 ## Rollback
 

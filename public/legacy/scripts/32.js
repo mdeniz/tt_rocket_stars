@@ -19,7 +19,7 @@
       sent: 'Check your email for a sign-in link. If this address is invited, the link will arrive shortly.', signedIn: 'You are signed in.',
       signedOut: 'You have been signed out. Your local pilots and progress are unchanged.', denied: 'This email cannot request access. Ask an administrator for an invitation.',
       expired: 'The link has expired or is invalid. Request a new one.', rateLimit: 'Too many requests. Please wait a moment and try again.',
-      generic: 'Cloud access is unavailable. You can keep playing offline.', as: 'Signed in', syncIdle: 'Cloud sync is ready.',
+      generic: 'Cloud access is unavailable. You can keep playing offline.', as: 'Signed in', privacy: 'Cloud access is optional. Your local progress stays on this device, and cloud data belongs to your invited account.', syncIdle: 'Cloud sync is ready.',
       syncPending: 'Synchronizing your active pilot…', syncSuccess: 'Cloud sync completed.', syncError: 'Sync failed. Your local progress is safe; try again.',
       deleteConfirm: 'Delete all cloud progress for this account? Local pilots and progress will remain on this device.',
       deleted: 'Cloud data deleted. Local progress remains available.', deleteError: 'Cloud deletion failed. Your local progress is unchanged.'
@@ -29,7 +29,7 @@
       sent: 'Revisa tu email para encontrar el enlace de acceso. Si la dirección está invitada, llegará en breve.', signedIn: 'Has iniciado sesión.',
       signedOut: 'Has cerrado sesión. Tus pilotos y progresos locales no han cambiado.', denied: 'Este email no puede solicitar acceso. Pide una invitación a un administrador.',
       expired: 'El enlace ha caducado o no es válido. Solicita uno nuevo.', rateLimit: 'Demasiadas solicitudes. Espera un momento y vuelve a intentarlo.',
-      generic: 'El acceso en la nube no está disponible. Puedes seguir jugando sin conexión.', as: 'Sesión iniciada', syncIdle: 'La sincronización está lista.',
+      generic: 'El acceso en la nube no está disponible. Puedes seguir jugando sin conexión.', as: 'Sesión iniciada', privacy: 'El acceso a la nube es opcional. Tu progreso local permanece en este dispositivo y los datos de la nube pertenecen a tu cuenta invitada.', syncIdle: 'La sincronización está lista.',
       syncPending: 'Sincronizando tu piloto activo…', syncSuccess: 'Sincronización completada.', syncError: 'La sincronización ha fallado. Tu progreso local está a salvo; inténtalo de nuevo.',
       deleteConfirm: '¿Borrar todo el progreso en la nube de esta cuenta? Los pilotos y progresos locales permanecerán en este dispositivo.',
       deleted: 'Datos de la nube borrados. El progreso local sigue disponible.', deleteError: 'No se han podido borrar los datos de la nube. Tu progreso local no ha cambiado.'
@@ -54,12 +54,14 @@
   const localPilot = () => window.TTProfiles?.active?.();
   const controls = document.createElement('div');
   controls.className = 'ttCloudControls';
-  controls.innerHTML = '<p id="ttCloudStatus" class="ttCloudStatus" role="status" aria-live="polite" data-i18n="ui.084">Cloud sync is ready.</p><div class="ttCloudActions"><button id="ttCloudSyncNow" class="btn alt" type="button" data-i18n="ui.085">Sync now</button><button id="ttCloudDelete" class="btn alt dangerBtn" type="button" data-i18n="ui.086">Delete cloud data</button></div>';
+  controls.innerHTML = '<p class="ttPrivacyNote" data-i18n="ui.087">Cloud access is optional. Your local progress stays on this device, and cloud data belongs to your invited account.</p><p id="ttCloudStatus" class="ttCloudStatus" role="status" aria-live="polite" data-i18n="ui.084">Cloud sync is ready.</p><div class="ttCloudActions"><button id="ttCloudSyncNow" class="btn alt" type="button" data-i18n="ui.085">Sync now</button><button id="ttCloudDelete" class="btn alt dangerBtn" type="button" data-i18n="ui.086">Delete cloud data</button></div>';
   panel.appendChild(controls);
   const cloudStatus = document.getElementById('ttCloudStatus');
   const syncNow = document.getElementById('ttCloudSyncNow');
   const deleteCloud = document.getElementById('ttCloudDelete');
+  const privacyNote = controls.querySelector('.ttPrivacyNote');
   const updateCloudLabels = () => {
+    privacyNote.textContent = text('privacy');
     syncNow.textContent = language() === 'es' ? 'Sincronizar ahora' : 'Sync now';
     deleteCloud.textContent = language() === 'es' ? 'Borrar datos de la nube' : 'Delete cloud data';
     if (cloudStatus.dataset.message) cloudStatus.textContent = text(cloudStatus.dataset.message);
