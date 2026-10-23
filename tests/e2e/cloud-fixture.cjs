@@ -28,6 +28,7 @@ function pilotFromSnapshot(snapshot) {
 }
 
 async function installCloudFixture(page, options = {}) {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   const state = {
     authRequests: [],
     cloudRequests: [],
