@@ -17,7 +17,11 @@ The telemetry service SHALL remain disabled until the caller explicitly grants c
 - **THEN** the queue is empty and subsequent events are ignored until consent is granted again
 
 ### Requirement: Events contain only allowlisted aggregate data
-The service SHALL accept only known event names and bounded aggregate fields, and SHALL reject identifying fields, pilot names, emails, child identifiers, answers, free text, and replay data.
+The service SHALL accept only known aggregate event names and bounded fields, and SHALL reject identifying fields, pilot names, emails, child identifiers, answers, free text, replay data, raw error messages, stacks, and URLs.
+
+#### Scenario: Aggregate mission event is recorded
+- **WHEN** consent is granted and a mission event contains valid mode, operation, performance bucket, or bounded count fields
+- **THEN** the sanitized event is queued with no unallowlisted fields
 
 #### Scenario: Allowed event is recorded
 - **WHEN** consent is granted and a known event contains valid aggregate fields
@@ -28,7 +32,11 @@ The service SHALL accept only known event names and bounded aggregate fields, an
 - **THEN** the event is not queued and the service reports rejection without throwing into gameplay
 
 ### Requirement: Collection is bounded and offline-safe
-The service SHALL cap queued events and SHALL not perform network requests unless a caller explicitly injects a sink; sink failures SHALL not affect gameplay.
+The service SHALL cap queued events, apply configured sampling and retention limits, and SHALL not perform network requests unless a caller explicitly injects a sink; sink failures SHALL not affect gameplay.
+
+#### Scenario: Sampling or retention removes an event
+- **WHEN** an event is not selected by sampling or exceeds the retention window
+- **THEN** the event is absent from the queue without affecting gameplay
 
 #### Scenario: Queue reaches its limit
 - **WHEN** more events are recorded than the configured maximum
