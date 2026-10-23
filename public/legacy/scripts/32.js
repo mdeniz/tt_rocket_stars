@@ -150,7 +150,7 @@
       const snapshots = await snapshotResponse.json(); const remotePayload = snapshots[0]?.payload || cloudPilot.payload || {};
       if (!window.confirm(language() === 'es' ? '¿Recuperar el progreso de la nube? Se guardará una copia local antes de sustituir el progreso actual.' : 'Restore cloud progress? A local backup will be saved before replacing the current progress.')) return;
       if (typeof window.saveBackup === 'function' && !window.saveBackup('Before cloud restore')) throw new Error('backup failed');
-      ['cosmotablas-v2', 'cosmotablas-history-v1', 'tt-rocket-garage-v1', 'tt-rocket-backups-v1'].forEach(key => {
+      ['cosmotablas-v2', 'cosmotablas-history-v1', 'tt-rocket-garage-v1'].forEach(key => {
         const value = remotePayload[key];
         if (typeof value === 'string') window.TTLocalStore.setItem(key, value); else window.TTLocalStore.removeItem(key);
       });
