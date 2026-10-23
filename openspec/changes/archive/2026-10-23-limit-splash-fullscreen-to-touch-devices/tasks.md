@@ -8,4 +8,4 @@
 ## 2. Verification and documentation
 
 - [x] 2.1 Add desktop, narrow-desktop, and touch-capability E2E coverage with a documented emulation caveat.
-- [ ] 2.2 Run the configured test and build checks and verify the self-contained production bundle.
+- [x] 2.2 Run the configured test and build checks and verify the self-contained production bundle.
