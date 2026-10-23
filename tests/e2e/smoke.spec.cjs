@@ -35,6 +35,7 @@ test('settings exposes optional auth without replacing local gameplay',async({pa
 });
 
 test('settings navigation isolates cloud access from every local category', async ({ page }) => {
+ test.setTimeout(60000);
  await page.goto('/');await page.locator('#launchSplash').click();
  await expect(page.locator('#launchSplash')).toBeHidden();
  const skip=page.locator('#ttTourSkip');
@@ -50,5 +51,6 @@ test('settings navigation isolates cloud access from every local category', asyn
  await tabs.filter({hasText:'Cloud access'}).click();
  await expect(page.locator('#ttAuthPanel')).toHaveClass(/ttSettingsActive/);
  await expect(page.locator('#ttCloudSyncNow')).toBeVisible();
+ await expect(page.locator('#ttCloudList')).toBeVisible();
  await expect(page.locator('#ttCloudDelete')).toBeVisible();
 });

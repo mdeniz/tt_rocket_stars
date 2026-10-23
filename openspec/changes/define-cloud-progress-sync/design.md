@@ -77,6 +77,15 @@ Alternative rejected: event sourcing would improve merge granularity but would
 require a new domain model and migration before the current payload contract is
 stable.
 
+### Discover cloud pilots before restoring a second device
+
+After authentication, the client may list only the current account's pilots and
+request one pilot by its stable `local_id`. A cloud-only pilot is restored as a
+new local profile with the same identifier and complete compatible payload;
+existing local profiles are never replaced by discovery. If the identifier is
+already local, restoration uses the existing version and recovery-backup
+conflict path instead of creating a duplicate.
+
 ### Use optimistic concurrency with recoverable conflicts
 
 Each snapshot has a monotonically increasing remote version and an updated-at

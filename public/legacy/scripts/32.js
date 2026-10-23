@@ -97,7 +97,17 @@
         limit(value) { state.query.set('limit', String(value)); return builder; },
         single() { return execute(); },
         maybeSingle() { return execute(); },
+        many() { return executeMany(); },
         then(resolve, reject) { return execute().then(resolve, reject); },
+      };
+      const executeMany = async () => {
+        const response = await fetch(`${rest(`/${table}`)}${state.query.toString() ? `?${state.query}` : ''}`, {
+          method: state.method,
+          headers: { ...headers(readSession()?.access_token), ...(state.prefer ? { Prefer: state.prefer } : {}) },
+          body: state.body === null ? undefined : JSON.stringify(state.body),
+        });
+        const data = await response.json().catch(() => null);
+        return response.ok ? { data: Array.isArray(data) ? data : (data ? [data] : []), error: null } : { data: null, error: data || Error('Cloud request failed') };
       };
       return builder;
     },
@@ -134,12 +144,14 @@
   });
   const controls = document.createElement('div');
   controls.className = 'ttCloudControls';
-  controls.innerHTML = '<p class="ttPrivacyNote" data-i18n="ui.087">Cloud access is optional. Your local progress stays on this device, and cloud data belongs to your invited account.</p><p id="ttCloudStatus" class="ttCloudStatus" role="status" aria-live="polite" data-i18n="ui.084">Cloud sync is ready.</p><div class="ttCloudActions"><button id="ttCloudSyncNow" class="btn alt" type="button" data-i18n="ui.085">Sync now</button><button id="ttCloudRestore" class="btn alt" type="button">Restore from cloud</button><button id="ttCloudDelete" class="btn alt dangerBtn" type="button" data-i18n="ui.086">Delete cloud data</button></div>';
+  controls.innerHTML = '<p class="ttPrivacyNote" data-i18n="ui.087">Cloud access is optional. Your local progress stays on this device, and cloud data belongs to your invited account.</p><p id="ttCloudStatus" class="ttCloudStatus" role="status" aria-live="polite" data-i18n="ui.084">Cloud sync is ready.</p><div class="ttCloudActions"><button id="ttCloudSyncNow" class="btn alt" type="button" data-i18n="ui.085">Sync now</button><button id="ttCloudRestore" class="btn alt" type="button">Restore from cloud</button><button id="ttCloudList" class="btn alt" type="button">Find cloud pilots</button><button id="ttCloudDelete" class="btn alt dangerBtn" type="button" data-i18n="ui.086">Delete cloud data</button></div><div id="ttCloudPilots" class="ttCloudPilots" aria-live="polite"></div>';
   panel.appendChild(controls);
   const cloudStatus = document.getElementById('ttCloudStatus');
   const syncNow = document.getElementById('ttCloudSyncNow');
   const restoreCloud = document.getElementById('ttCloudRestore');
+  const listCloud = document.getElementById('ttCloudList');
   const deleteCloud = document.getElementById('ttCloudDelete');
+  const cloudPilots = document.getElementById('ttCloudPilots');
   const privacyNote = controls.querySelector('.ttPrivacyNote');
   const updateCloudLabels = () => {
     privacyNote.textContent = text('privacy');
@@ -151,6 +163,7 @@
     changeButton.textContent = language() === 'es' ? 'Cambiar contraseña' : 'Change password';
     syncNow.textContent = language() === 'es' ? 'Sincronizar ahora' : 'Sync now';
     restoreCloud.textContent = language() === 'es' ? 'Recuperar de la nube' : 'Restore from cloud';
+    listCloud.textContent = language() === 'es' ? 'Buscar pilotos en la nube' : 'Find cloud pilots';
     deleteCloud.textContent = language() === 'es' ? 'Borrar datos de la nube' : 'Delete cloud data';
     if (cloudStatus.dataset.message) cloudStatus.textContent = text(cloudStatus.dataset.message);
   };
@@ -159,8 +172,41 @@
     const authenticated = Boolean(session?.access_token && session?.user);
     controls.classList.toggle('isAuthenticated', authenticated);
     syncNow.disabled = !authenticated; restoreCloud.disabled = !authenticated; deleteCloud.disabled = !authenticated;
+    listCloud.disabled = !authenticated;
     if (!authenticated) setCloudStatus(config.url && config.anonKey ? 'missing' : 'missing', 'info');
   };
+  const renderCloudPilots = pilots => {
+    cloudPilots.replaceChildren();
+    if (!pilots.length) return;
+    const title = document.createElement('p'); title.className = 'ttPrivacyNote'; title.textContent = language() === 'es' ? 'Pilotos disponibles en la nube:' : 'Cloud pilots available:'; cloudPilots.appendChild(title);
+    pilots.forEach(pilot => {
+      const row = document.createElement('div'); row.className = 'ttCloudPilot';
+      const label = document.createElement('span'); const local = window.TTProfiles?.read?.().some(profile => profile.id === pilot.localId); label.textContent = `${pilot.avatar || '🚀'} ${pilot.name}${local ? (language() === 'es' ? ' (local)' : ' (local)') : ''}`;
+      const button = document.createElement('button'); button.type = 'button'; button.className = 'btn alt'; button.textContent = language() === 'es' ? 'Recuperar' : 'Restore'; button.addEventListener('click', () => restoreRemotePilot(pilot)); row.append(label, button); cloudPilots.appendChild(row);
+    });
+  };
+  async function listCloudPilots() {
+    if (!cloudAdapter) { setCloudStatus('missing', 'info'); return; }
+    listCloud.disabled = true; setCloudStatus('syncPending', 'pending');
+    const result = await cloudAdapter.listRemotePilots();
+    listCloud.disabled = false;
+    if (result.status === 'listed') { renderCloudPilots(result.pilots); setCloudStatus('syncIdle', 'info'); }
+    else if (result.status === 'failed') setCloudStatus('syncError', 'error');
+  }
+  async function restoreRemotePilot(pilot) {
+    if (!cloudAdapter) return;
+    const local = window.TTProfiles?.read?.().find(profile => profile.id === pilot.localId);
+    restoreCloud.disabled = true; setCloudStatus('syncPending', 'pending');
+    const result = await cloudAdapter.downloadPilot(pilot.localId);
+    if (result.status === 'downloaded') {
+      if (local) {
+        window.TTProfiles.choose(pilot.localId);
+        const current = await cloudAdapter.download();
+        if (current.status === 'downloaded') location.reload();
+      } else if (window.TTProfiles?.restoreCloud?.(result.snapshot)) location.reload();
+    } else if (result.status === 'failed') setCloudStatus('syncError', 'error');
+    restoreCloud.disabled = false;
+  }
   const consumeRedirectSession = () => {
     const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));const accessToken = hash.get('access_token');const refreshToken = hash.get('refresh_token');
     if (!accessToken || !refreshToken) return null;
@@ -203,7 +249,8 @@
   };
   async function syncCloud() {
     const session = readSession(); const pilot = localPilot();
-    if (!session?.access_token || !session.user || !pilot) { setCloudStatus('missing', 'info'); return; }
+    if (!session?.access_token || !session.user) { setCloudStatus('missing', 'info'); return; }
+    if (!pilot) { await listCloudPilots(); return; }
     if (!cloudAdapter) { setCloudStatus('missing', 'info'); return; }
     syncNow.disabled = true;
     try {
@@ -289,7 +336,7 @@
     catch (error) { setStatus(classifyError(error), 'error'); } finally { recovery.disabled = false; }
   });
   signOut.addEventListener('click', async () => { const session = readSession();clearSession();updateSessionUi(null);if (session?.access_token) { try { await fetch(api('/logout'), { method: 'POST', headers: headers(session.access_token) }); } catch (_) {} }setStatus('signedOut', 'success'); });
-  syncNow.addEventListener('click', syncCloud);restoreCloud.addEventListener('click', restoreCloudData);deleteCloud.addEventListener('click', deleteCloudData);
+  syncNow.addEventListener('click', syncCloud);restoreCloud.addEventListener('click', restoreCloudData);listCloud.addEventListener('click', listCloudPilots);deleteCloud.addEventListener('click', deleteCloudData);
   async function restoreSession() {
     if (!config.url || !config.anonKey) { form.classList.add('hidden');setStatus('missing', 'info');updateCloudControls(null);return; }
     let session;
@@ -301,7 +348,7 @@
       return;
     }
     session = session || consumeRedirectSession() || readSession();if (!session?.access_token)return;
-    try { const response = await fetch(api('/user'), { headers: headers(session.access_token) });if (!response.ok) throw new Error('invalid session');session.user = await response.json();saveSession(session);updateSessionUi(session); }
+    try { const response = await fetch(api('/user'), { headers: headers(session.access_token) });if (!response.ok) throw new Error('invalid session');session.user = await response.json();saveSession(session);updateSessionUi(session); listCloudPilots(); }
     catch (_) { clearSession();setStatus('expired', 'error');updateCloudControls(null); }
   }
   window.addEventListener('tt-local-save', scheduleSync);

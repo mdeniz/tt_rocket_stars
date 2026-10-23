@@ -25,6 +25,15 @@
    if(all.some(p=>p.name.toLowerCase()===name.toLowerCase()))return (window.TTLocalStore.getItem('cosmotablas-language')==='es'?'Nombre repetido':'Name already used');
    sync();const profile={id:id(),name,language:language(),createdAt:Date.now(),payload:{}};all.push(profile);write(all);apply({});window.TTLocalStore.setItem(ACTIVE,profile.id);window.TTSwitchProfileInPlace();return '';
  }
+ function restoreCloud(profile){
+   const localId=String(profile?.localId||'').trim();if(!localId)return false;
+   const all=read();const existing=all.find(p=>p.id===localId);if(existing){choose(localId);return true}
+   if(all.length>=12)return false;
+   sync();let name=String(profile.name||'Pilot').trim().replace(/\s+/g,' ').slice(0,24)||'Pilot';
+   if(all.some(p=>p.name.toLowerCase()===name.toLowerCase()))name=`${name.slice(0,17)} (cloud)`;
+   const restored={id:localId,name,avatar:profile.avatar||null,language:profile.language==='en'?'en':'es',createdAt:Date.now(),payload:profile.payload&&typeof profile.payload==='object'?profile.payload:{}};
+   all.push(restored);write(all);apply(restored.payload);window.TTLocalStore.setItem('cosmotablas-language',restored.language);window.TTLocalStore.setItem(ACTIVE,localId);window.TTSwitchProfileInPlace();return true;
+ }
  function remove(profileId){
    const all=read(),target=all.find(p=>p.id===profileId);if(!target)return;
    const es=window.TTLocalStore.getItem('cosmotablas-language')==='es';
@@ -63,7 +72,7 @@
    document.getElementById('profileCreateForm').onsubmit=e=>{e.preventDefault();err.textContent=create(input.value)};
    gate.classList.remove('hidden');
  }
- window.TTProfiles={show:render,sync,read,deleteActive(){const current=window.TTLocalStore.getItem(ACTIVE);if(current)remove(current)},renameActive(){
+ window.TTProfiles={show:render,sync,read,restoreCloud,deleteActive(){const current=window.TTLocalStore.getItem(ACTIVE);if(current)remove(current)},renameActive(){
    const activeId=window.TTLocalStore.getItem(ACTIVE);const all=read();const profile=all.find(p=>p.id===activeId);if(!profile)return;
    const es=window.TTLocalStore.getItem('cosmotablas-language')==='es';
    const proposed=prompt(es?'Nuevo nombre del piloto':'New pilot name',profile.name);if(proposed===null)return;
@@ -79,4 +88,3 @@
  if(active&&!profiles.some(p=>p.id===active))window.TTLocalStore.removeItem(ACTIVE);
  else if(active){const p=profiles.find(x=>x.id===active);if(p){if(p.language==='es'||p.language==='en')window.TTLocalStore.setItem('cosmotablas-language',p.language);else{p.language=language();write(profiles)}}}
 })();
-

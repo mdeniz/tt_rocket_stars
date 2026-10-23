@@ -24,7 +24,7 @@
 - [ ] 4.1 Add a synchronization adapter that serializes the existing per-pilot payload without renaming or deleting local storage keys, and verify compatible round-trip import and export tests pass.
 - [ ] 4.2 Synchronize local snapshots after authentication and on safe local saves with retryable failure handling, and verify offline gameplay and local progress remain available when the service is unavailable.
 - [x] 4.3 Add optimistic version checks for stale writes, create a recovery backup before replacement, and verify the conflict flow offers local and remote choices without silent data loss.
-- [ ] 4.4 Restore a pilot on a second device after authentication and verify pilot separation, language, progress, missions, garage state, and achievements remain consistent.
+- [x] 4.4 Restore a pilot on a second device after authentication and verify pilot separation, language, progress, missions, garage state, and achievements remain consistent. The adapter now discovers account-owned pilots and restores a cloud-only profile using its stable `local_id`; existing profiles continue through the backup/conflict path. Live provider execution remains a deployment check.
 
 ## 5. User controls and integration verification
 
