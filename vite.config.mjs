@@ -11,7 +11,7 @@ const escapeClosingTag = (contents, tagName) => contents.replace(
 function inlineReleaseAssets() {
   let isBuild = false;
   let outDir = '';
-  let publicSupabaseConfig = { url: '', anonKey: '' };
+  let publicSupabaseConfig = { url: '', anonKey: '', siteUrl: '' };
 
   return {
     name: 'tt-inline-release-assets',
@@ -22,6 +22,7 @@ function inlineReleaseAssets() {
       publicSupabaseConfig = {
         url: config.env.VITE_SUPABASE_URL || '',
         anonKey: config.env.VITE_SUPABASE_ANON_KEY || '',
+        siteUrl: config.env.VITE_APP_SITE_URL || '',
       };
     },
     transformIndexHtml: {

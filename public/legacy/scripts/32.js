@@ -108,7 +108,7 @@
   form.addEventListener('submit', async event => {
     event.preventDefault();const email = emailInput.value.trim();if (!email || !emailInput.validity.valid) { setStatus('invalidEmail', 'error');return; }
     const button = form.querySelector('button[type="submit"]');button.disabled = true;setStatus('sent', 'pending');
-    try { const response = await fetch(api('/otp'), { method: 'POST', headers: headers(), body: JSON.stringify({ email, create_user: false, redirect_to: `${location.origin}${location.pathname}` }) });if (!response.ok) throw await parseError(response);setStatus('sent', 'success');emailInput.value = ''; }
+    try { const redirectTo = String(config.siteUrl || `${location.origin}${location.pathname}`).trim(); const response = await fetch(api('/otp'), { method: 'POST', headers: headers(), body: JSON.stringify({ email, create_user: false, redirect_to: redirectTo }) });if (!response.ok) throw await parseError(response);setStatus('sent', 'success');emailInput.value = ''; }
     catch (error) { setStatus(classifyError(error), 'error'); } finally { button.disabled = false; }
   });
   signOut.addEventListener('click', async () => { const session = readSession();clearSession();updateSessionUi(null);if (session?.access_token) { try { await fetch(api('/logout'), { method: 'POST', headers: headers(session.access_token) }); } catch (_) {} }setStatus('signedOut', 'success'); });
