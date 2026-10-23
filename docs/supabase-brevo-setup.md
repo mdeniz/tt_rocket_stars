@@ -1,4 +1,4 @@
-# Supabase and Brevo setup
+# Supabase and Gmail SMTP setup
 
 This document describes the external configuration required for optional,
 invite-only cloud progress synchronization. The application remains playable
@@ -60,22 +60,34 @@ Function or other trusted server can automate invitations later.
 Use a generic user-facing response for unknown email addresses so the public
 form does not reveal whether an account exists.
 
-## Brevo SMTP
+## Gmail SMTP
 
-Configure Brevo as Supabase Auth's custom SMTP provider:
+For the current free setup, configure Gmail as Supabase Auth's custom SMTP
+provider:
 
-- Verify the sender email or project domain in Brevo.
-- Configure SPF and DKIM records when a project domain is available.
-- Create SMTP credentials dedicated to authentication email.
+- Enable two-step verification on the sender Google account.
+- Create a Google app password dedicated to Supabase Auth.
+- Use `smtp.gmail.com`, port `587`, and the sender Gmail address in Supabase.
 - Enter the SMTP host, port, username, password, and sender address only in
   Supabase Auth SMTP settings.
-- Customize the magic-link template without tracking or marketing links.
+- Do not commit or paste the app password into the repository, issue tracker,
+  logs, or browser bundle.
 
-Brevo's free plan is subject to a provider-defined daily email quota. Confirm
-the current quota and sender requirements in the Brevo dashboard before
-launching; provider terms can change. Treat quota exhaustion as an
-authentication-delivery outage; local gameplay and existing sessions must
-continue to work.
+The magic-link template must send a token hash to the app callback instead of
+using `{{ .ConfirmationURL }}`. This avoids relying on a stale Site URL when
+the app supplies a path-specific redirect:
+
+```html
+<p><a href="{{ if .RedirectTo }}{{ .RedirectTo }}{{ else }}{{ .SiteURL }}{{ end }}?token_hash={{ .TokenHash }}&type=email">Sign in</a></p>
+```
+
+The static app verifies `token_hash` through Supabase Auth and removes it from
+the browser URL after verification. Keep email-provider link tracking disabled;
+authentication links are single-use and must not be rewritten.
+
+Gmail sender limits and account policies can change. Treat quota exhaustion or
+SMTP delivery failure as an authentication-delivery outage; local gameplay and
+existing sessions must continue to work.
 
 See [`cloud-operations.md`](cloud-operations.md) for the persistence boundary,
 privacy behavior, deletion contract, recovery steps, and provider-failure
