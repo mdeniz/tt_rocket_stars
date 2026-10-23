@@ -71,7 +71,7 @@ v190 was a single HTML file. Styles and scripts have been extracted while preser
 
 ## Quality and browsers
 
-`npm run check` validates the syntax of the 32 scripts, translations, and build. `npm run test:e2e` checks startup and navigation in Chromium, Firefox, WebKit, and mobile WebKit. Linux WebKit does not replace real iPhone Safari testing. Validate the first tap, audio, fullscreen, restricted storage, and orientation on iOS.
+`npm run check` validates the syntax of the 32 scripts, translations, and build. `npm run test:e2e` checks startup, navigation, optional account flows, and local-first synchronization in Chromium, Firefox, and WebKit. CI additionally runs the `webkit-mobile` project with `PLAYWRIGHT_MOBILE=1`; this project is kept as a separate pass because concurrent desktop and mobile WebKit workers can become resource-bound on development machines. Cloud E2E tests use an in-memory Supabase test double and never require production credentials or email delivery. Linux WebKit does not replace real iPhone Safari testing. Validate the first tap, audio, fullscreen, restricted storage, authentication redirects, and orientation on iOS.
 
 ## Versioning
 

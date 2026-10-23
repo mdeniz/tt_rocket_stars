@@ -30,6 +30,11 @@ jobs:
       - run: npx playwright install --with-deps chromium firefox webkit
       - run: npm run check
       - run: npm run test:e2e
+      - name: Run mobile WebKit checks
+        env:
+          PLAYWRIGHT_MOBILE: '1'
+          PLAYWRIGHT_WORKERS: '1'
+        run: npx playwright test --project=webkit-mobile
       - if: always()
         uses: actions/upload-artifact@v6
         with:
