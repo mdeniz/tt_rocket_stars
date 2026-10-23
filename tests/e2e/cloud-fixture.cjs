@@ -81,6 +81,7 @@ async function installCloudFixture(page, options = {}) {
   });
 
   await page.addInitScript(({ config, initialStorage }) => {
+    window.__TT_FEATURES__ = { cloudAccess: true };
     window.__TT_SUPABASE_CONFIG__ = config;
     for (const [key, value] of Object.entries(initialStorage || {})) window.localStorage.setItem(key, value);
   }, {

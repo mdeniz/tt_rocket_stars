@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { defineConfig } from 'vite';
 import * as i18n from './scripts/i18n.mjs';
@@ -12,6 +13,7 @@ function inlineReleaseAssets() {
   let isBuild = false;
   let outDir = '';
   let publicSupabaseConfig = { url: '', anonKey: '', siteUrl: '' };
+  let cloudAccessEnabled = false;
 
   return {
     name: 'tt-inline-release-assets',
@@ -24,6 +26,7 @@ function inlineReleaseAssets() {
         anonKey: config.env.VITE_SUPABASE_ANON_KEY || '',
         siteUrl: config.env.VITE_APP_SITE_URL || '',
       };
+      cloudAccessEnabled = config.env.VITE_ENABLE_CLOUD_ACCESS === 'true';
     },
     transformIndexHtml: {
       order: 'pre',
@@ -44,6 +47,10 @@ function inlineReleaseAssets() {
         output = output.replace(
           '<!-- TT_TELEMETRY_RUNTIME -->',
           `<script>${escapeClosingTag(telemetry, 'script')}</script>`,
+        );
+        output = output.replace(
+          '<!-- TT_FEATURE_FLAGS -->',
+          `<script>window.__TT_FEATURES__=Object.assign(${JSON.stringify({ cloudAccess: cloudAccessEnabled })},window.__TT_FEATURES__||{});</script>`,
         );
         if (!isBuild) return output;
 
@@ -66,7 +73,10 @@ function inlineReleaseAssets() {
       },
     },
     closeBundle() {
-      if (isBuild) fs.rmSync(path.resolve(outDir, 'legacy'), { force: true, recursive: true });
+      if (!isBuild) return;
+      fs.rmSync(path.resolve(outDir, 'legacy'), { force: true, recursive: true });
+      fs.renameSync(path.resolve(outDir, 'index.html'), path.resolve(outDir, 'index_next.html'));
+      writeFileSync(path.resolve(outDir, 'index.html'), '<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=./index_next.html"><title>TT Rocket Stars</title><script>location.replace("./index_next.html")</script>');
     },
   };
 }

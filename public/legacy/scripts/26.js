@@ -9,8 +9,11 @@
   if(profileCard&&profileMount&&profileCard.parentElement!==profileMount){
    profileMount.appendChild(profileCard);profileCard.classList.remove('ttSettingsActive');
   }
+  const cloudAccessEnabled=window.__TT_FEATURES__?.cloudAccess===true;
+  const cloudPanel=settings.querySelector('#ttAuthPanel');
+  if(cloudPanel&&!cloudAccessEnabled){cloudPanel.hidden=true;cloudPanel.classList.remove('ttSettingsActive');cloudPanel.setAttribute('aria-hidden','true');}
   const panelMap={
-   cloud:settings.querySelector('#ttAuthPanel'),audio:settings.querySelector('#ttAudioSettings'),
+   ...(cloudAccessEnabled?{cloud:cloudPanel}:{}),audio:settings.querySelector('#ttAudioSettings'),
    profile:profileMount?.querySelector('article'),
    language:Array.from(stack.querySelectorAll(':scope > article')).find(p=>p.querySelector('.settingsLanguages')),
    theme:Array.from(stack.querySelectorAll(':scope > article')).find(p=>p.querySelector('#themeChoices')),
@@ -36,7 +39,7 @@
    nav.querySelectorAll('button').forEach(button=>button.classList.toggle('active',button.dataset.target===panelMap[key]?.id));
    settings.scrollIntoView({behavior:'instant',block:'start'});
   }
-  const current=panels.find(({panel})=>panel.classList.contains('ttSettingsActive'))?.key||'cloud';activate(current);
+  const current=panels.find(({panel})=>panel.classList.contains('ttSettingsActive'))?.key||panels[0]?.key;activate(current);
   const langObs=new MutationObserver(()=>{const spanish=document.documentElement.lang==='es';nav.querySelectorAll('small').forEach(el=>{el.textContent=el.dataset[spanish?'es':'en']})});
   langObs.observe(document.documentElement,{attributes:true,attributeFilter:['lang']});
  }

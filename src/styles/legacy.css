@@ -1349,6 +1349,7 @@ body.ttMainNavReady{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
 #settings{padding-bottom:20px!important}
 #settings .settingsStack>article{display:none!important}
 #settings .settingsStack>article.ttSettingsActive{display:block!important}
+#settings .settingsStack>article.ttAuthPanel[hidden]{display:none!important}
 @media(max-width:390px){#ttMainBottomNav{gap:1px;padding-left:4px;padding-right:4px}#ttMainBottomNav button>span{font-size:20px}#ttMainBottomNav button>small{font-size:9px}}
 
 

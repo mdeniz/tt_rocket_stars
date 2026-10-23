@@ -20,6 +20,7 @@
   const signOut = document.getElementById('ttAuthSignOut');
   const panel = document.getElementById('ttAuthPanel');
   if (!form || !emailInput || !status || !signOut || !panel) return;
+  if (window.__TT_FEATURES__?.cloudAccess !== true) { panel.hidden = true; return; }
   passwordLabel.textContent = 'Password';
   recovery.textContent = 'Forgot password?';
   passwordInput.placeholder = '••••••••';

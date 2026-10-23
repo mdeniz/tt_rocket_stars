@@ -10,10 +10,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 - Credential-free Playwright coverage for invited authentication, local-first cloud synchronization, restore, conflict recovery, retries, deletion, and offline gameplay.
 - A consent-aware, provider-independent telemetry boundary with allowlisted aggregate events and no default network activity.
 - Sampled aggregate mission and sanitized runtime-error hooks with bounded in-memory retention.
+- Cloud access is hidden by default behind an explicit development flag, and the next self-contained distribution is generated as `dist/index_next.html` with a root compatibility redirect.
 
 ## [0.1.1] - 2026-10-22
 ### Changed
-- Production distribution is generated as a single self-contained `dist/index.html`.
+- Production distribution is generated as a single self-contained `dist/index_next.html`; `dist/index.html` remains a root compatibility redirect.
 
 ## [0.1.0] - 2026-10-22
 ### Added

@@ -76,7 +76,7 @@ function main() {
   ));
 
   mkdirSync(resolve(root, 'releases'), { recursive: true });
-  copyFileSync(resolve(root, 'dist', 'index.html'), releaseFile);
+  copyFileSync(resolve(root, 'dist', 'index_next.html'), releaseFile);
   console.log(`Created ${releaseFile}`);
 }
 

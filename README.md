@@ -43,7 +43,7 @@ The workflow requires the tag to match `package.json` exactly and requires a mat
 
 The mobile application is published at [GitHub Pages](https://mdeniz.github.io/tt_rocket_stars/). Every push to `main` rebuilds and deploys the self-contained HTML through the Pages workflow.
 
-Vite serves the application at http://localhost:5173. `npm run build` generates a self-contained distribution at `dist/index.html`: CSS, JavaScript, and visual resources are embedded, so it can be copied or opened without adjacent files. Do not open the development `index.html` directly: Vite injects translations during development and build. The repository includes `package-lock.json`, and CI uses `npm ci` for reproducible installations.
+Vite serves the application at http://localhost:5173. `npm run build` generates the self-contained application at `dist/index_next.html`: CSS, JavaScript, and visual resources are embedded, so it can be copied or opened without adjacent files. `dist/index.html` is a small root redirect for GitHub Pages compatibility. Do not open the development `index.html` directly: Vite injects translations during development and build. Cloud access is hidden by default; use `VITE_ENABLE_CLOUD_ACCESS=true` only for controlled development. The repository includes `package-lock.json`, and CI uses `npm ci` for reproducible installations.
 
 Cloud synchronization setup is documented in [`docs/supabase-brevo-setup.md`](docs/supabase-brevo-setup.md). It is optional: local gameplay and backups remain available without a Supabase project or an authenticated account.
 Operational behavior, privacy boundaries, failure fallback, deletion, and traceability are documented in [`docs/cloud-operations.md`](docs/cloud-operations.md).
