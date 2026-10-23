@@ -23,6 +23,9 @@ jobs:
         with:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
+      - name: Use the public Ubuntu mirror for WebKit dependencies
+        run: |
+          sudo sed -i 's|azure.archive.ubuntu.com|archive.ubuntu.com|g' /etc/apt/sources.list /etc/apt/sources.list.d/ubuntu.sources
       # Install dependencies for the only browser whose system libraries are
       # not guaranteed by the hosted runner. Keep Chromium and Firefox cached
       # without installing their unrelated OS packages.
