@@ -22,3 +22,11 @@ snapshots; it does not delete local browser storage.
 
 The browser must never use a service-role key. This schema is intended to be
 applied through Supabase migrations or the SQL editor by a project maintainer.
+
+The client adapter in `src/lib/cloud-sync.js` consumes a serialized pilot
+snapshot and writes synchronization metadata separately from the existing
+local game keys. It returns `disabled`, `signed-out`, `not-found`, `uploaded`,
+`downloaded`, `local-newer`, or `failed` results so offline gameplay does not
+depend on network availability. Conflicts are resolved deterministically by
+`updatedAt`, then snapshot version, then stable JSON ordering; the settings UI
+is responsible for presenting status and retry controls.
