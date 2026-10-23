@@ -23,7 +23,11 @@ jobs:
         with:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
-      - run: npx playwright install --with-deps chromium firefox webkit
+      # GitHub-hosted Ubuntu already provides the browser system libraries.
+      # Installing OS packages here can hang during runner image migrations;
+      # browser binaries are restored by the cache above and installed only
+      # when the cache is cold.
+      - run: npx playwright install chromium firefox webkit
       - run: npm run check
       - run: npm run test:e2e
       - if: always()
