@@ -5,6 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 ## [Unreleased]
 
 ### Added
+- Isolated, framework-agnostic TypeScript game-rule and progression contracts with deterministic tests.
 - An isolated React mount contract and strict no-emit TypeScript bootstrap alongside the legacy runtime.
 - Credential-free Playwright coverage for invited authentication, local-first cloud synchronization, restore, conflict recovery, retries, deletion, and offline gameplay.
 - A consent-aware, provider-independent telemetry boundary with allowlisted aggregate events and no default network activity.
