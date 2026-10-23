@@ -1,6 +1,6 @@
 # Telemetry boundary
 
-TT Rocket Stars remains playable without an account, network, or telemetry provider. The telemetry module is an opt-in, provider-independent boundary for future aggregate product learning; this change does not instrument gameplay or send events.
+TT Rocket Stars remains playable without an account, network, or telemetry provider. The telemetry module is an opt-in, provider-independent boundary for aggregate product learning. Runtime hooks are dormant until explicit consent is granted and never make a provider request by default.
 
 ## Privacy contract
 
@@ -11,10 +11,12 @@ TT Rocket Stars remains playable without an account, network, or telemetry provi
 - With no injected sink, recording and flushing never make network requests.
 - Opting out or requesting deletion clears queued telemetry without touching pilots, progress, backups, or other game data.
 - A future provider adapter must be injected explicitly, receive only sanitized batches, and isolate delivery failures from gameplay.
+- Mission events contain only mode, operation, bounded counts, and coarse performance/time buckets. Runtime errors contain enum codes and sources only; messages, stacks, URLs, and exception objects are never collected.
+- Sampling and a 24-hour in-memory retention window bound the volume before any future sink receives data.
 
 ## Integration boundary
 
-Future instrumentation may call `createTelemetryService()` after a product and privacy review. Provider configuration, retention, aggregation, account linkage, and consent UI are separate changes and must not add service-role credentials or make gameplay depend on delivery.
+Future instrumentation may call `createTelemetryService()` after a product and privacy review. Provider configuration, quotas, retention region, EU data handling, lawful basis, aggregation, account linkage, and consent UI are deployment gates. A provider must be explicitly injected and must not add service-role credentials or make gameplay depend on delivery.
 
 Run the focused checks with:
 

@@ -565,3 +565,29 @@ function renderDashboard(){const pp=TTProfiles.active();if(pp){const who=documen
 function modeName(m){return m.mode==='timed'?'Misión de '+m.minutes+' minutos':m.mode==='speed'?'60 segundos':m.mode==='exam'?'20 retos':'Entrenamiento'}
 function renderMissionKeypad(){const target=$('keys');if(!target)return;target.innerHTML=[1,2,3,4,5,6,7,8,9,'del',0,'ok'].map(x=>`<button class="key ${x==='ok'?'ok':''}" onclick="${x==='ok'?'submit()':`press('${x}')`}" aria-label="${x==='del'?(lang==='es'?'Borrar':'Delete'):x==='ok'?(lang==='es'?'Comprobar':'Check'):x}">${x==='del'?'⌫':x==='ok'?'✓':x}</button>`).join('');}
 renderMissionKeypad();$('answer').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();answered?nextQuestion():submit()}});$('answer').addEventListener('input',e=>e.target.value=e.target.value.replace(/\D/g,'').slice(0,3));renderPlanets();renderStats();awardCoins();renderDashboard();updateCoins();document.querySelectorAll('#dashboard [data-go]').forEach(card=>{const go=()=>navigate(card.dataset.go);card.addEventListener('click',go);card.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go()}})});navigate('dashboard');function toggleFullscreen(){if(document.fullscreenElement){document.exitFullscreen?.().catch(()=>{})}else{document.documentElement.requestFullscreen?.().catch(()=>{alert(lang==='es'?'Este navegador no permite pantalla completa desde un archivo local. Prueba a abrirlo en Chrome o añadirlo a la pantalla de inicio.':'This browser cannot enter fullscreen from a local file. Try Chrome or add the game to your home screen.')})}}document.addEventListener('fullscreenchange',updateFullscreenMenu);
+// Optional aggregate telemetry remains inert until explicit consent is granted.
+if (typeof window.start === 'function') {
+ const ttStartMission = window.start;
+ window.start = function () {
+  window.TTTelemetry?.record('mission_started', { mode, operation: op });
+  return ttStartMission.apply(this, arguments);
+ };
+}
+if (typeof window.finish === 'function') {
+ const ttFinishMission = window.finish;
+ window.finish = function () {
+  const attempted = correct + wrong;
+  const accuracy = attempted ? correct / attempted : 0;
+  const elapsedSeconds = Math.max(0, Math.round((Date.now() - missionStartedAt) / 1000));
+  window.TTTelemetry?.record('mission_completed', {
+   mode,
+   operation: op,
+   table: Math.min(12, Math.max(1, Number([...chosen][0]) || 1)),
+   attempted: Math.min(100, Math.max(1, attempted || 1)),
+   correct: Math.min(100, Math.max(0, correct)),
+   accuracyBucket: accuracy >= .9 ? 'high' : accuracy >= .65 ? 'medium' : accuracy > 0 ? 'low' : 'zero',
+   elapsedBucket: elapsedSeconds < 60 ? 'under_60' : elapsedSeconds <= 300 ? '60_300' : 'over_300',
+  });
+  return ttFinishMission.apply(this, arguments);
+ };
+}

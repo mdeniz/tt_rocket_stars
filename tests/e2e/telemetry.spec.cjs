@@ -29,3 +29,13 @@ test('keeps telemetry opt-in and offline-safe in the browser', async ({ page }) 
   expect(result.requests).toBe(0);
   expect(result.cleared).toEqual([]);
 });
+
+test('exposes a consent-disabled runtime adapter without collecting startup data', async ({ page }) => {
+  await page.goto('/');
+  const result = await page.evaluate(() => ({
+    available: Boolean(window.TTTelemetry),
+    consent: window.TTTelemetry?.hasConsent(),
+    queued: window.TTTelemetry?.getQueuedEvents(),
+  }));
+  expect(result).toEqual({ available: true, consent: false, queued: [] });
+});
