@@ -80,6 +80,18 @@ export function createCloudSync({ client, store, getLocalPilot, applyRemotePilot
     if (error) throw error;
     return remote ? { ...remote.payload, version: remote.version, updatedAt: remote.updated_at } : null;
   };
+  const normalizeRemotePilot = (pilot, snapshot) => {
+    const snapshotPayload = snapshot?.payload;
+    return {
+      localId: String(pilot?.local_id || snapshotPayload?.localId || ''),
+      name: String(pilot?.name || snapshotPayload?.name || 'Pilot').trim().slice(0, 80),
+      avatar: pilot?.avatar || snapshotPayload?.avatar || null,
+      language: pilot?.language === 'en' || snapshotPayload?.language === 'en' ? 'en' : 'es',
+      payload: clone(snapshotPayload?.payload || pilot?.payload || {}),
+      updatedAt: snapshot?.updated_at || pilot?.updated_at || null,
+      version: Number(snapshot?.version || 0),
+    };
+  };
   const writeVersion = (localId, snapshot) => {
     if (!snapshot) return;
     const metadata = readMetadata(store);
@@ -197,6 +209,43 @@ export function createCloudSync({ client, store, getLocalPilot, applyRemotePilot
     }, retries, wait).catch(error => { const failed = result('failed', { error }); report('failed', failed); return failed; });
   }
 
+  async function listRemotePilots() {
+    if (!client) return result('disabled', { pilots: [] });
+    const authSession = await session();
+    if (!authSession?.user?.id) return result('signed-out', { pilots: [] });
+    try {
+      const query = client.from('pilots').select('local_id,name,avatar,language,payload,updated_at')
+        .eq('user_id', authSession.user.id).limit(50);
+      const response = typeof query.many === 'function' ? await query.many() : await query;
+      if (response?.error) throw response.error;
+      const rows = Array.isArray(response?.data) ? response.data : (response?.data ? [response.data] : []);
+      return result('listed', { pilots: rows.map(row => normalizeRemotePilot(row)) });
+    } catch (error) {
+      return result('failed', { pilots: [], error });
+    }
+  }
+
+  async function downloadPilot(localId) {
+    if (!client) return result('disabled');
+    const authSession = await session();
+    if (!authSession?.user?.id) return result('signed-out');
+    if (!localId) return result('not-found');
+    try {
+      const { data: pilot, error: pilotError } = await client.from('pilots')
+        .select('id,local_id,name,avatar,language,payload,updated_at').eq('user_id', authSession.user.id)
+        .eq('local_id', localId).maybeSingle();
+      if (pilotError) throw pilotError;
+      if (!pilot) return result('not-found');
+      const { data: snapshot, error: snapshotError } = await client.from('progress_snapshots')
+        .select('version,payload,updated_at').eq('user_id', authSession.user.id)
+        .eq('pilot_id', pilot.id).maybeSingle();
+      if (snapshotError) throw snapshotError;
+      return result('downloaded', { snapshot: normalizeRemotePilot(pilot, snapshot) });
+    } catch (error) {
+      return result('failed', { error });
+    }
+  }
+
   let queueTimer = null;
   let queuedResolve = null;
   const queueUpload = (delay = 1200) => new Promise(resolve => {
@@ -211,7 +260,7 @@ export function createCloudSync({ client, store, getLocalPilot, applyRemotePilot
       currentResolve?.(await upload());
     }, Math.max(0, Number(delay) || 0));
   });
-  return { upload, download, queueUpload, sync: async () => { const pushed = await upload(); return pushed.status === 'uploaded' ? pushed : download(); } };
+  return { upload, download, listRemotePilots, downloadPilot, queueUpload, sync: async () => { const pushed = await upload(); return pushed.status === 'uploaded' ? pushed : download(); } };
 }
 
 export { SYNC_METADATA_KEY };

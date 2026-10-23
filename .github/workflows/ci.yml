@@ -27,38 +27,11 @@ jobs:
       # Installing OS packages here can hang during runner image migrations;
       # browser binaries are restored by the cache above and installed only
       # when the cache is cold.
-      - run: npx playwright install chromium firefox webkit
-      - name: Install WebKit runtime dependency
-        run: >-
-          sudo apt-get update -qq &&
-          (sudo apt-get install -y -qq libevent-2.1-7t64 libopus0 libflite1
-          libavif16 libharfbuzz-icu0 libwayland-server0
-          gstreamer1.0-libav gstreamer1.0-plugins-bad
-          gstreamer1.0-plugins-base gstreamer1.0-plugins-good libicu74
-          libatomic1 libatk-bridge2.0-0t64 libdrm2 libenchant-2-2 libepoxy0
-          libgbm1 libgles2 libgstreamer1.0-0 libgtk-4-1 libharfbuzz0b
-          libhyphen0 libjpeg-turbo8 liblcms2-2 libmanette-0.2-0
-          libpng16-16t64 libsecret-1-0 libvpx9 libwayland-client0
-          libwayland-egl1 libwebp7 libwebpdemux2 libwoff1 libxkbcommon0
-          libxml2 libxslt1.1 libx264-164
-          libgstreamer-plugins-base1.0-0 libgstreamer-gl1.0-0
-          libgstreamer-plugins-bad1.0-0 ||
-          sudo apt-get install -y -qq libevent-2.1-7 libopus0 libflite1
-          libavif16 libharfbuzz-icu0 libwayland-server0
-          gstreamer1.0-libav gstreamer1.0-plugins-bad
-          gstreamer1.0-plugins-base gstreamer1.0-plugins-good libicu74
-          libatomic1 libatk-bridge2.0-0t64 libdrm2 libenchant-2-2 libepoxy0
-          libgbm1 libgles2 libgstreamer1.0-0 libgtk-4-1 libharfbuzz0b
-          libhyphen0 libjpeg-turbo8 liblcms2-2 libmanette-0.2-0
-          libpng16-16t64 libsecret-1-0 libvpx9 libwayland-client0
-          libwayland-egl1 libwebp7 libwebpdemux2 libwoff1 libxkbcommon0
-          libxml2 libxslt1.1 libx264-164
-          libgstreamer-plugins-base1.0-0 libgstreamer-gl1.0-0
-          libgstreamer-plugins-bad1.0-0)
+      - run: npx playwright install --with-deps chromium firefox webkit
       - run: npm run check
       - run: npm run test:e2e
       - if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: playwright-report
           path: |

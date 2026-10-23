@@ -83,6 +83,33 @@ test('returns not-found without replacing the local pilot', async () => {
   assert.equal(applied, false);
 });
 
+test('lists and downloads only the authenticated account pilots', async () => {
+  const { createCloudSync } = await cloudSync;
+  const client = {
+    auth: { getSession: async () => ({ data: { session: { user: { id: 'user-1' } } } }) },
+    from(table) {
+      if (table === 'pilots') return {
+        select: () => ({
+          eq: () => ({
+            limit: async () => ({ data: [{ local_id: 'cloud-1', name: 'Remote Ada', language: 'en', payload: { 'cosmotablas-v2': '{}' } }], error: null }),
+            eq: () => ({ maybeSingle: async () => ({ data: { id: 'remote-row', local_id: 'cloud-1', name: 'Remote Ada', language: 'en', payload: {}, updated_at: '2026-01-03T00:00:00.000Z' }, error: null }) }),
+          }),
+        }),
+      };
+      return { select: () => ({ eq: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { version: 7, payload: { localId: 'cloud-1', payload: { score: 12 }, language: 'en' }, updated_at: '2026-01-03T00:00:00.000Z' }, error: null }) }) }) }) };
+    },
+  };
+  const adapter = createCloudSync({ client });
+  const listed = await adapter.listRemotePilots();
+  assert.equal(listed.status, 'listed');
+  assert.deepEqual(listed.pilots.map(pilot => pilot.localId), ['cloud-1']);
+  const downloaded = await adapter.downloadPilot('cloud-1');
+  assert.equal(downloaded.status, 'downloaded');
+  assert.equal(downloaded.snapshot.localId, 'cloud-1');
+  assert.equal(downloaded.snapshot.version, 7);
+  assert.equal(downloaded.snapshot.payload.score, 12);
+});
+
 test('keeps the local pilot when a remote download repeatedly fails', async () => {
   const { createCloudSync } = await cloudSync;
   let attempts = 0;
