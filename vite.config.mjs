@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import { writeFileSync } from 'node:fs';
+import { copyFileSync } from 'node:fs';
 import path from 'node:path';
 import { defineConfig } from 'vite';
 import * as i18n from './scripts/i18n.mjs';
@@ -76,7 +76,7 @@ function inlineReleaseAssets() {
       if (!isBuild) return;
       fs.rmSync(path.resolve(outDir, 'legacy'), { force: true, recursive: true });
       fs.renameSync(path.resolve(outDir, 'index.html'), path.resolve(outDir, 'index_next.html'));
-      writeFileSync(path.resolve(outDir, 'index.html'), '<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=./index_next.html"><title>TT Rocket Stars</title><script>location.replace("./index_next.html")</script>');
+      copyFileSync(path.resolve(outDir, 'index_next.html'), path.resolve(outDir, 'index.html'));
     },
   };
 }

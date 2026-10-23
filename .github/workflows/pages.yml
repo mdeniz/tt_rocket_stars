@@ -32,6 +32,24 @@ jobs:
           cache-dependency-path: package-lock.json
       - run: npm ci --no-audit --no-fund
       - run: npm run check
+      - name: Restore stable release entrypoint
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if stable_tag=$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName --jq '.tagName' 2>/dev/null); then
+            stable_asset=$(gh release view "$stable_tag" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[] | select(.name | endswith(".html")) | .name' | head -n 1)
+            if [ -z "$stable_asset" ]; then
+              echo "Release $stable_tag has no HTML asset; keeping the current build as the stable fallback"
+              exit 0
+            fi
+            gh release download "$stable_tag" --repo "$GITHUB_REPOSITORY" --pattern "$stable_asset" --dir dist --clobber
+            if [ "$stable_asset" != "index.html" ]; then
+              mv "dist/$stable_asset" dist/index.html
+            fi
+            echo "Restored stable release $stable_tag as dist/index.html"
+          else
+            echo "No published release found; keeping the current build as the stable fallback"
+          fi
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
