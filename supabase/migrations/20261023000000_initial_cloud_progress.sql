@@ -29,6 +29,9 @@ create table if not exists public.progress_snapshots (
 create index if not exists pilots_user_id_idx on public.pilots (user_id);
 create index if not exists progress_snapshots_user_id_idx on public.progress_snapshots (user_id);
 
+grant select, insert, update, delete on table public.pilots to authenticated;
+grant select, insert, update, delete on table public.progress_snapshots to authenticated;
+
 create or replace function public.set_updated_at()
 returns trigger
 language plpgsql

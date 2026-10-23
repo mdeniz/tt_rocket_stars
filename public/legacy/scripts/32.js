@@ -54,15 +54,17 @@
   const localPilot = () => window.TTProfiles?.active?.();
   const controls = document.createElement('div');
   controls.className = 'ttCloudControls';
-  controls.innerHTML = '<p class="ttPrivacyNote" data-i18n="ui.087">Cloud access is optional. Your local progress stays on this device, and cloud data belongs to your invited account.</p><p id="ttCloudStatus" class="ttCloudStatus" role="status" aria-live="polite" data-i18n="ui.084">Cloud sync is ready.</p><div class="ttCloudActions"><button id="ttCloudSyncNow" class="btn alt" type="button" data-i18n="ui.085">Sync now</button><button id="ttCloudDelete" class="btn alt dangerBtn" type="button" data-i18n="ui.086">Delete cloud data</button></div>';
+  controls.innerHTML = '<p class="ttPrivacyNote" data-i18n="ui.087">Cloud access is optional. Your local progress stays on this device, and cloud data belongs to your invited account.</p><p id="ttCloudStatus" class="ttCloudStatus" role="status" aria-live="polite" data-i18n="ui.084">Cloud sync is ready.</p><div class="ttCloudActions"><button id="ttCloudSyncNow" class="btn alt" type="button" data-i18n="ui.085">Sync now</button><button id="ttCloudRestore" class="btn alt" type="button">Restore from cloud</button><button id="ttCloudDelete" class="btn alt dangerBtn" type="button" data-i18n="ui.086">Delete cloud data</button></div>';
   panel.appendChild(controls);
   const cloudStatus = document.getElementById('ttCloudStatus');
   const syncNow = document.getElementById('ttCloudSyncNow');
+  const restoreCloud = document.getElementById('ttCloudRestore');
   const deleteCloud = document.getElementById('ttCloudDelete');
   const privacyNote = controls.querySelector('.ttPrivacyNote');
   const updateCloudLabels = () => {
     privacyNote.textContent = text('privacy');
     syncNow.textContent = language() === 'es' ? 'Sincronizar ahora' : 'Sync now';
+    restoreCloud.textContent = language() === 'es' ? 'Recuperar de la nube' : 'Restore from cloud';
     deleteCloud.textContent = language() === 'es' ? 'Borrar datos de la nube' : 'Delete cloud data';
     if (cloudStatus.dataset.message) cloudStatus.textContent = text(cloudStatus.dataset.message);
   };
@@ -70,7 +72,7 @@
   const updateCloudControls = session => {
     const authenticated = Boolean(session?.access_token && session?.user);
     controls.classList.toggle('isAuthenticated', authenticated);
-    syncNow.disabled = !authenticated; deleteCloud.disabled = !authenticated;
+    syncNow.disabled = !authenticated; restoreCloud.disabled = !authenticated; deleteCloud.disabled = !authenticated;
     if (!authenticated) setCloudStatus(config.url && config.anonKey ? 'missing' : 'missing', 'info');
   };
   const consumeRedirectSession = () => {
@@ -133,6 +135,29 @@
     catch (_) { setCloudStatus('deleteError', 'error'); }
     finally { deleteCloud.disabled = false; }
   }
+  async function restoreCloudData() {
+    const session = readSession(); const pilot = localPilot();
+    if (!session?.access_token || !session.user || !pilot) { setCloudStatus('missing', 'info'); return; }
+    restoreCloud.disabled = true; setCloudStatus('syncPending', 'pending');
+    try {
+      const pilotQuery = `${rest('/pilots')}?select=id,name,avatar,language,payload&user_id=eq.${encodeURIComponent(session.user.id)}&local_id=eq.${encodeURIComponent(pilot.id)}&limit=1`;
+      const pilotResponse = await fetch(pilotQuery, { headers: headers(session.access_token) });
+      if (!pilotResponse.ok) throw await parseError(pilotResponse);
+      const cloudPilots = await pilotResponse.json(); const cloudPilot = cloudPilots[0];
+      if (!cloudPilot) { setCloudStatus('missing', 'info'); return; }
+      const snapshotResponse = await fetch(`${rest('/progress_snapshots')}?select=payload,version,updated_at&pilot_id=eq.${encodeURIComponent(cloudPilot.id)}&limit=1`, { headers: headers(session.access_token) });
+      if (!snapshotResponse.ok) throw await parseError(snapshotResponse);
+      const snapshots = await snapshotResponse.json(); const remotePayload = snapshots[0]?.payload || cloudPilot.payload || {};
+      if (!window.confirm(language() === 'es' ? '¿Recuperar el progreso de la nube? Se guardará una copia local antes de sustituir el progreso actual.' : 'Restore cloud progress? A local backup will be saved before replacing the current progress.')) return;
+      if (typeof window.saveBackup === 'function' && !window.saveBackup('Before cloud restore')) throw new Error('backup failed');
+      ['cosmotablas-v2', 'cosmotablas-history-v1', 'tt-rocket-garage-v1', 'tt-rocket-backups-v1'].forEach(key => {
+        const value = remotePayload[key];
+        if (typeof value === 'string') window.TTLocalStore.setItem(key, value); else window.TTLocalStore.removeItem(key);
+      });
+      window.TTProfiles?.sync?.(); location.reload();
+    } catch (_) { setCloudStatus('syncError', 'error'); }
+    finally { restoreCloud.disabled = false; }
+  }
   form.addEventListener('submit', async event => {
     event.preventDefault();const email = emailInput.value.trim();if (!email || !emailInput.validity.valid) { setStatus('invalidEmail', 'error');return; }
     const button = form.querySelector('button[type="submit"]');button.disabled = true;setStatus('sent', 'pending');
@@ -140,7 +165,7 @@
     catch (error) { setStatus(classifyError(error), 'error'); } finally { button.disabled = false; }
   });
   signOut.addEventListener('click', async () => { const session = readSession();clearSession();updateSessionUi(null);if (session?.access_token) { try { await fetch(api('/logout'), { method: 'POST', headers: headers(session.access_token) }); } catch (_) {} }setStatus('signedOut', 'success'); });
-  syncNow.addEventListener('click', syncCloud);deleteCloud.addEventListener('click', deleteCloudData);
+  syncNow.addEventListener('click', syncCloud);restoreCloud.addEventListener('click', restoreCloudData);deleteCloud.addEventListener('click', deleteCloudData);
   async function restoreSession() {
     if (!config.url || !config.anonKey) { form.classList.add('hidden');setStatus('missing', 'info');updateCloudControls(null);return; }
     let session;
