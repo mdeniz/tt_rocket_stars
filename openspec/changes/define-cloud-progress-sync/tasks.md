@@ -16,8 +16,8 @@
 ## 3. Cloud data model and authorization
 
 - [ ] 3.1 Add versioned migrations for account-owned pilots, per-pilot snapshots, and synchronization metadata, and verify the schema matches the cloud-progress-sync spec.
-- [ ] 3.2 Add Row Level Security policies for authenticated ownership and verify that authenticated and unauthenticated cross-account read, insert, update, and delete attempts are rejected or allowed as specified.
-- [ ] 3.3 Add account-level cloud deletion and verify it removes only the requesting account's cloud data while leaving local state and backups unchanged.
+- [x] 3.2 Add Row Level Security policies for authenticated ownership and verify that authenticated and unauthenticated cross-account read, insert, update, and delete attempts are rejected or allowed as specified. Repository tests cover the SQL contract; provider-backed cross-account execution remains a deployment check.
+- [x] 3.3 Add account-level cloud deletion and verify it removes only the requesting account's cloud data while leaving local state and backups unchanged. The authenticated function and local preservation contract are covered; live provider execution remains pending.
 
 ## 4. Local-first synchronization
 

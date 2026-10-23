@@ -6,6 +6,7 @@ const test = require('node:test');
 const migrationPath = path.join(__dirname, '../../supabase/migrations/20261023000000_initial_cloud_progress.sql');
 const migration = fs.readFileSync(migrationPath, 'utf8');
 const concurrencyMigration = fs.readFileSync(path.join(__dirname, '../../supabase/migrations/20261023010000_optimistic_cloud_snapshots.sql'), 'utf8');
+const hardeningMigration = fs.readFileSync(path.join(__dirname, '../../supabase/migrations/20261023020000_harden_cloud_access.sql'), 'utf8');
 const schemaDocs = fs.readFileSync(path.join(__dirname, '../../docs/supabase-schema.md'), 'utf8');
 
 test('cloud schema defines user-owned pilot and versioned progress tables', () => {
@@ -39,4 +40,13 @@ test('snapshot writes enforce authenticated optimistic concurrency', () => {
   assert.match(concurrencyMigration, /snapshot version conflict/i);
   assert.match(concurrencyMigration, /grant execute on function public\.upsert_my_progress_snapshot/i);
   assert.doesNotMatch(concurrencyMigration, /service[_ -]?role|supabase_service_role/i);
+});
+
+test('hardening migration removes anonymous access and direct snapshot mutations', () => {
+  assert.match(hardeningMigration, /revoke all on table public\.pilots from anon/i);
+  assert.match(hardeningMigration, /revoke all on table public\.progress_snapshots from anon/i);
+  assert.match(hardeningMigration, /revoke insert, update, delete on table public\.progress_snapshots from authenticated/i);
+  assert.match(hardeningMigration, /grant execute on function public\.delete_my_cloud_data\(\) to authenticated/i);
+  assert.match(hardeningMigration, /grant execute on function public\.upsert_my_progress_snapshot\(uuid, bigint, jsonb\) to authenticated/i);
+  assert.doesNotMatch(hardeningMigration, /service[_ -]?role|supabase_service_role/i);
 });
