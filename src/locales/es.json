@@ -94,5 +94,12 @@
   "ui.093": "✓ Progreso guardado en este dispositivo",
   "ui.094": "Toca para iniciar 🚀",
   "ui.095": "¡La aventura está a punto de comenzar!",
-  "ui.096": "Iniciar TT Rocket Stars"
+  "ui.096": "Iniciar TT Rocket Stars",
+  "ui.097": "Cerrar selector de pilotos",
+  "ui.098": "TU IDENTIDAD ESPACIAL",
+  "ui.099": "¿Quién juega?",
+  "ui.100": "Elige un piloto o crea uno nuevo. Cada piloto mantiene su progreso separado en este dispositivo.",
+  "ui.101": "Escribe un nombre de piloto único.",
+  "ui.102": "Nombre del nuevo piloto",
+  "ui.103": "+ Crear"
 }

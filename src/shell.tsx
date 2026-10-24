@@ -17,12 +17,40 @@ export function ReactShell() {
   const legacySplash = document.getElementById('launchSplash');
   const [visible] = useState(() => Boolean(legacySplash && !legacySplash.classList.contains('hidden')));
   const [entered, setEntered] = useState(false);
+  const [pilotSelectorOpen, setPilotSelectorOpen] = useState(false);
+  const [pilotName, setPilotName] = useState('');
+  const [pilotError, setPilotError] = useState('');
+  const [pilots, setPilots] = useState(() => window.TTPilotAdapter?.readPilots() || []);
   const entering = useRef(false);
 
   useEffect(() => {
     if (!visible || !legacySplash) return;
     legacySplash.classList.add('hidden');
   }, [legacySplash, visible]);
+
+  useEffect(() => {
+    const open = () => {
+      window.TTProfiles?.sync();
+      setPilots(window.TTPilotAdapter?.readPilots() || []);
+      setPilotError('');
+      setPilotSelectorOpen(true);
+    };
+    window.TTOpenPilotSelector = open;
+    const interceptLegacyPilotEntry = (event: Event) => {
+      const target = event.target as HTMLElement | null;
+      if (!target?.closest('.drawerProfileSwitch')) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      document.getElementById('sideDrawer')?.classList.remove('open');
+      document.getElementById('drawerOverlay')?.classList.add('hidden');
+      open();
+    };
+    document.addEventListener('click', interceptLegacyPilotEntry, true);
+    return () => {
+      if (window.TTOpenPilotSelector === open) delete window.TTOpenPilotSelector;
+      document.removeEventListener('click', interceptLegacyPilotEntry, true);
+    };
+  }, []);
 
   if (!visible) return null;
 
@@ -40,6 +68,7 @@ export function ReactShell() {
   };
 
   return (
+    <>
     <section
       id="reactLaunchSplash"
       className={`ttReactLaunchSplash${entered ? ' hidden' : ''}`}
@@ -70,5 +99,42 @@ export function ReactShell() {
         <div className="splashHint">{copy['ui.095']}</div>
       </div>
     </section>
+    {pilotSelectorOpen && (
+      <section className="ttReactPilotSelector" role="dialog" aria-modal="true" aria-labelledby="ttReactPilotTitle">
+        <div className="ttReactPilotCard">
+          <button className="ttReactPilotClose" type="button" aria-label={copy['ui.097']} onClick={() => setPilotSelectorOpen(false)}>×</button>
+          <div className="eyebrow">{copy['ui.098']}</div>
+          <h1 id="ttReactPilotTitle">🚀 {copy['ui.099']}</h1>
+          <p>{copy['ui.100']}</p>
+          <div className="ttReactPilotGrid">
+            {pilots.map(pilot => (
+              <button className="ttReactPilotTile" type="button" key={pilot.id} onClick={() => {
+                if (window.TTPilotAdapter?.choosePilot(pilot.id)) setPilotSelectorOpen(false);
+              }}>
+                <span aria-hidden="true">{pilot.avatar || '🚀'}</span>
+                <strong>{pilot.name}</strong>
+              </button>
+            ))}
+          </div>
+          <form onSubmit={event => {
+            event.preventDefault();
+            const id = window.TTPilotAdapter?.createPilot(pilotName.trim());
+            if (id) {
+              setPilots(window.TTPilotAdapter?.readPilots() || []);
+              setPilotName('');
+              setPilotSelectorOpen(false);
+            } else setPilotError(copy['ui.101']);
+          }}>
+            <label htmlFor="ttReactPilotName">{copy['ui.102']}</label>
+            <div className="ttReactPilotCreate">
+              <input id="ttReactPilotName" value={pilotName} onChange={event => setPilotName(event.target.value)} maxLength={24} />
+              <button className="btn" type="submit">{copy['ui.103']}</button>
+            </div>
+            {pilotError && <p className="ttReactPilotError" role="alert">{pilotError}</p>}
+          </form>
+        </div>
+      </section>
+    )}
+    </>
   );
 }

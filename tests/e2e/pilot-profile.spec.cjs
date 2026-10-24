@@ -20,6 +20,20 @@ test('pilot adapter exposes local profiles without cloud configuration', async (
   expect(await page.evaluate(() => window.TTPilotAdapter.readPilots())).toHaveLength(1);
 });
 
+test('React pilot selector preserves the legacy profile contract', async ({ page }) => {
+  await enterGame(page);
+  await page.locator('#menuBtn').click();
+  await page.locator('.drawerProfileSwitch').click();
+  await expect(page.locator('.ttReactPilotSelector')).toBeVisible();
+  await expect(page.locator('.ttReactPilotTile')).toContainText('Pilot 1');
+
+  await page.locator('#ttReactPilotName').fill('React Pilot');
+  await page.locator('.ttReactPilotCreate button').click();
+  await expect(page.locator('.ttReactPilotSelector')).toBeHidden();
+  await expect(page.locator('#headerPilotName')).toHaveText('React Pilot');
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('tt-rocket-profiles-v1')).length)).toBe(2);
+});
+
 test('pilot creation and switching preserve separate local profile identities', async ({ page }) => {
   await enterGame(page);
   await page.locator('#headerPilot').click();
