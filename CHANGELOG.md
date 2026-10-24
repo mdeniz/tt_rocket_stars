@@ -18,6 +18,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 - Added a typed fullscreen adapter that keeps splash entry safe when the browser API is unavailable or rejects the request.
 - Added a typed pilot adapter backed by the existing local persistence and covered local profile creation and switching in Playwright.
 - Added a typed settings-category adapter while preserving the legacy panel ownership and translated category labels.
+- Added fail-closed typed adapters for React mission, garage, and achievement actions while keeping legacy gameplay and persistence authoritative.
 - Recorded full unit, cross-browser, build, and Chrome DevTools verification for the incremental React shell boundary; the visible legacy shell remains intentionally authoritative until the next migration slice.
 - Added validated local profile, backup, and cloud snapshot persistence contracts with storage fallback and legacy-key compatibility.
 

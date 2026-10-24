@@ -31,3 +31,17 @@ test('core screen adapter keeps navigation and refresh behind stable legacy cont
   assert.match(adapter, /renderGarage/);
   assert.match(adapter, /installCoreScreensAdapter/);
 });
+
+test('core screen actions delegate through fail-closed legacy boundaries', () => {
+  assert.match(adapter, /selectMissionOperation: operation => callLegacyAction\('choose', 'op', operation\)/);
+  assert.match(adapter, /selectMissionMode: mode => callLegacyAction\('choose', 'mode', mode\)/);
+  assert.match(adapter, /setMissionDuration: minutes => callLegacyAction\('chooseDuration', minutes\)/);
+  assert.match(adapter, /startMission: \(\) => callLegacyAction\('start'\)/);
+  assert.match(adapter, /selectRocketFamily: family => callLegacyStringAction\('selectFamily', family\)/);
+  assert.match(adapter, /setGarageCategory: category => callLegacyStringAction\('setGarageCat', category\)/);
+  assert.match(adapter, /previewGaragePart: partId => callLegacyStringAction\('previewPart', partId\)/);
+  assert.match(adapter, /activateGaragePart: partId => callLegacyStringAction\('garageAction', partId\)/);
+  assert.match(adapter, /refreshAchievements: \(\) => callLegacyAction\('renderAwards'\)/);
+  assert.match(adapter, /if \(typeof action !== 'function'\) return false/);
+  assert.match(adapter, /catch \{\n    return false;\n  \}/);
+});
