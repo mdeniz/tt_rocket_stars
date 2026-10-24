@@ -36,6 +36,69 @@ test('invited account setup can return to password login without blocking local 
   expect(fixture.state.authRequests.some(request => request.path === '/auth/v1/verify')).toBe(true);
 });
 
+test('password authentication exposes a safe error and supports password change and logout', async ({ page }) => {
+  const fixture = await installCloudFixture(page);
+  await fixture.openCloudSettings();
+  await page.locator('#ttAuthEmail').fill('pilot@example.com');
+  await page.locator('#ttAuthPassword').fill('wrong-password');
+  await page.locator('#ttAuthForm button[type="submit"]').click();
+  await expect(page.locator('#ttAuthStatus')).toContainText('The email or password is incorrect.');
+  await expect(page.locator('#ttAuthForm')).toBeVisible();
+
+  await page.locator('#ttAuthPassword').fill('correct horse battery');
+  await page.locator('#ttAuthForm button[type="submit"]').click();
+  await expect(page.locator('#ttAuthStatus')).toContainText('signed in');
+  await page.locator('#ttAuthChangePassword').fill('new correct horse battery');
+  await page.locator('#ttAuthChangePasswordForm button[type="submit"]').click();
+  await expect(page.locator('#ttAuthStatus')).toContainText('Your password has been changed.');
+  await page.locator('#ttAuthSignOut').click();
+  await expect(page.locator('#ttAuthStatus')).toContainText('You have been signed out.');
+  await expect(page.locator('#ttAuthForm')).toBeVisible();
+  await expect(page.locator('#ttAuthChangePasswordForm')).toBeHidden();
+  expect(await page.evaluate(() => localStorage.getItem('tt-rocket-profiles-v1'))).not.toBeNull();
+  expect(fixture.state.authRequests.some(request => request.path === '/auth/v1/logout')).toBe(true);
+});
+
+test('password authentication localizes rejected credentials in Spanish', async ({ page }) => {
+  const fixture = await installCloudFixture(page, { language: 'es' });
+  await fixture.openCloudSettings();
+  await page.locator('#ttAuthEmail').fill('piloto@example.com');
+  await page.locator('#ttAuthPassword').fill('wrong-password');
+  await page.locator('#ttAuthForm button[type="submit"]').click();
+  await expect(page.locator('#ttAuthStatus')).toContainText('El email o la contraseña no son correctos.');
+  await expect(page.locator('#ttAuthForm')).toBeVisible();
+  expect(fixture.state.authRequests.some(request => request.path === '/auth/v1/token')).toBe(true);
+});
+
+test('password recovery reports rate limits in Spanish without blocking local play', async ({ page }) => {
+  const fixture = await installCloudFixture(page, {
+    language: 'es',
+    recoveryError: { status: 429, body: { error_description: 'Too many requests' } },
+  });
+  await fixture.openCloudSettings();
+  await page.locator('#ttAuthEmail').fill('piloto@example.com');
+  await page.locator('#ttAuthRecovery').click();
+  await expect(page.locator('#ttAuthStatus')).toContainText('Demasiadas solicitudes.');
+  await expect(page.locator('#ttAuthRecovery')).toBeEnabled();
+  expect(await page.evaluate(() => localStorage.getItem('tt-rocket-profiles-v1'))).not.toBeNull();
+});
+
+test('expired invitation links show a safe recovery message', async ({ page }) => {
+  const fixture = await installCloudFixture(page, {
+    verifyError: { status: 400, body: { error_description: 'Token has expired' } },
+  });
+  await page.goto('/?token_hash=expired-token&type=invite');
+  await page.locator('#launchSplash').click();
+  await expect(page.locator('#launchSplash')).toBeHidden();
+  await page.locator('#ttTourShade').waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
+  const skip = page.locator('#ttTourSkip');
+  if (await skip.isVisible().catch(() => false)) await skip.click();
+  await page.locator('#menuBtn').click();
+  await page.locator('#sideDrawer [data-section="settings"]').click();
+  await expect(page.locator('#ttAuthStatus')).toContainText('The invitation or recovery link has expired or is invalid.');
+  expect(fixture.state.authRequests.some(request => request.path === '/auth/v1/verify')).toBe(true);
+});
+
 test('authenticated local changes upload and cloud deletion keeps local progress', async ({ page }) => {
   const fixture = await installCloudFixture(page);
   await fixture.openCloudSettings();

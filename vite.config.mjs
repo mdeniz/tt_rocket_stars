@@ -78,7 +78,7 @@ function inlineReleaseAssets() {
         return output;
       },
     },
-    closeBundle() {
+    writeBundle() {
       if (!isBuild) return;
       fs.rmSync(path.resolve(outDir, 'legacy'), { force: true, recursive: true });
       fs.renameSync(path.resolve(outDir, 'index.html'), path.resolve(outDir, 'index_next.html'));

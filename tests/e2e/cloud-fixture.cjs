@@ -34,6 +34,8 @@ async function installCloudFixture(page, options = {}) {
     deleteCount: 0,
     failPilotUploads: Number(options.failPilotUploads || 0),
     conflictOnce: Boolean(options.conflictOnce),
+    recoveryError: options.recoveryError || null,
+    verifyError: options.verifyError || null,
     session: options.session === false ? null : null,
     pilots: new Map(),
     snapshots: new Map(),
@@ -99,6 +101,7 @@ async function installCloudFixture(page, options = {}) {
     else state.cloudRequests.push({ method, path, url: request.url() });
 
     if (path === '/auth/v1/token') {
+      if (body.password === 'wrong-password') return jsonResponse(route, { error_description: 'Invalid login credentials' }, 400);
       state.session = {
         access_token: 'test-access-token',
         refresh_token: 'test-refresh-token',
@@ -107,6 +110,7 @@ async function installCloudFixture(page, options = {}) {
       return jsonResponse(route, state.session);
     }
     if (path === '/auth/v1/verify') {
+      if (state.verifyError) return jsonResponse(route, state.verifyError.body, state.verifyError.status || 400);
       state.session = {
         access_token: 'invite-access-token',
         refresh_token: 'invite-refresh-token',
@@ -118,7 +122,10 @@ async function installCloudFixture(page, options = {}) {
       return state.session ? jsonResponse(route, state.session.user) : jsonResponse(route, { message: 'No session' }, 401);
     }
     if (path === '/auth/v1/user' && method === 'PUT') return jsonResponse(route, state.session?.user || { id: 'user-1' });
-    if (path === '/auth/v1/recover') return jsonResponse(route, {});
+    if (path === '/auth/v1/recover') {
+      if (state.recoveryError) return jsonResponse(route, state.recoveryError.body, state.recoveryError.status || 400);
+      return jsonResponse(route, {});
+    }
     if (path === '/auth/v1/logout') {
       state.session = null;
       return jsonResponse(route, {});
