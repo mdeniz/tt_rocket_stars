@@ -42,6 +42,15 @@ export interface CoreScreensAdapter {
   show(screen: CoreScreenId): boolean;
   active(): CoreScreenId | null;
   refresh(screen?: CoreScreenId): void;
+  selectMissionOperation(operation: 'mul' | 'div' | 'mix'): boolean;
+  selectMissionMode(mode: 'practice' | 'speed' | 'timed' | 'exam'): boolean;
+  setMissionDuration(minutes: 5 | 10 | 15): boolean;
+  startMission(): boolean;
+  selectRocketFamily(family: string): boolean;
+  setGarageCategory(category: string): boolean;
+  previewGaragePart(partId: string): boolean;
+  activateGaragePart(partId: string): boolean;
+  refreshAchievements(): boolean;
 }
 
 export interface PilotAdapter {
@@ -112,6 +121,23 @@ function isCoreScreenId(value: string): value is CoreScreenId {
   return CORE_SCREEN_IDS.includes(value as CoreScreenId);
 }
 
+type LegacyAction = (...args: unknown[]) => unknown;
+
+function callLegacyAction(name: string, ...args: unknown[]): boolean {
+  const action = (window as unknown as Record<string, unknown>)[name];
+  if (typeof action !== 'function') return false;
+  try {
+    (action as LegacyAction)(...args);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function callLegacyStringAction(name: string, value: string): boolean {
+  return value.trim() ? callLegacyAction(name, value) : false;
+}
+
 export function createCoreScreensAdapter(): CoreScreensAdapter {
   const active = () => {
     const screen = Array.from(document.querySelectorAll<HTMLElement>('.appscreen'))
@@ -141,6 +167,15 @@ export function createCoreScreensAdapter(): CoreScreensAdapter {
       const fn = name && (window as unknown as Record<string, unknown>)[name];
       if (typeof fn === 'function') (fn as () => void)();
     },
+    selectMissionOperation: operation => callLegacyAction('choose', 'op', operation),
+    selectMissionMode: mode => callLegacyAction('choose', 'mode', mode),
+    setMissionDuration: minutes => callLegacyAction('chooseDuration', minutes),
+    startMission: () => callLegacyAction('start'),
+    selectRocketFamily: family => callLegacyStringAction('selectFamily', family),
+    setGarageCategory: category => callLegacyStringAction('setGarageCat', category),
+    previewGaragePart: partId => callLegacyStringAction('previewPart', partId),
+    activateGaragePart: partId => callLegacyStringAction('garageAction', partId),
+    refreshAchievements: () => callLegacyAction('renderAwards'),
   };
 }
 

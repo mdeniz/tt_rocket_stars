@@ -32,6 +32,22 @@ The application SHALL preserve mission selection, timers, auto-next behavior, au
 - **THEN** the visible rocket and coin balance update
 - **AND** the pilot-local garage storage remains compatible with existing backups
 
+### Requirement: React actions delegate through a fail-closed legacy boundary
+
+The application SHALL expose typed adapter actions for mission setup, rocket customization, and achievement refresh without allowing React components to access legacy globals directly.
+
+#### Scenario: Legacy action is available
+
+- **WHEN** a React screen invokes a supported mission or garage action
+- **THEN** the adapter forwards the validated action and arguments to the corresponding legacy function
+- **AND** the existing gameplay and persistence runtime remains authoritative
+
+#### Scenario: Legacy action is unavailable
+
+- **WHEN** a supported legacy action is missing or throws
+- **THEN** the adapter returns `false`
+- **AND** the React screen remains usable without a runtime exception or storage mutation
+
 ### Requirement: Core screens are accessible in both supported languages
 
 The application SHALL expose English and Spanish labels, status text, and accessible names for migrated core screen controls.
@@ -51,4 +67,3 @@ The application SHALL retain stable screen identifiers and legacy behavior until
 - **WHEN** the React core-screen bridge is disabled or unavailable
 - **THEN** the legacy screen remains navigable
 - **AND** no pilot progress or backup data is removed
-

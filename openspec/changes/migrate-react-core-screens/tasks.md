@@ -2,9 +2,9 @@
 
 ## 1. Contracts and adapters
 
-- [ ] 1.1 Add the React core-screen ownership flag and typed screen adapter contracts; verify the feature-disabled path keeps all existing legacy screens visible.
-- [ ] 1.2 Add legacy adapter methods for navigation, refresh, mission start, rocket actions, and achievement rendering without changing storage keys; verify adapter unit tests cover unavailable globals and successful delegation.
-- [ ] 1.3 Add the OpenSpec capability and update the changelog with the incremental migration boundary; verify `openspec validate --strict` passes.
+- [x] 1.1 Add the React core-screen ownership flag and typed screen adapter contracts; verify the feature-disabled path keeps all existing legacy screens visible.
+- [x] 1.2 Add legacy adapter methods for navigation, refresh, mission start, rocket actions, and achievement rendering without changing storage keys; verify adapter unit tests cover unavailable globals and successful delegation.
+- [x] 1.3 Add the OpenSpec capability and update the changelog with the incremental migration boundary; verify `openspec validate --strict` passes.
 
 ## 2. Dashboard and progress
 
@@ -31,4 +31,3 @@
 ## Workflow follow-up
 
 - Archive the OpenSpec change after the PR is merged and the accepted capability is synchronized.
-
