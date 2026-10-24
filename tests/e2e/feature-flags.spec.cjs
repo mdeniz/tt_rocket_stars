@@ -135,3 +135,52 @@ test('React mission setup delegates supported configuration to gameplay', async 
   await expect(page.locator('#play')).toBeVisible();
   await expect(page.locator('#question')).not.toHaveText('');
 });
+
+async function launchReactMission(page, mode = 'practice') {
+  await page.addInitScript(() => {
+    window.__TTFeatureFlags = { reactCoreScreens: true };
+  });
+  await page.goto('/');
+  await page.locator('#reactLaunchSplash').click();
+  const skip = page.locator('#ttTourSkip');
+  await skip.waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
+  if (await skip.isVisible().catch(() => false)) await skip.click();
+  await page.locator('.ttReactCoreNav button').nth(1).click();
+  const setup = page.locator('.ttReactMissionSetup');
+  await expect(setup).toBeVisible();
+  if (mode === 'timed') {
+    await setup.getByRole('button', { name: /Long mission/ }).click();
+    await setup.getByRole('button', { name: '5 minutes', exact: true }).click();
+  }
+  await setup.getByRole('button', { name: /Launch mission/ }).click();
+  await expect(page.locator('#play')).toBeVisible();
+  return setup;
+}
+
+test('React practice flow preserves legacy answer progression, audio, and local persistence', async ({ page }) => {
+  await launchReactMission(page);
+  const initialQuestion = await page.locator('#question').innerText();
+  const match = initialQuestion.match(/(\d+)\s*[×x]\s*(\d+)/);
+  expect(match).not.toBeNull();
+  const correctAnswer = String(Number(match[1]) * Number(match[2]));
+
+  for (const digit of correctAnswer) await page.getByRole('button', { name: digit, exact: true }).click();
+  await page.getByRole('button', { name: /Check|Comprobar/ }).click();
+
+  await expect(page.locator('#answer')).toBeDisabled();
+  await expect(page.locator('#score')).toContainText('10');
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('cosmotablas-v2'))).not.toBeNull();
+  await expect.poll(() => page.locator('#question').innerText()).not.toBe(initialQuestion, { timeout: 3000 });
+  await expect(page.locator('#answer')).toBeEnabled();
+  expect(await page.evaluate(() => typeof window.TTAudio?.sfx)).toBe('function');
+});
+
+test('React timed flow exposes a running legacy timer and remains locally playable', async ({ page }) => {
+  await launchReactMission(page, 'timed');
+  const initialClock = await page.locator('#clock').innerText();
+  expect(initialClock).toMatch(/5:0\d/);
+  await expect.poll(() => page.locator('#clock').innerText(), { timeout: 3000 }).not.toBe(initialClock);
+  await expect(page.locator('#question')).not.toHaveText('');
+  await expect(page.locator('#answer')).toBeEnabled();
+  expect(await page.evaluate(() => typeof window.TTAudio?.sfx)).toBe('function');
+});
