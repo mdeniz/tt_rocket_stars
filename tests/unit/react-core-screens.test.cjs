@@ -1,0 +1,32 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+
+const root = path.resolve(__dirname, '../..');
+const shell = fs.readFileSync(path.join(root, 'src/shell.tsx'), 'utf8');
+const english = JSON.parse(fs.readFileSync(path.join(root, 'src/locales/en.json'), 'utf8'));
+const spanish = JSON.parse(fs.readFileSync(path.join(root, 'src/locales/es.json'), 'utf8'));
+
+test('React core composition uses stable legacy hosts and reversible portals', () => {
+  assert.match(shell, /createPortal\(/);
+  assert.match(shell, /data-react-core-host/);
+  assert.match(shell, /selector: '#dashboard'/);
+  assert.match(shell, /selector: '#insights'/);
+  assert.match(shell, /element\.remove\(\)/);
+  assert.match(shell, /window\.TTCoreScreensAdapter\?\.show\(action\)/);
+});
+
+test('React core composition labels are complete in English and Spanish', () => {
+  for (const key of [
+    'ui.core.dashboard',
+    'ui.core.insights',
+    'ui.core.openProgress',
+    'ui.core.openDashboard',
+  ]) {
+    assert.equal(typeof english[key], 'string', `English locale is missing ${key}`);
+    assert.equal(typeof spanish[key], 'string', `Spanish locale is missing ${key}`);
+    assert.notEqual(english[key], '');
+    assert.notEqual(spanish[key], '');
+  }
+});

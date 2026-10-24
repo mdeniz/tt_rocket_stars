@@ -106,5 +106,7 @@
   "ui.core.home": "Nueva misión",
   "ui.core.insights": "Progreso",
   "ui.core.garage": "Garaje espacial",
-  "ui.core.awards": "Logros"
+  "ui.core.awards": "Logros",
+  "ui.core.openProgress": "Ver progreso",
+  "ui.core.openDashboard": "Volver al centro de mando"
 }
