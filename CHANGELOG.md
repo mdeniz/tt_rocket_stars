@@ -24,6 +24,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 - Added an opt-in React dashboard and progress composition around stable legacy hosts with English and Spanish labels; legacy navigation and persistence remain authoritative.
 - Added focused offline and pilot-local Playwright coverage for the React dashboard and progress adapter boundary.
 - Added Playwright coverage for React-launched practice and timed missions, proving legacy answer progression, auto-next, audio, timer, and local persistence remain available.
+- Added feature-flagged React garage controls and localized achievement progress composition while keeping legacy inventory, rewards, and pilot-local persistence authoritative.
 
 ## [0.1.1] - 2026-10-22
 ### Changed

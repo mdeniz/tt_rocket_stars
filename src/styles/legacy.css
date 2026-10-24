@@ -1852,4 +1852,15 @@ body.ttReactCoreScreensEnabled #home.ttReactMissionSetupEnabled>section.card{dis
 .ttReactGarageActions .btn{font-size:.78rem;padding:7px 9px}
 @media(max-width:700px){.ttReactGarageHeading{flex-direction:column}.ttReactGarageItems{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:430px){.ttReactGarageItems{grid-template-columns:minmax(0,1fr)}}
+.ttReactAchievementsPanel{margin:16px auto;max-width:980px}
+.ttReactAchievementsHeading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.ttReactAchievementsHeading h2{margin:0;color:#fff}
+.ttReactAchievementsHeading p{margin:6px 0 0;color:#c6d4f0}
+.ttReactAchievementsList{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:16px}
+.ttReactAchievement{display:flex;align-items:flex-start;gap:10px;padding:12px;border:1px solid rgba(157,196,255,.32);border-radius:12px;background:rgba(12,27,61,.42)}
+.ttReactAchievement>span{font-size:1.35rem;line-height:1}
+.ttReactAchievement strong{color:#fff}
+.ttReactAchievement p{margin:4px 0 0;color:#c6d4f0;font-size:.86rem}
+.ttReactAchievement.locked{opacity:.72}
+@media(max-width:700px){.ttReactAchievementsHeading{flex-direction:column}.ttReactAchievementsList{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:560px){.ttReactCoreNav{width:calc(100% - 16px);justify-content:space-between}.ttReactCoreNav button{min-width:0;flex:1}.ttReactCoreNav button small{font-size:.58rem}}

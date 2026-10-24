@@ -206,3 +206,31 @@ test('React garage controls delegate preview and equip actions to pilot-local st
   await firstItem.getByRole('button', { name: /Equip|Equipped|Equipado/ }).click();
   await expect.poll(() => page.evaluate(() => localStorage.getItem('tt-rocket-garage-v1'))).not.toBeNull();
 });
+
+test('React achievements render in both locales and refresh through the legacy adapter', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.__TTFeatureFlags = { reactCoreScreens: true };
+    localStorage.setItem('cosmotablas-language', 'en');
+  });
+  await page.goto('/');
+  await page.locator('#reactLaunchSplash').click();
+  const skip = page.locator('#ttTourSkip');
+  await skip.waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
+  if (await skip.isVisible().catch(() => false)) await skip.click();
+  await page.locator('.ttReactCoreNav button').nth(4).click();
+  const panel = page.locator('.ttReactAchievementsPanel');
+  await expect(panel).toBeVisible();
+  await expect(panel).toContainText('Achievement progress');
+  await expect(panel.locator('.ttReactAchievement')).not.toHaveCount(0);
+  await panel.getByRole('button', { name: 'Refresh achievements' }).click();
+
+  await page.evaluate(() => localStorage.setItem('cosmotablas-language', 'es'));
+  await page.reload();
+  await page.locator('#reactLaunchSplash').click();
+  const spanishSkip = page.locator('#ttTourSkip');
+  await spanishSkip.waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
+  if (await spanishSkip.isVisible().catch(() => false)) await spanishSkip.click();
+  await page.locator('.ttReactCoreNav button').nth(4).click();
+  await expect(page.locator('.ttReactAchievementsPanel')).toContainText('Progreso de logros');
+  await expect(page.locator('.ttReactAchievementsPanel .ttReactAchievement')).not.toHaveCount(0);
+});

@@ -255,6 +255,74 @@ function ReactGaragePanelHost({ enabled, locale }: { enabled: boolean; locale: L
   return host ? createPortal(<ReactGaragePanel locale={locale} />, host) : null;
 }
 
+type ReactAchievement = { title: string; description: string; locked: boolean };
+
+function readReactAchievements(): ReactAchievement[] {
+  return Array.from(document.querySelectorAll<HTMLElement>('#awardGrid .awardcard')).map(card => ({
+    title: card.querySelector('h3')?.textContent || '',
+    description: card.querySelector('p')?.textContent || '',
+    locked: card.classList.contains('locked'),
+  }));
+}
+
+function ReactAchievementsPanel({ locale }: { locale: Locale }) {
+  const copy = locale as Record<string, string>;
+  const [achievements, setAchievements] = useState<ReactAchievement[]>(readReactAchievements);
+  const sync = () => setAchievements(readReactAchievements());
+
+  useEffect(() => {
+    const awardGrid = document.getElementById('awardGrid');
+    if (!awardGrid) return;
+    const initialSync = window.setTimeout(sync, 0);
+    const observer = new MutationObserver(sync);
+    observer.observe(awardGrid, { childList: true, subtree: true });
+    return () => {
+      window.clearTimeout(initialSync);
+      observer.disconnect();
+    };
+  }, []);
+
+  return (
+    <section className="card ttReactAchievementsPanel" aria-labelledby="ttReactAchievementsTitle">
+      <div className="ttReactAchievementsHeading">
+        <div>
+          <h2 id="ttReactAchievementsTitle">{copy['ui.achievements.controls']}</h2>
+          <p>{copy['ui.achievements.description']}</p>
+        </div>
+        <button type="button" className="btn alt" onClick={() => {
+          if (window.TTCoreScreensAdapter?.refreshAchievements()) sync();
+        }}>{copy['ui.achievements.refresh']}</button>
+      </div>
+      <div className="ttReactAchievementsList" aria-live="polite">
+        {achievements.map((achievement, index) => (
+          <article className={`ttReactAchievement ${achievement.locked ? 'locked' : ''}`} key={`${achievement.title}-${index}`}>
+            <span aria-hidden="true">{achievement.locked ? '🔒' : '🏅'}</span>
+            <div><strong>{achievement.title}</strong><p>{achievement.description}</p></div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ReactAchievementsPanelHost({ enabled, locale }: { enabled: boolean; locale: Locale }) {
+  const [host, setHost] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    if (!enabled) return;
+    const awards = document.getElementById('awards');
+    if (!awards) return;
+    const element = document.createElement('div');
+    element.dataset.reactAchievementsPanel = 'true';
+    awards.prepend(element);
+    setHost(element);
+    return () => {
+      element.remove();
+      setHost(null);
+    };
+  }, [enabled]);
+  return host ? createPortal(<ReactAchievementsPanel locale={locale} />, host) : null;
+}
+
 function CoreScreenComposition({
   screen,
   action,
@@ -335,6 +403,7 @@ function ReactCoreScreens() {
     <>
     <ReactMissionSetupHost enabled={enabled} locale={currentLocale()} />
     <ReactGaragePanelHost enabled={enabled} locale={currentLocale()} />
+    <ReactAchievementsPanelHost enabled={enabled} locale={currentLocale()} />
     {compositionHosts.map(({ screen, action, actionKey, element }) => createPortal(
       <CoreScreenComposition screen={screen} action={action} actionKey={actionKey} locale={locale} />,
       element,

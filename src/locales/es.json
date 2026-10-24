@@ -138,5 +138,8 @@
   "ui.garage.flame": "Fuego",
   "ui.garage.window": "Ventana",
   "ui.garage.extra": "Extras",
-  "ui.garage.support": "Naves de apoyo"
+  "ui.garage.support": "Naves de apoyo",
+  "ui.achievements.controls": "Progreso de logros",
+  "ui.achievements.description": "Los hitos y recompensas de tu piloto local.",
+  "ui.achievements.refresh": "Actualizar logros"
 }
