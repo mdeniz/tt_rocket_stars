@@ -14,3 +14,11 @@ test('legacy splash delegates fullscreen to the typed adapter when available', (
   assert.match(splash, /window\.TTFullscreenAdapter\?\.requestFullscreen/);
   assert.match(splash, /document\.documentElement\.requestFullscreen/);
 });
+
+test('pilot adapter delegates selection and creation to the legacy persistence boundary', () => {
+  assert.match(adapter, /createPilotAdapter/);
+  assert.match(adapter, /store\?\.read\(\)\.some\(profile => profile\.id === id\)/);
+  assert.match(adapter, /store\.choose\(id\)/);
+  assert.match(adapter, /store\.create\(name\)/);
+  assert.match(adapter, /installPilotAdapter/);
+});
