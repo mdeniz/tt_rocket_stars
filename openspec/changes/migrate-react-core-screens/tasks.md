@@ -20,7 +20,7 @@
 
 - [x] 4.1 Add React garage controls that delegate part selection, purchase, equip, and coin refresh actions; verify pilot-local garage and backup compatibility with unit tests.
 - [x] 4.2 Add React achievements composition and refresh adapter; verify achievement state remains isolated per pilot and is rendered in both locales.
-- [ ] 4.3 Add Playwright coverage for garage interaction, achievement visibility, and rollback to legacy ownership when the flag is disabled.
+- [x] 4.3 Add Playwright coverage for garage interaction, achievement visibility, and rollback to legacy ownership when the flag is disabled.
 
 ## 5. Integration verification
 

@@ -234,3 +234,25 @@ test('React achievements render in both locales and refresh through the legacy a
   await expect(page.locator('.ttReactAchievementsPanel')).toContainText('Progreso de logros');
   await expect(page.locator('.ttReactAchievementsPanel .ttReactAchievement')).not.toHaveCount(0);
 });
+
+test('disabling the React core flag rolls back to legacy garage and achievements ownership', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('#reactLaunchSplash').click();
+  await expect(page.locator('.ttReactCoreNav')).toHaveCount(0);
+  await expect(page.locator('.ttReactGaragePanel')).toHaveCount(0);
+  await expect(page.locator('.ttReactAchievementsPanel')).toHaveCount(0);
+  await expect(page.locator('#dashboard')).toBeVisible();
+  const tour = page.locator('#ttTourShade.ttTourVisible');
+  await tour.waitFor({ state: 'visible', timeout: 5000 }).then(() =>
+    tour.locator('#ttTourSkip').click({ force: true }),
+  ).catch(() => {});
+
+  await page.locator('#menuBtn').click();
+  await page.locator('.drawerItem[data-section="garage"]').click();
+  await expect(page.locator('#garage')).toBeVisible();
+  await expect(page.locator('#garageItems .garageItem')).not.toHaveCount(0);
+  await page.locator('#menuBtn').click();
+  await page.locator('.drawerItem[data-section="awards"]').click();
+  await expect(page.locator('#awards')).toBeVisible();
+  await expect(page.locator('#awardGrid .awardcard')).not.toHaveCount(0);
+});
