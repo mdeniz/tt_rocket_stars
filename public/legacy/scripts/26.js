@@ -40,6 +40,7 @@
    settings.scrollIntoView({behavior:'instant',block:'start'});
   }
   const current=panels.find(({panel})=>panel.classList.contains('ttSettingsActive'))?.key||panels[0]?.key;activate(current);
+  window.TTSettingsAdapter={showSettingsPanel:panel=>activate(panels.some(({key})=>key===panel)?panel:current)};
   const langObs=new MutationObserver(()=>{const spanish=document.documentElement.lang==='es';nav.querySelectorAll('small').forEach(el=>{el.textContent=el.dataset[spanish?'es':'en']})});
   langObs.observe(document.documentElement,{attributes:true,attributeFilter:['lang']});
  }

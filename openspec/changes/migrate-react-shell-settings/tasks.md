@@ -9,7 +9,7 @@
 
 - [x] 2.1 Implement splash entry and fullscreen adapter behavior; verify desktop, touch, unsupported, and rejected fullscreen E2E scenarios.
 - [x] 2.2 Implement pilot selection and creation through the existing persistence adapter; verify per-pilot isolation and local-only startup.
-- [ ] 2.3 Implement settings category navigation and translated labels; verify sound, language, theme, backups, reset, pilot, and optional cloud access remain reachable.
+- [x] 2.3 Implement settings category navigation and translated labels; verify sound, language, theme, backups, reset, pilot, and optional cloud access remain reachable.
 
 ## 3. Compatibility and verification
 
