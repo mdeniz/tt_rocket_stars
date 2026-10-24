@@ -8,15 +8,15 @@
 
 ## 2. Validate the technical contracts
 
-- [ ] 2.1 Audit the production artifact against `technical/offline-web-app`; verify the absence of remote dependencies and self-contained output with `npm run build` and `node scripts/check-dist.cjs`.
-- [ ] 2.2 Cover startup, first tap, restricted storage, orientation changes, and persistence with browser flows; verify the configured suite with `npm run test:e2e` and document which WebKit behavior is not equivalent to iOS Safari.
-- [ ] 2.3 Confirm translation coverage and legacy-script contracts; verify with `npm run check:legacy`, unit tests, and the complete build.
+- [x] 2.1 Audit the production artifact against `technical/offline-web-app`; verify the absence of remote dependencies and self-contained output with `npm run build` and `node scripts/check-dist.cjs`.
+- [x] 2.2 Cover startup, first tap, restricted storage, orientation changes, and persistence with browser flows; verify the configured suite with `npm run test:e2e` and document which WebKit behavior is not equivalent to iOS Safari.
+- [x] 2.3 Confirm translation coverage and legacy-script contracts; verify with `npm run check:legacy`, unit tests, and the complete build.
 
 ## 3. Integrate the specifications into project workflow
 
-- [ ] 3.1 Review `README.md` and `AGENTS.md` to link the OpenSpec catalog and maintain one operational source of truth; verify that documented commands and paths exist.
-- [ ] 3.2 Convert every future extraction or behavior change into an OpenSpec proposal with requirements and scenarios; verify the process with `openspec status` and `openspec validate`.
-- [ ] 3.3 Run final validation for this baseline and resolve inconsistencies across proposal, specs, design, and tasks; verify with `openspec validate establish-product-and-technical-specs --strict`.
+- [x] 3.1 Review `README.md` and `AGENTS.md` to link the OpenSpec catalog and maintain one operational source of truth; verify that documented commands and paths exist.
+- [x] 3.2 Convert every future extraction or behavior change into an OpenSpec proposal with requirements and scenarios; verify the process with `openspec status` and `openspec validate`.
+- [x] 3.3 Run final validation for this baseline and resolve inconsistencies across proposal, specs, design, and tasks; verify with `openspec validate establish-product-and-technical-specs --strict`.
 
 ## Workflow follow-up
 
