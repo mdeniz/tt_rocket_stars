@@ -13,8 +13,7 @@
     }
    }catch(e){console.warn('Safari profile recovery',e)}
    try{if(typeof navigate==='function')navigate('dashboard')}catch(e){console.warn('Safari navigation recovery',e)}
-   splash.classList.add('hidden');
-   splash.setAttribute('aria-hidden','true');
+   window.TTAccessibility.hideRegion(splash,document.getElementById('menuBtn'));
    var dash=document.getElementById('dashboard');
    if(dash)dash.classList.remove('hidden');
   },650);
@@ -22,4 +21,3 @@
  splash.addEventListener('click',recover,true);
  splash.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' ')recover()},true);
 })();
-
