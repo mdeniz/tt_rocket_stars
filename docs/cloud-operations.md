@@ -61,7 +61,8 @@ backup before deletion when they may need to restore a local pilot.
 
 ## Maintainer setup checklist
 
-1. Follow [`docs/supabase-brevo-setup.md`](supabase-brevo-setup.md).
+1. Follow [`docs/supabase-brevo-setup.md`](supabase-brevo-setup.md) for the
+   current Gmail SMTP configuration.
 2. Apply the migration and verify RLS policies in the Supabase SQL editor.
    Apply all migrations in timestamp order, including the cloud access
    hardening migration, before enabling production synchronization.
@@ -73,8 +74,8 @@ backup before deletion when they may need to restore a local pilot.
 6. If email delivery or quota fails, leave cloud access disabled and verify that
    `npm run dev`, local gameplay, and backup/restore still work.
 
-Never commit `.env.local`, service-role keys, SMTP passwords, Brevo API keys,
-management tokens, access tokens, or private dashboard URLs.
+Never commit `.env.local`, service-role keys, SMTP passwords, management tokens,
+access tokens, or private dashboard URLs.
 
 ## Traceability
 
@@ -82,5 +83,5 @@ management tokens, access tokens, or private dashboard URLs.
 - Cloud sync proposal: [`openspec/changes/define-cloud-progress-sync`](../openspec/changes/define-cloud-progress-sync/)
 - Implementation issue: [#12](https://github.com/mdeniz/tt_rocket_stars/issues/12)
 - Navigation bug issue: [#21](https://github.com/mdeniz/tt_rocket_stars/issues/21)
-- SMTP setup issue: [#7](https://github.com/mdeniz/tt_rocket_stars/issues/7)
+- SMTP/provider operations issue: [#29](https://github.com/mdeniz/tt_rocket_stars/issues/29)
 - Supabase setup issue: [#6](https://github.com/mdeniz/tt_rocket_stars/issues/6)

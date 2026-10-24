@@ -14,7 +14,7 @@ The browser may receive only these public values:
   for authentication redirects.
 
 Never place a Supabase service-role key, Supabase secret key, SMTP password,
-Brevo API key, or Supabase management token in the repository, `.env.example`,
+or Supabase management token in the repository, `.env.example`,
 the browser bundle, or GitHub Actions logs.
 
 ## Local configuration
@@ -85,8 +85,7 @@ the app supplies a path-specific redirect:
 
 The static app verifies `token_hash` through Supabase Auth and removes it from
 the browser URL after verification. Keep email-provider link tracking disabled;
-authentication links are single-use and must not be rewritten. Brevo must not
-be used for this flow while its click tracker rewrites authentication URLs.
+authentication links are single-use and must not be rewritten.
 
 Gmail sender limits and account policies can change. Treat quota exhaustion or
 SMTP delivery failure as an authentication-delivery outage; local gameplay and
