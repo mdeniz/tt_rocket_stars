@@ -101,5 +101,10 @@
   "ui.100": "Choose a pilot or create a new one. Each pilot keeps separate progress on this device.",
   "ui.101": "Please enter a unique pilot name.",
   "ui.102": "New pilot name",
-  "ui.103": "+ Create"
+  "ui.103": "+ Create",
+  "ui.core.dashboard": "Mission Control",
+  "ui.core.home": "New Mission",
+  "ui.core.insights": "Progress",
+  "ui.core.garage": "Rocket Garage",
+  "ui.core.awards": "Achievements"
 }

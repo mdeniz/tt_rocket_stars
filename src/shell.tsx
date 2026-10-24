@@ -2,11 +2,74 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import en from './locales/en.json';
 import es from './locales/es.json';
+import type { CoreScreenId } from './lib/shell-adapters';
 
 type Locale = typeof en;
 
 function currentLocale(): Locale {
   return document.documentElement.lang === 'es' ? es : en;
+}
+
+const coreScreenOrder: readonly CoreScreenId[] = ['dashboard', 'home', 'insights', 'garage', 'awards'];
+const coreScreenCopy: Record<CoreScreenId, [string, string, string]> = {
+  dashboard: ['🛰️', 'Mission Control', 'Centro de mando'],
+  home: ['🚀', 'New Mission', 'Nueva misión'],
+  insights: ['📊', 'Progress', 'Progreso'],
+  garage: ['🛠️', 'Rocket Garage', 'Garaje espacial'],
+  awards: ['🏆', 'Achievements', 'Logros'],
+};
+
+function coreScreensFeatureEnabled(): boolean {
+  const buildEnv = (import.meta as ImportMeta & { env?: Record<string, string> }).env;
+  return buildEnv?.VITE_REACT_CORE_SCREENS === 'true'
+    || window.__TTFeatureFlags?.reactCoreScreens === true;
+}
+
+function ReactCoreScreens() {
+  const [enabled] = useState(coreScreensFeatureEnabled);
+  const [active, setActive] = useState<CoreScreenId | null>(null);
+
+  useEffect(() => {
+    if (!enabled) return;
+    document.body.classList.add('ttReactCoreScreensEnabled');
+    const sync = () => setActive(window.TTCoreScreensAdapter?.active() || null);
+    sync();
+    const observer = new MutationObserver(sync);
+    observer.observe(document.body, { subtree: true, attributes: true, attributeFilter: ['class'] });
+    return () => {
+      observer.disconnect();
+      document.body.classList.remove('ttReactCoreScreensEnabled');
+    };
+  }, [enabled]);
+
+  if (!enabled) return null;
+  const locale = currentLocale();
+  const localizedCoreCopy = locale as Record<string, string>;
+  const isSpanish = document.documentElement.lang === 'es';
+  return (
+    <nav className="ttReactCoreNav" aria-label={isSpanish ? 'Pantallas principales' : 'Core screens'}>
+      {coreScreenOrder.map(screen => {
+        const [emoji, english, spanish] = coreScreenCopy[screen];
+        return (
+          <button
+            type="button"
+            key={screen}
+            className={active === screen ? 'active' : ''}
+            aria-current={active === screen ? 'page' : undefined}
+            onClick={() => {
+              if (window.TTCoreScreensAdapter?.show(screen)) setActive(screen);
+            }}
+          >
+            <span aria-hidden="true">{emoji}</span>
+            <small>{isSpanish ? spanish : english}</small>
+          </button>
+        );
+      })}
+      <span className="sr-only" aria-live="polite">
+        {active ? (isSpanish ? `Pantalla: ${localizedCoreCopy[`ui.core.${active}`] || coreScreenCopy[active][2]}` : `Screen: ${localizedCoreCopy[`ui.core.${active}`] || coreScreenCopy[active][1]}`) : ''}
+      </span>
+    </nav>
+  );
 }
 
 /**
@@ -125,6 +188,7 @@ export function ReactShell() {
 
   return (
     <>
+    <ReactCoreScreens />
     {settingsNavigation}
     <section
       id="reactLaunchSplash"
