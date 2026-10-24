@@ -24,9 +24,9 @@
 
 ## 5. Integration verification
 
-- [ ] 5.1 Run typecheck, unit tests, all Playwright browser projects, build, self-contained distribution checks, and `git diff --check`; record exact results in the workflow evidence.
-- [ ] 5.2 Perform empirical Chrome DevTools verification for each migrated screen when available, or record the integration as unavailable without claiming it passed.
-- [ ] 5.3 Review the complete issue acceptance matrix and keep the issue open if any behavior remains only partially migrated or unverified.
+- [x] 5.1 Run typecheck, unit tests, all Playwright browser projects, build, self-contained distribution checks, and `git diff --check`; record exact results in the workflow evidence.
+- [x] 5.2 Perform empirical Chrome DevTools verification for each migrated screen when available, or record the integration as unavailable without claiming it passed.
+- [x] 5.3 Review the complete issue acceptance matrix and keep the issue open if any behavior remains only partially migrated or unverified.
 
 ## Workflow follow-up
 
