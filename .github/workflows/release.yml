@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   publish:
@@ -31,8 +32,16 @@ jobs:
         run: |
           node -e 'const fs=require("node:fs");const tag=process.env.TAG;const version=require("./package.json").version;if(tag!==`v${version}`)throw Error(`Tag ${tag} must match package version v${version}`);if(!fs.readFileSync("CHANGELOG.md","utf8").includes(`## [${version}] -`))throw Error(`CHANGELOG.md has no entry for ${version}`)'
       - run: npm run check
+      - name: Prepare release asset
+        env:
+          TAG: ${{ github.ref_name }}
+        run: cp dist/index_next.html "tt-rocket-stars-$TAG.html"
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
-        run: gh release create "$TAG" "dist/index_next.html#tt-rocket-stars-$TAG.html" --verify-tag --title "TT Rocket Stars $TAG" --generate-notes
+        run: gh release create "$TAG" "tt-rocket-stars-$TAG.html" --verify-tag --title "TT Rocket Stars $TAG" --generate-notes
+      - name: Refresh stable Pages entrypoint
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run pages.yml --repo "$GITHUB_REPOSITORY" --ref main
