@@ -11,6 +11,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 - A consent-aware, provider-independent telemetry boundary with allowlisted aggregate events and no default network activity.
 - Sampled aggregate mission and sanitized runtime-error hooks with bounded in-memory retention.
 - Cloud access is hidden by default behind an explicit development flag. GitHub Pages now keeps the latest release at `index.html` and publishes the current build separately at `index_next.html`.
+- Added the initial typed shell contract for the incremental React migration.
 - Added validated local profile, backup, and cloud snapshot persistence contracts with storage fallback and legacy-key compatibility.
 
 ## [0.1.1] - 2026-10-22
