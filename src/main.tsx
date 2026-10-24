@@ -1,6 +1,7 @@
 import { createRoot } from 'react-dom/client';
 import type { ReactNode } from 'react';
 import { ReactShell } from './shell';
+import { installFullscreenAdapter } from './lib/shell-adapters';
 
 export const REACT_ROOT_ID = 'react-root';
 
@@ -20,6 +21,7 @@ export function mountReactRoot(content: ReactNode = null): void {
  * Legacy scripts keep their existing order and remain the active UI owners.
  */
 export function bootstrapReactShell(): void {
+  installFullscreenAdapter();
   const mount = () => mountReactRoot(<ReactShell />);
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', mount, { once: true });

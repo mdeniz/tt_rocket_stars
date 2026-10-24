@@ -1,14 +1,18 @@
 const {test,expect}=require('@playwright/test');
 const packageJson=require('../../package.json');
 
-async function installFullscreenProbe(page,{touch=false}={}){
- await page.addInitScript(({touch})=>{
+async function installFullscreenProbe(page,{touch=false,fullscreen='resolve'}={}){
+ await page.addInitScript(({touch,fullscreen})=>{
   Object.defineProperty(Navigator.prototype,'maxTouchPoints',{configurable:true,value:touch?5:0});
   const originalMatchMedia=window.matchMedia.bind(window);
   window.matchMedia=query=>query==='(pointer: coarse)'?{matches:touch,media:query,onchange:null,addListener(){},removeListener(){},addEventListener(){},removeEventListener(){},dispatchEvent(){return false}}:originalMatchMedia(query);
   window.__ttFullscreenRequests=0;
-  Object.defineProperty(Element.prototype,'requestFullscreen',{configurable:true,value(){window.__ttFullscreenRequests+=1;return Promise.resolve()}});
- },{touch});
+  if(fullscreen==='unsupported'){
+   Object.defineProperty(Element.prototype,'requestFullscreen',{configurable:true,value:undefined});
+  }else{
+   Object.defineProperty(Element.prototype,'requestFullscreen',{configurable:true,value(){window.__ttFullscreenRequests+=1;return fullscreen==='reject'?Promise.reject(new Error('fullscreen denied')):Promise.resolve()}});
+  }
+ },{touch,fullscreen});
 }
 
 test('one-tap splash opens dashboard without uncaught JS errors',async({page})=>{
@@ -58,6 +62,18 @@ test('touch-oriented splash entry requests fullscreen without blocking navigatio
  await expect(page.locator('#dashboard')).toBeVisible();
  await expect.poll(()=>page.evaluate(()=>window.__ttFullscreenRequests)).toBe(1);
  // Browser emulation verifies capability routing only; it is not real iOS Safari.
+});
+test('touch-oriented splash entry remains usable when fullscreen is unsupported',async({page})=>{
+ await installFullscreenProbe(page,{touch:true,fullscreen:'unsupported'});
+ await page.goto('/');
+ await page.locator('#launchSplash').click();
+ await expect(page.locator('#dashboard')).toBeVisible();
+});
+test('touch-oriented splash entry remains usable when fullscreen is rejected',async({page})=>{
+ await installFullscreenProbe(page,{touch:true,fullscreen:'reject'});
+ await page.goto('/');
+ await page.locator('#launchSplash').click();
+ await expect(page.locator('#dashboard')).toBeVisible();
 });
 test('drawer can be opened and closed',async({page})=>{
  await page.goto('/');await page.locator('#launchSplash').click();
