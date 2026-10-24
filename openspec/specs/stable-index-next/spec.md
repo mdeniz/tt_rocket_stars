@@ -1,7 +1,7 @@
 # stable-index-next Specification
 
 ## Purpose
-TBD - created by archiving change stable-index-next-deployment. Update Purpose after archive.
+The deployment exposes a stable public release and a separate development build for internal verification.
 
 ## Requirements
 

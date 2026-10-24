@@ -1,7 +1,7 @@
 # about-build-version Specification
 
 ## Purpose
-TBD - created by archiving change display-build-version. Update Purpose after archive.
+The About screen exposes the canonical application version while preserving offline, self-contained gameplay.
 
 ## Requirements
 
