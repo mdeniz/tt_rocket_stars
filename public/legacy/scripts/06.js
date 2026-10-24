@@ -43,8 +43,10 @@
     }
     entered=true;
     // This must be called synchronously from the tap/click, before any await.
-    try{if(isTouchOrCoarsePointerDevice()&&!document.fullscreenElement&&document.documentElement.requestFullscreen){
-      const promise=document.documentElement.requestFullscreen({navigationUI:'hide'});
+    try{if(isTouchOrCoarsePointerDevice()&&!document.fullscreenElement&&(window.TTFullscreenAdapter?.requestFullscreen||document.documentElement.requestFullscreen)){
+      const promise=window.TTFullscreenAdapter?.requestFullscreen
+        ? window.TTFullscreenAdapter.requestFullscreen()
+        : document.documentElement.requestFullscreen({navigationUI:'hide'});
       if(promise&&promise.catch)promise.catch(()=>{});
     }}catch(e){}
     // Keep the splash visible until dashboard initialization and rendering have
