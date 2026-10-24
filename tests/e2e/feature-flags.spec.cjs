@@ -82,3 +82,32 @@ test('React core navigation is opt-in and delegates to legacy screens', async ({
   }
   await expect(page.locator('.ttReactCoreNav')).toHaveCount(1);
 });
+
+test('React core navigation stays usable offline and preserves pilot-local identity', async ({ page, context }) => {
+  await page.addInitScript(() => {
+    window.__TTFeatureFlags = { reactCoreScreens: true };
+  });
+  await page.goto('/');
+  await page.locator('#reactLaunchSplash').click();
+  await expect(page.locator('#dashboard')).toBeVisible();
+  const skip = page.locator('#ttTourSkip');
+  await skip.waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
+  if (await skip.isVisible().catch(() => false)) await skip.click();
+
+  const originalPilot = await page.evaluate(() => window.TTProfiles.active().id);
+  await page.locator('.ttReactCoreNav button').nth(2).click();
+  await expect(page.locator('#insights')).toBeVisible();
+
+  await context.setOffline(true);
+  await page.locator('.ttReactCoreNav button').nth(0).press('Enter');
+  await expect(page.locator('#dashboard')).toBeVisible();
+  await page.locator('.ttReactCoreNav button').nth(2).click();
+  await expect(page.locator('#insights')).toBeVisible();
+
+  const secondPilot = await page.evaluate(() => window.TTPilotAdapter.createPilot('Offline Pilot'));
+  expect(secondPilot).toBeTruthy();
+  expect(await page.evaluate(() => window.TTProfiles.active().name)).toBe('Offline Pilot');
+  expect(await page.evaluate(id => window.TTPilotAdapter.choosePilot(id), originalPilot)).toBe(true);
+  expect(await page.evaluate(() => window.TTProfiles.active().id)).toBe(originalPilot);
+  expect(await page.evaluate(() => localStorage.getItem('tt-rocket-profiles-v1'))).not.toBeNull();
+});

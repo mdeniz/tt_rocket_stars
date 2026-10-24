@@ -9,7 +9,7 @@
 ## 2. Dashboard and progress
 
 - [x] 2.1 Add React dashboard/progress screen composition around stable legacy hosts and localized labels; verify English and Spanish rendering with unit tests.
-- [ ] 2.2 Preserve dashboard navigation, pilot-local metrics, history, and keyboard/touch activation through adapters; verify focused Playwright tests cover offline navigation and profile switching.
+- [x] 2.2 Preserve dashboard navigation, pilot-local metrics, history, and keyboard/touch activation through adapters; verify focused Playwright tests cover offline navigation and profile switching.
 
 ## 3. Mission setup and gameplay boundary
 
