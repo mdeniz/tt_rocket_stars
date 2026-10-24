@@ -5,4 +5,4 @@
 - [x] Add unit coverage for the self-contained favicon and focus-management contracts.
 - [x] Add Chromium, Firefox, and WebKit coverage for startup, drawer focus restoration, and reported console diagnostics.
 - [x] Run legacy checks, typecheck, unit tests, build validation, and focused browser verification.
-- [ ] Review and deliver the PR after CI passes.
+- [x] Review and deliver the PR after CI passes.
