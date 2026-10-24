@@ -1,7 +1,7 @@
 # technical/cloud-progress-sync Specification
 
 ## Purpose
-TBD - created by archiving change complete-invited-auth-lifecycle. Update Purpose after archive.
+The optional cloud account flow provides safe invited-user authentication and preserves local gameplay and progress.
 
 ## Requirements
 
