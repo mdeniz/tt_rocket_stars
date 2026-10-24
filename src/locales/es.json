@@ -125,5 +125,18 @@
   "ui.mission.timed": "Misión larga",
   "ui.mission.duration": "Duración de la misión",
   "ui.mission.minutes": "minutos",
-  "ui.mission.start": "¡Despegar! 🚀"
+  "ui.mission.start": "¡Despegar! 🚀",
+  "ui.garage.controls": "Controles del cohete",
+  "ui.garage.description": "Selecciona, previsualiza, compra y equipa piezas desde el garaje local.",
+  "ui.garage.refresh": "Actualizar garaje",
+  "ui.garage.category": "Categorías del garaje",
+  "ui.garage.preview": "Previsualizar",
+  "ui.garage.equip": "Equipar",
+  "ui.garage.body": "Cuerpo",
+  "ui.garage.nose": "Punta",
+  "ui.garage.wings": "Alas",
+  "ui.garage.flame": "Fuego",
+  "ui.garage.window": "Ventana",
+  "ui.garage.extra": "Extras",
+  "ui.garage.support": "Naves de apoyo"
 }

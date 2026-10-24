@@ -125,5 +125,18 @@
   "ui.mission.timed": "Long mission",
   "ui.mission.duration": "Mission duration",
   "ui.mission.minutes": "minutes",
-  "ui.mission.start": "Launch mission 🚀"
+  "ui.mission.start": "Launch mission 🚀",
+  "ui.garage.controls": "Rocket controls",
+  "ui.garage.description": "Select, preview, buy, and equip parts through the local garage.",
+  "ui.garage.refresh": "Refresh garage",
+  "ui.garage.category": "Garage categories",
+  "ui.garage.preview": "Preview",
+  "ui.garage.equip": "Equip",
+  "ui.garage.body": "Body",
+  "ui.garage.nose": "Nose",
+  "ui.garage.wings": "Wings",
+  "ui.garage.flame": "Flame",
+  "ui.garage.window": "Window",
+  "ui.garage.extra": "Extras",
+  "ui.garage.support": "Support ships"
 }

@@ -184,3 +184,25 @@ test('React timed flow exposes a running legacy timer and remains locally playab
   await expect(page.locator('#answer')).toBeEnabled();
   expect(await page.evaluate(() => typeof window.TTAudio?.sfx)).toBe('function');
 });
+
+test('React garage controls delegate preview and equip actions to pilot-local storage', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.__TTFeatureFlags = { reactCoreScreens: true };
+  });
+  await page.goto('/');
+  await page.locator('#reactLaunchSplash').click();
+  const skip = page.locator('#ttTourSkip');
+  await skip.waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
+  if (await skip.isVisible().catch(() => false)) await skip.click();
+
+  await page.locator('.ttReactCoreNav button').nth(3).click();
+  const panel = page.locator('.ttReactGaragePanel');
+  await expect(panel).toBeVisible();
+  await expect(panel.getByRole('button', { name: /Body|Cuerpo/ })).toBeVisible();
+  const firstItem = panel.locator('.ttReactGarageItem').first();
+  await expect(firstItem).toBeVisible();
+  await firstItem.getByRole('button', { name: 'Preview' }).click();
+  await expect(page.locator('#garageItems .garageItem.previewing')).toHaveCount(1);
+  await firstItem.getByRole('button', { name: /Equip|Equipped|Equipado/ }).click();
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('tt-rocket-garage-v1'))).not.toBeNull();
+});

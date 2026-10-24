@@ -43,3 +43,22 @@ test('React mission setup renders all supported configuration controls', () => {
     assert.equal(typeof spanish[key], 'string', `Spanish locale is missing ${key}`);
   }
 });
+
+test('React garage controls delegate inventory actions through the adapter', () => {
+  assert.match(shell, /ReactGaragePanel/);
+  assert.match(shell, /setGarageCategory/);
+  assert.match(shell, /previewGaragePart/);
+  assert.match(shell, /activateGaragePart/);
+  assert.match(shell, /refresh\('garage'\)/);
+  assert.match(fs.readFileSync(path.join(root, 'public/legacy/scripts/03.js'), 'utf8'), /data-garage-part-id/);
+  for (const key of [
+    'ui.garage.controls',
+    'ui.garage.description',
+    'ui.garage.refresh',
+    'ui.garage.preview',
+    'ui.garage.equip',
+  ]) {
+    assert.equal(typeof english[key], 'string', `English locale is missing ${key}`);
+    assert.equal(typeof spanish[key], 'string', `Spanish locale is missing ${key}`);
+  }
+});
