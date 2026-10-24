@@ -1819,5 +1819,11 @@ body:has(#sideDrawer.open) .ttSettingsBottomNav{visibility:hidden!important}
 .ttReactCoreNav button:focus-visible{box-shadow:0 0 0 3px rgba(255,220,126,.85)}
 .ttReactCoreNav button span{font-size:1.15rem;line-height:1}
 .ttReactCoreNav button small{font-size:.68rem;font-weight:700;white-space:nowrap}
+.ttReactCoreComposition{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;padding:10px 12px;border:1px solid rgba(157,196,255,.38);border-radius:14px;background:rgba(12,27,61,.42)}
+.ttReactCoreCompositionLabel{font-weight:800;color:#eef5ff}
+.ttReactCoreCompositionAction{border:1px solid rgba(255,220,126,.7);border-radius:10px;padding:7px 10px;color:#172645;background:#ffdc7e;font:inherit;font-size:.8rem;font-weight:800;cursor:pointer;transition:transform .15s ease,background .15s ease}
+.ttReactCoreCompositionAction:hover{background:#ffe8a9;transform:translateY(-1px)}
+.ttReactCoreCompositionAction:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(255,255,255,.9),0 0 0 5px rgba(255,220,126,.85)}
+@media(prefers-reduced-motion:reduce){.ttReactCoreCompositionAction{transition:none}.ttReactCoreCompositionAction:hover{transform:none}}
 body.ttReactCoreScreensEnabled #ttMainBottomNav{display:none!important}
 @media (max-width:560px){.ttReactCoreNav{width:calc(100% - 16px);justify-content:space-between}.ttReactCoreNav button{min-width:0;flex:1}.ttReactCoreNav button small{font-size:.58rem}}

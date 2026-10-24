@@ -19,15 +19,63 @@ const coreScreenCopy: Record<CoreScreenId, [string, string, string]> = {
   awards: ['🏆', 'Achievements', 'Logros'],
 };
 
+const coreCompositionTargets = [
+  { screen: 'dashboard' as const, selector: '#dashboard', action: 'insights' as const, actionKey: 'ui.core.openProgress' },
+  { screen: 'insights' as const, selector: '#insights', action: 'dashboard' as const, actionKey: 'ui.core.openDashboard' },
+] as const;
+
 function coreScreensFeatureEnabled(): boolean {
   const buildEnv = (import.meta as ImportMeta & { env?: Record<string, string> }).env;
   return buildEnv?.VITE_REACT_CORE_SCREENS === 'true'
     || window.__TTFeatureFlags?.reactCoreScreens === true;
 }
 
+function localizedCoreLabel(locale: Locale, screen: CoreScreenId): string {
+  const key = `ui.core.${screen}`;
+  return (locale as Record<string, string>)[key] || coreScreenCopy[screen][1];
+}
+
+function CoreScreenComposition({
+  screen,
+  action,
+  actionKey,
+  locale,
+}: {
+  screen: CoreScreenId;
+  action: CoreScreenId;
+  actionKey: string;
+  locale: Locale;
+}) {
+  const copy = locale as Record<string, string>;
+  const label = localizedCoreLabel(locale, screen);
+  const actionLabel = copy[actionKey] || localizedCoreLabel(locale, action);
+  return (
+    <div className="ttReactCoreComposition" data-react-core-host={screen}>
+      <span className="ttReactCoreCompositionLabel">{label}</span>
+      <button
+        type="button"
+        className="ttReactCoreCompositionAction"
+        aria-label={actionLabel}
+        onClick={event => {
+          event.stopPropagation();
+          window.TTCoreScreensAdapter?.show(action);
+        }}
+      >
+        {actionLabel}
+      </button>
+    </div>
+  );
+}
+
 function ReactCoreScreens() {
   const [enabled] = useState(coreScreensFeatureEnabled);
   const [active, setActive] = useState<CoreScreenId | null>(null);
+  const [compositionHosts, setCompositionHosts] = useState<Array<{
+    screen: CoreScreenId;
+    action: CoreScreenId;
+    actionKey: string;
+    element: HTMLElement;
+  }>>([]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -42,11 +90,34 @@ function ReactCoreScreens() {
     };
   }, [enabled]);
 
+  useEffect(() => {
+    if (!enabled) return;
+    const hosts = coreCompositionTargets.flatMap(target => {
+      const parent = document.querySelector<HTMLElement>(target.selector);
+      if (!parent) return [];
+      const element = document.createElement('div');
+      element.dataset.reactCoreComposition = target.screen;
+      parent.append(element);
+      return [{ ...target, element }];
+    });
+    setCompositionHosts(hosts);
+    return () => {
+      hosts.forEach(({ element }) => element.remove());
+      setCompositionHosts([]);
+    };
+  }, [enabled]);
+
   if (!enabled) return null;
   const locale = currentLocale();
   const localizedCoreCopy = locale as Record<string, string>;
   const isSpanish = document.documentElement.lang === 'es';
   return (
+    <>
+    {compositionHosts.map(({ screen, action, actionKey, element }) => createPortal(
+      <CoreScreenComposition screen={screen} action={action} actionKey={actionKey} locale={locale} />,
+      element,
+      `react-core-composition-${screen}`,
+    ))}
     <nav className="ttReactCoreNav" aria-label={isSpanish ? 'Pantallas principales' : 'Core screens'}>
       {coreScreenOrder.map(screen => {
         const [emoji, english, spanish] = coreScreenCopy[screen];
@@ -61,7 +132,7 @@ function ReactCoreScreens() {
             }}
           >
             <span aria-hidden="true">{emoji}</span>
-            <small>{isSpanish ? spanish : english}</small>
+            <small>{localizedCoreLabel(locale, screen) || (isSpanish ? spanish : english)}</small>
           </button>
         );
       })}
@@ -69,6 +140,7 @@ function ReactCoreScreens() {
         {active ? (isSpanish ? `Pantalla: ${localizedCoreCopy[`ui.core.${active}`] || coreScreenCopy[active][2]}` : `Screen: ${localizedCoreCopy[`ui.core.${active}`] || coreScreenCopy[active][1]}`) : ''}
       </span>
     </nav>
+    </>
   );
 }
 

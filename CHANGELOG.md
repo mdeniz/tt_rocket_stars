@@ -21,6 +21,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 - Added fail-closed typed adapters for React mission, garage, and achievement actions while keeping legacy gameplay and persistence authoritative.
 - Recorded full unit, cross-browser, build, and Chrome DevTools verification for the incremental React shell boundary; the visible legacy shell remains intentionally authoritative until the next migration slice.
 - Added validated local profile, backup, and cloud snapshot persistence contracts with storage fallback and legacy-key compatibility.
+- Added an opt-in React dashboard and progress composition around stable legacy hosts with English and Spanish labels; legacy navigation and persistence remain authoritative.
 
 ## [0.1.1] - 2026-10-22
 ### Changed

@@ -70,6 +70,11 @@ test('React core navigation is opt-in and delegates to legacy screens', async ({
   await skip.waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
   if (await skip.isVisible().catch(() => false)) await skip.click();
   await expect(page.locator('.ttReactCoreNav')).toBeVisible();
+  await expect(page.locator('[data-react-core-host="dashboard"]')).toBeVisible();
+  await expect(page.locator('[data-react-core-host="dashboard"]')).toContainText('Mission Control');
+  await page.locator('[data-react-core-host="dashboard"] button').click();
+  await expect(page.locator('#insights')).toBeVisible();
+  await expect(page.locator('[data-react-core-host="insights"]')).toContainText('Progress');
 
   for (const [screen, selector] of [['home', '#home'], ['insights', '#insights'], ['garage', '#garage'], ['awards', '#awards']]) {
     await page.locator('.ttReactCoreNav button').nth(['dashboard', 'home', 'insights', 'garage', 'awards'].indexOf(screen)).click();

@@ -106,5 +106,7 @@
   "ui.core.home": "New Mission",
   "ui.core.insights": "Progress",
   "ui.core.garage": "Rocket Garage",
-  "ui.core.awards": "Achievements"
+  "ui.core.awards": "Achievements",
+  "ui.core.openProgress": "View progress",
+  "ui.core.openDashboard": "Back to mission control"
 }
