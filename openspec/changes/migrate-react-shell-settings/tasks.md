@@ -3,7 +3,7 @@
 ## 1. Shell foundation
 
 - [x] 1.1 Define typed shell state and adapter contracts for navigation, language, fullscreen, and pilot actions; verify strict TypeScript passes.
-- [ ] 1.2 Mount one React shell root without changing legacy startup order; verify the self-contained build still contains ordered legacy scripts.
+- [x] 1.2 Mount one React shell root without changing legacy startup order; verify the self-contained build still contains ordered legacy scripts.
 
 ## 2. Migrated surfaces
 

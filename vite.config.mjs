@@ -15,6 +15,7 @@ function inlineReleaseAssets() {
   let publicSupabaseConfig = { url: '', anonKey: '', siteUrl: '' };
   let cloudAccessEnabled = false;
   let appVersion = '';
+  const inlinedScripts = new Map();
 
   return {
     name: 'tt-inline-release-assets',
@@ -83,11 +84,46 @@ function inlineReleaseAssets() {
         return output;
       },
     },
+    generateBundle(_, bundle) {
+      if (!isBuild) return;
+      const htmlAsset = bundle['index.html'];
+      if (!htmlAsset || htmlAsset.type !== 'asset' || typeof htmlAsset.source !== 'string') {
+        throw new Error('Expected Vite to emit index.html before inlining the React shell');
+      }
+      let builtHtml = htmlAsset.source;
+      for (const [fileName, output] of Object.entries(bundle)) {
+        if (output.type !== 'chunk' || !fileName.endsWith('.js')) continue;
+        const escapedFileName = fileName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        builtHtml = builtHtml.replace(
+          new RegExp(`<script type="module"[^>]*src="[^"]*${escapedFileName}"[^>]*><\\/script>`, 'g'),
+          `<script>${escapeClosingTag(output.code, 'script')}</script>`,
+        );
+        inlinedScripts.set(fileName, output.code);
+        delete bundle[fileName];
+      }
+      htmlAsset.source = builtHtml;
+    },
     writeBundle() {
       if (!isBuild) return;
+      const htmlPath = path.resolve(outDir, 'index.html');
+      let builtHtml = fs.readFileSync(htmlPath, 'utf8');
+      for (const [fileName, script] of inlinedScripts) {
+        const escapedFileName = fileName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        builtHtml = builtHtml.replace(
+          new RegExp(`<script[^>]*src="[^"]*${escapedFileName}"[^>]*><\\/script>`, 'g'),
+          `<script>${escapeClosingTag(script, 'script')}</script>`,
+        );
+      }
+      // Vite may append the original module tag after Rollup has emitted the
+      // already-inlined chunk. Remove that duplicate external reference from
+      // the final file, together with any modulepreload hint.
+      builtHtml = builtHtml
+        .replace(/<script type="module"[^>]*src="[^"]+"[^>]*><\/script>/g, '')
+        .replace(/<link rel="modulepreload"[^>]*>/g, '');
+      fs.writeFileSync(htmlPath, builtHtml);
       fs.rmSync(path.resolve(outDir, 'legacy'), { force: true, recursive: true });
-      fs.renameSync(path.resolve(outDir, 'index.html'), path.resolve(outDir, 'index_next.html'));
-      copyFileSync(path.resolve(outDir, 'index_next.html'), path.resolve(outDir, 'index.html'));
+      fs.renameSync(htmlPath, path.resolve(outDir, 'index_next.html'));
+      copyFileSync(path.resolve(outDir, 'index_next.html'), htmlPath);
     },
   };
 }

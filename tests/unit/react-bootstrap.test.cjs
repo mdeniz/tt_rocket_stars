@@ -9,8 +9,10 @@ const bootstrap = fs.readFileSync(path.join(root, 'src/main.tsx'), 'utf8');
 
 test('React bootstrap has an isolated inert mount point', () => {
   assert.match(index, /<div id="react-root" hidden aria-hidden="true"(?: [^>]*)?><\/div>/);
+  assert.match(index, /<script type="module" src="\.\/src\/main\.tsx"><\/script>/);
   assert.match(bootstrap, /export const REACT_ROOT_ID = 'react-root'/);
   assert.match(bootstrap, /createRoot\(element\)\.render\(content\)/);
+  assert.match(bootstrap, /bootstrapReactShell\(\)/);
 });
 
 test('legacy entry scripts remain ordered independently of React', () => {
@@ -18,5 +20,5 @@ test('legacy entry scripts remain ordered independently of React', () => {
     .map(match => Number.parseInt(match[1], 10));
   assert.deepEqual(scripts, [...scripts].sort((a, b) => a - b));
   assert.ok(scripts.length >= 18);
-  assert.ok(!index.includes('src/main.tsx'));
+  assert.ok(index.indexOf('src/main.tsx') < index.indexOf('./legacy/scripts/00.js'));
 });
