@@ -30,3 +30,16 @@ test('React core composition labels are complete in English and Spanish', () => 
     assert.notEqual(spanish[key], '');
   }
 });
+
+test('React mission setup renders all supported configuration controls', () => {
+  assert.match(shell, /ReactMissionSetup/);
+  assert.match(shell, /toggleMissionTable/);
+  assert.match(shell, /selectMissionOperation/);
+  assert.match(shell, /selectMissionMode/);
+  assert.match(shell, /setMissionDuration/);
+  assert.match(shell, /startMission/);
+  for (const key of ['ui.mission.setup', 'ui.mission.practice', 'ui.mission.exam', 'ui.mission.speed', 'ui.mission.timed']) {
+    assert.equal(typeof english[key], 'string', `English locale is missing ${key}`);
+    assert.equal(typeof spanish[key], 'string', `Spanish locale is missing ${key}`);
+  }
+});

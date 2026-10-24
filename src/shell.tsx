@@ -35,6 +35,111 @@ function localizedCoreLabel(locale: Locale, screen: CoreScreenId): string {
   return (locale as Record<string, string>)[key] || coreScreenCopy[screen][1];
 }
 
+const missionTables = Array.from({ length: 12 }, (_, index) => index + 1);
+const missionOperations = [
+  ['mul', '✖', 'ui.mission.multiply'],
+  ['div', '➗', 'ui.mission.divide'],
+  ['mix', '🔀', 'ui.mission.mixed'],
+] as const;
+const missionModes = [
+  ['practice', '🌱', 'ui.mission.practice'],
+  ['exam', '🏆', 'ui.mission.exam'],
+  ['speed', '⏱', 'ui.mission.speed'],
+  ['timed', '🚀', 'ui.mission.timed'],
+] as const;
+const missionDurations = [5, 10, 15] as const;
+
+function ReactMissionSetup({ locale }: { locale: Locale }) {
+  const copy = locale as Record<string, string>;
+  const [tables, setTables] = useState<Set<number>>(() => new Set([1, 2, 5, 10]));
+  const [operation, setOperation] = useState<'mul' | 'div' | 'mix'>('mul');
+  const [mode, setMode] = useState<'practice' | 'exam' | 'speed' | 'timed'>('practice');
+  const [duration, setDuration] = useState<5 | 10 | 15>(5);
+  const isSpanish = document.documentElement.lang === 'es';
+  const adapter = window.TTCoreScreensAdapter;
+
+  return (
+    <section className="card ttReactMissionSetup" aria-labelledby="ttReactMissionTitle">
+      <h2 id="ttReactMissionTitle">{copy['ui.mission.setup']}</h2>
+      <p>{copy['ui.mission.tables']}</p>
+      <div className="ttMissionQuickActions" aria-label={copy['ui.mission.tablePresets']}>
+        {(['all', 'easy'] as const).map(preset => (
+          <button className="btn alt" type="button" key={preset} onClick={() => {
+            if (!adapter?.pickMissionTables(preset)) return;
+            setTables(preset === 'all' ? new Set(missionTables) : new Set([1, 2, 5, 10]));
+          }}>{copy[`ui.mission.${preset}`]}</button>
+        ))}
+      </div>
+      <div className="ttMissionTableGrid" role="group" aria-label={copy['ui.mission.tables']}>
+        {missionTables.map(table => (
+          <button
+            type="button"
+            className={`planet ${tables.has(table) ? 'on' : ''}`}
+            aria-pressed={tables.has(table)}
+            key={table}
+            onClick={() => {
+              if (!adapter?.toggleMissionTable(table)) return;
+              setTables(previous => {
+                const next = new Set(previous);
+                if (next.has(table)) next.delete(table); else next.add(table);
+                return next;
+              });
+            }}
+          >{isSpanish ? 'Tabla' : 'Table'} {table}</button>
+        ))}
+      </div>
+      <h3>{copy['ui.mission.operation']}</h3>
+      <div className="opts" role="group" aria-label={copy['ui.mission.operation']}>
+        {missionOperations.map(([value, emoji, key]) => (
+          <button className={`opt ${operation === value ? 'on' : ''}`} type="button" key={value} onClick={() => {
+            if (adapter?.selectMissionOperation(value)) setOperation(value);
+          }}>{emoji} {copy[key]}</button>
+        ))}
+      </div>
+      <h3>{copy['ui.mission.mode']}</h3>
+      <div className="opts" role="group" aria-label={copy['ui.mission.mode']}>
+        {missionModes.map(([value, emoji, key]) => (
+          <button className={`opt ${mode === value ? 'on' : ''}`} type="button" key={value} onClick={() => {
+            if (adapter?.selectMissionMode(value)) setMode(value);
+          }}>{emoji} {copy[key]}</button>
+        ))}
+      </div>
+      {mode === 'timed' && (
+        <div className="ttMissionDurations" role="group" aria-label={copy['ui.mission.duration']}>
+          {missionDurations.map(minutes => (
+            <button className={`opt ${duration === minutes ? 'on' : ''}`} type="button" key={minutes} onClick={() => {
+              if (adapter?.setMissionDuration(minutes)) setDuration(minutes);
+            }}>{minutes} {copy['ui.mission.minutes']}</button>
+          ))}
+        </div>
+      )}
+      <button className="btn ttReactMissionStart" type="button" onClick={() => adapter?.startMission()}>
+        {copy['ui.mission.start']}
+      </button>
+    </section>
+  );
+}
+
+function ReactMissionSetupHost({ enabled, locale }: { enabled: boolean; locale: Locale }) {
+  const [host, setHost] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    if (!enabled) return;
+    const home = document.getElementById('home');
+    if (!home) return;
+    const element = document.createElement('div');
+    element.dataset.reactMissionSetup = 'true';
+    home.prepend(element);
+    home.classList.add('ttReactMissionSetupEnabled');
+    setHost(element);
+    return () => {
+      element.remove();
+      home.classList.remove('ttReactMissionSetupEnabled');
+      setHost(null);
+    };
+  }, [enabled]);
+  return host ? createPortal(<ReactMissionSetup locale={locale} />, host) : null;
+}
+
 function CoreScreenComposition({
   screen,
   action,
@@ -113,6 +218,7 @@ function ReactCoreScreens() {
   const isSpanish = document.documentElement.lang === 'es';
   return (
     <>
+    <ReactMissionSetupHost enabled={enabled} locale={currentLocale()} />
     {compositionHosts.map(({ screen, action, actionKey, element }) => createPortal(
       <CoreScreenComposition screen={screen} action={action} actionKey={actionKey} locale={locale} />,
       element,
