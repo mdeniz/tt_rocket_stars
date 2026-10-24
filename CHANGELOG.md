@@ -25,6 +25,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 - Added focused offline and pilot-local Playwright coverage for the React dashboard and progress adapter boundary.
 - Added Playwright coverage for React-launched practice and timed missions, proving legacy answer progression, auto-next, audio, timer, and local persistence remain available.
 - Added feature-flagged React garage controls and localized achievement progress composition while keeping legacy inventory, rewards, and pilot-local persistence authoritative.
+- Added Playwright coverage proving the React core-screen flag can roll back to legacy garage and achievement ownership without losing access to either screen.
 
 ## [0.1.1] - 2026-10-22
 ### Changed
