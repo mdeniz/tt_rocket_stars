@@ -124,6 +124,9 @@ test('settings navigation isolates local categories', async ({ page }) => {
  await page.locator('#menuBtn').click();await page.locator('#sideDrawer [data-section="settings"]').click();
  const tabs=page.locator('#settings .ttSettingsBottomNav .ttSettingsTab');
  await expect(tabs).toHaveCount(6);
+ await expect.poll(()=>page.evaluate(()=>typeof window.TTSettingsAdapter?.showSettingsPanel)).toBe('function');
+ await page.evaluate(()=>window.TTSettingsAdapter.showSettingsPanel('theme'));
+ await expect(page.locator('#settings [data-settings-panel="theme"]')).toHaveClass(/ttSettingsActive/);
  for(const label of ['Sound','Pilot','Language','Theme','Backups','Reset']){
   await tabs.filter({hasText:label}).click();
   await expect(page.locator('#ttAuthPanel')).not.toHaveClass(/ttSettingsActive/);

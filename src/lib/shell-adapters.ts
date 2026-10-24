@@ -18,11 +18,16 @@ interface LegacyPilotStore {
   create(name: string): string;
 }
 
+interface LegacySettingsStore {
+  showSettingsPanel(panel: string): void;
+}
+
 declare global {
   interface Window {
     TTFullscreenAdapter?: FullscreenAdapter;
     TTProfiles?: LegacyPilotStore;
     TTPilotAdapter?: PilotAdapter;
+    TTSettingsAdapter?: LegacySettingsStore;
   }
 }
 
@@ -76,4 +81,14 @@ export function createPilotAdapter(store: LegacyPilotStore | undefined = window.
 
 export function installPilotAdapter(): void {
   window.TTPilotAdapter = createPilotAdapter();
+}
+
+export function createSettingsAdapter(store: LegacySettingsStore | undefined = window.TTSettingsAdapter): LegacySettingsStore {
+  return {
+    showSettingsPanel: panel => store?.showSettingsPanel(panel),
+  };
+}
+
+export function installSettingsAdapter(): void {
+  window.TTSettingsAdapter = createSettingsAdapter();
 }

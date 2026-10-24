@@ -15,6 +15,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 - Mounted an isolated React shell boundary while preserving the legacy startup order and self-contained release output.
 - Added a typed fullscreen adapter that keeps splash entry safe when the browser API is unavailable or rejects the request.
 - Added a typed pilot adapter backed by the existing local persistence and covered local profile creation and switching in Playwright.
+- Added a typed settings-category adapter while preserving the legacy panel ownership and translated category labels.
 - Added validated local profile, backup, and cloud snapshot persistence contracts with storage fallback and legacy-key compatibility.
 
 ## [0.1.1] - 2026-10-22
