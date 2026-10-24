@@ -2,7 +2,7 @@ const { test, expect } = require('@playwright/test');
 
 async function enterGame(page) {
   await page.goto('/');
-  await page.locator('#launchSplash').click();
+  await page.locator('#reactLaunchSplash').click();
   await expect(page.locator('#dashboard')).toBeVisible();
   await dismissTour(page);
 }

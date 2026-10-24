@@ -314,6 +314,12 @@ header{background:transparent!important;backdrop-filter:none!important;-webkit-b
 @media(prefers-reduced-motion:reduce){#dashboard .rocketHome *{animation:none!important}}
 
 #launchSplash{position:fixed;inset:0;z-index:5000;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(ellipse at 50% 35%,#355389 0%,#16294e 47%,#0b1530 100%);color:#fff;cursor:pointer;touch-action:manipulation;overflow:auto}
+.ttReactLaunchSplash{position:fixed;inset:0;z-index:2147483601;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(ellipse at 50% 35%,#355389 0%,#16294e 47%,#0b1530 100%);color:#fff;cursor:pointer;touch-action:manipulation;overflow:auto}
+.ttReactLaunchSplash:focus-visible{outline:3px solid #ffd266;outline-offset:-8px}
+.ttReactSplashCard{width:min(540px,100%);text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px}
+.ttReactSplashRocket{font-size:clamp(100px,24vh,190px);line-height:1;filter:drop-shadow(0 10px 30px #030b26aa);animation:splashFloat 3s ease-in-out infinite}
+.ttReactLaunchSplash .splashTitle,.ttReactLaunchSplash .splashLead,.ttReactLaunchSplash .splashHint{text-shadow:0 2px 7px #000}
+@media(prefers-reduced-motion:reduce){.ttReactSplashRocket{animation:none}}
 #launchSplash.hidden{display:none!important}
 .splashCard{width:min(540px,100%);text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px}
 .splashRocket{width:clamp(110px,26vh,210px);max-height:32vh;filter:drop-shadow(0 10px 30px #030b26aa);animation:splashFloat 3s ease-in-out infinite}

@@ -28,6 +28,7 @@ declare global {
     TTProfiles?: LegacyPilotStore;
     TTPilotAdapter?: PilotAdapter;
     TTSettingsAdapter?: LegacySettingsStore;
+    TTEnterGame?: () => void;
   }
 }
 
