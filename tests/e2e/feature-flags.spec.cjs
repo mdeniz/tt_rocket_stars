@@ -241,11 +241,18 @@ test('disabling the React core flag rolls back to legacy garage and achievements
   await expect(page.locator('.ttReactCoreNav')).toHaveCount(0);
   await expect(page.locator('.ttReactGaragePanel')).toHaveCount(0);
   await expect(page.locator('.ttReactAchievementsPanel')).toHaveCount(0);
+  await expect(page.locator('#dashboard')).toBeVisible();
+  const tour = page.locator('#ttTourShade.ttTourVisible');
+  if (await tour.count()) {
+    await tour.locator('#ttTourSkip').click({ force: true });
+  }
 
-  await page.evaluate(() => window.navigate('garage'));
+  await page.locator('#menuBtn').click();
+  await page.locator('.drawerItem[data-section="garage"]').click();
   await expect(page.locator('#garage')).toBeVisible();
   await expect(page.locator('#garageItems .garageItem')).not.toHaveCount(0);
-  await page.evaluate(() => window.navigate('awards'));
+  await page.locator('#menuBtn').click();
+  await page.locator('.drawerItem[data-section="awards"]').click();
   await expect(page.locator('#awards')).toBeVisible();
   await expect(page.locator('#awardGrid .awardcard')).not.toHaveCount(0);
 });
