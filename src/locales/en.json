@@ -138,5 +138,8 @@
   "ui.garage.flame": "Flame",
   "ui.garage.window": "Window",
   "ui.garage.extra": "Extras",
-  "ui.garage.support": "Support ships"
+  "ui.garage.support": "Support ships",
+  "ui.achievements.controls": "Achievement progress",
+  "ui.achievements.description": "Your pilot-local milestones and rewards.",
+  "ui.achievements.refresh": "Refresh achievements"
 }

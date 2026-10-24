@@ -62,3 +62,17 @@ test('React garage controls delegate inventory actions through the adapter', () 
     assert.equal(typeof spanish[key], 'string', `Spanish locale is missing ${key}`);
   }
 });
+
+test('React achievements composition delegates refresh and preserves localized copy', () => {
+  assert.match(shell, /ReactAchievementsPanel/);
+  assert.match(shell, /refreshAchievements/);
+  assert.match(shell, /reactAchievementsPanel/);
+  for (const key of [
+    'ui.achievements.controls',
+    'ui.achievements.description',
+    'ui.achievements.refresh',
+  ]) {
+    assert.equal(typeof english[key], 'string', `English locale is missing ${key}`);
+    assert.equal(typeof spanish[key], 'string', `Spanish locale is missing ${key}`);
+  }
+});
