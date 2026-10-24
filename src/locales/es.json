@@ -101,5 +101,10 @@
   "ui.100": "Elige un piloto o crea uno nuevo. Cada piloto mantiene su progreso separado en este dispositivo.",
   "ui.101": "Escribe un nombre de piloto único.",
   "ui.102": "Nombre del nuevo piloto",
-  "ui.103": "+ Crear"
+  "ui.103": "+ Crear",
+  "ui.core.dashboard": "Centro de mando",
+  "ui.core.home": "Nueva misión",
+  "ui.core.insights": "Progreso",
+  "ui.core.garage": "Garaje espacial",
+  "ui.core.awards": "Logros"
 }

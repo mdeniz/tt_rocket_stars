@@ -1810,3 +1810,14 @@ body:has(#sideDrawer.open) .ttSettingsBottomNav{visibility:hidden!important}
 #ttTourActions button:focus-visible{outline:3px solid #ffce63;outline-offset:2px}
 #ttTourActions #ttTourNext{background:linear-gradient(110deg,#f65f90,#ec7b54)!important;color:white!important;border-color:#f8a875!important}
 #ttTourHelp{display:none!important}
+/* React core-screen navigation remains opt-in until each legacy surface has
+   equivalent interaction coverage. The legacy navigation is untouched when
+   the feature flag is disabled. */
+.ttReactCoreNav{position:fixed;z-index:30;left:50%;bottom:max(12px,env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;gap:6px;padding:8px;border:1px solid rgba(157,196,255,.45);border-radius:20px;background:rgba(20,39,79,.94);box-shadow:0 12px 28px rgba(0,0,0,.28);backdrop-filter:blur(12px)}
+.ttReactCoreNav button{min-width:72px;border:0;border-radius:14px;padding:6px 8px;color:#dcecff;background:transparent;display:grid;place-items:center;gap:2px;font:inherit;cursor:pointer}
+.ttReactCoreNav button:hover,.ttReactCoreNav button:focus-visible,.ttReactCoreNav button.active{background:rgba(116,178,255,.24);outline:none}
+.ttReactCoreNav button:focus-visible{box-shadow:0 0 0 3px rgba(255,220,126,.85)}
+.ttReactCoreNav button span{font-size:1.15rem;line-height:1}
+.ttReactCoreNav button small{font-size:.68rem;font-weight:700;white-space:nowrap}
+body.ttReactCoreScreensEnabled #ttMainBottomNav{display:none!important}
+@media (max-width:560px){.ttReactCoreNav{width:calc(100% - 16px);justify-content:space-between}.ttReactCoreNav button{min-width:0;flex:1}.ttReactCoreNav button small{font-size:.58rem}}

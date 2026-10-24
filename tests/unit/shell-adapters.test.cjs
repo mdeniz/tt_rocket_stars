@@ -22,3 +22,12 @@ test('pilot adapter delegates selection and creation to the legacy persistence b
   assert.match(adapter, /store\.create\(name\)/);
   assert.match(adapter, /installPilotAdapter/);
 });
+
+test('core screen adapter keeps navigation and refresh behind stable legacy contracts', () => {
+  assert.match(adapter, /CoreScreenId = 'dashboard' \| 'home' \| 'insights' \| 'garage' \| 'awards'/);
+  assert.match(adapter, /createCoreScreensAdapter/);
+  assert.match(adapter, /navigate = \(window as Window/);
+  assert.match(adapter, /renderDashboard/);
+  assert.match(adapter, /renderGarage/);
+  assert.match(adapter, /installCoreScreensAdapter/);
+});

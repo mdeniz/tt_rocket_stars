@@ -29,9 +29,19 @@ declare global {
     TTProfiles?: LegacyPilotStore;
     TTPilotAdapter?: PilotAdapter;
     TTSettingsAdapter?: LegacySettingsStore;
+    TTCoreScreensAdapter?: CoreScreensAdapter;
+    __TTFeatureFlags?: { reactCoreScreens?: boolean };
     TTEnterGame?: () => void;
     TTOpenPilotSelector?: () => void;
   }
+}
+
+export type CoreScreenId = 'dashboard' | 'home' | 'insights' | 'garage' | 'awards';
+
+export interface CoreScreensAdapter {
+  show(screen: CoreScreenId): boolean;
+  active(): CoreScreenId | null;
+  refresh(screen?: CoreScreenId): void;
 }
 
 export interface PilotAdapter {
@@ -94,4 +104,46 @@ export function createSettingsAdapter(store: LegacySettingsStore | undefined = w
 
 export function installSettingsAdapter(): void {
   window.TTSettingsAdapter = createSettingsAdapter();
+}
+
+const CORE_SCREEN_IDS: readonly CoreScreenId[] = ['dashboard', 'home', 'insights', 'garage', 'awards'];
+
+function isCoreScreenId(value: string): value is CoreScreenId {
+  return CORE_SCREEN_IDS.includes(value as CoreScreenId);
+}
+
+export function createCoreScreensAdapter(): CoreScreensAdapter {
+  const active = () => {
+    const screen = Array.from(document.querySelectorAll<HTMLElement>('.appscreen'))
+      .find(element => !element.classList.contains('hidden'))?.id;
+    return screen && isCoreScreenId(screen) ? screen : null;
+  };
+  return {
+    show: screen => {
+      if (!isCoreScreenId(screen)) return false;
+      const navigate = (window as Window & { navigate?: (target: string) => void }).navigate;
+      if (typeof navigate !== 'function') return false;
+      navigate(screen);
+      return true;
+    },
+    active,
+    refresh: screen => {
+      const target = screen || active();
+      if (!target) return;
+      const refreshers: Record<CoreScreenId, string | undefined> = {
+        dashboard: 'renderDashboard',
+        home: 'renderPlanets',
+        insights: 'renderStats',
+        garage: 'renderGarage',
+        awards: 'renderAwards',
+      };
+      const name = refreshers[target];
+      const fn = name && (window as unknown as Record<string, unknown>)[name];
+      if (typeof fn === 'function') (fn as () => void)();
+    },
+  };
+}
+
+export function installCoreScreensAdapter(): void {
+  window.TTCoreScreensAdapter = createCoreScreensAdapter();
 }

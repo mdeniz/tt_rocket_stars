@@ -8,7 +8,8 @@ const index = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const bootstrap = fs.readFileSync(path.join(root, 'src/main.tsx'), 'utf8');
 
 test('React bootstrap has a visible shell mount point', () => {
-  assert.match(index, /<div id="react-root" aria-label="TT Rocket Stars React shell" data-i18n="ui\.089"><\/div>/);
+  assert.match(index, /<span id="reactAuthTranslationAnchor" class="sr-only" data-i18n="ui\.089"/);
+  assert.match(index, /<div id="react-root" aria-label="TT Rocket Stars React shell"><\/div>/);
   assert.match(index, /<script type="module" src="\.\/src\/main\.tsx"><\/script>/);
   assert.match(bootstrap, /export const REACT_ROOT_ID = 'react-root'/);
   assert.match(bootstrap, /createRoot\(element\)\.render\(content\)/);

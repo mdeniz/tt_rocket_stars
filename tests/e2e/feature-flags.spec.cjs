@@ -58,3 +58,22 @@ test('rejects invalid targeting configuration in the browser', async ({ page }) 
 
   expect(result).toEqual([true, true, true, true]);
 });
+
+test('React core navigation is opt-in and delegates to legacy screens', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.__TTFeatureFlags = { reactCoreScreens: true };
+  });
+  await page.goto('/');
+  await page.locator('#reactLaunchSplash').click();
+  await expect(page.locator('#dashboard')).toBeVisible();
+  const skip = page.locator('#ttTourSkip');
+  await skip.waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
+  if (await skip.isVisible().catch(() => false)) await skip.click();
+  await expect(page.locator('.ttReactCoreNav')).toBeVisible();
+
+  for (const [screen, selector] of [['home', '#home'], ['insights', '#insights'], ['garage', '#garage'], ['awards', '#awards']]) {
+    await page.locator('.ttReactCoreNav button').nth(['dashboard', 'home', 'insights', 'garage', 'awards'].indexOf(screen)).click();
+    await expect(page.locator(selector)).toBeVisible();
+  }
+  await expect(page.locator('.ttReactCoreNav')).toHaveCount(1);
+});
