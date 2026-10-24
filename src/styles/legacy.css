@@ -1838,4 +1838,18 @@ body.ttReactCoreScreensEnabled #home.ttReactMissionSetupEnabled>section.card{dis
 .ttReactMissionSetup .opts{display:flex;flex-wrap:wrap;gap:8px}
 .ttReactMissionSetup .opt{font:inherit;cursor:pointer}
 .ttReactMissionStart{width:100%;margin-top:24px}
+.ttReactGaragePanel{margin:16px auto;max-width:980px}
+.ttReactGarageHeading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.ttReactGarageHeading h2{margin:0;color:#fff}
+.ttReactGarageHeading p{margin:6px 0 0;color:#c6d4f0}
+.ttReactGarageCategories{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
+.ttReactGarageCategories .garageTab{font:inherit;cursor:pointer}
+.ttReactGarageItems{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.ttReactGarageItem{display:grid;gap:6px;min-width:0;padding:12px;border:1px solid rgba(157,196,255,.32);border-radius:12px;background:rgba(12,27,61,.42)}
+.ttReactGarageItem strong{color:#fff;overflow-wrap:anywhere}
+.ttReactGarageItem small{color:#c6d4f0;overflow-wrap:anywhere}
+.ttReactGarageActions{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto}
+.ttReactGarageActions .btn{font-size:.78rem;padding:7px 9px}
+@media(max-width:700px){.ttReactGarageHeading{flex-direction:column}.ttReactGarageItems{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:430px){.ttReactGarageItems{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:560px){.ttReactCoreNav{width:calc(100% - 16px);justify-content:space-between}.ttReactCoreNav button{min-width:0;flex:1}.ttReactCoreNav button small{font-size:.58rem}}

@@ -140,6 +140,121 @@ function ReactMissionSetupHost({ enabled, locale }: { enabled: boolean; locale: 
   return host ? createPortal(<ReactMissionSetup locale={locale} />, host) : null;
 }
 
+type ReactGarageItem = {
+  id: string;
+  name: string;
+  detail: string;
+  actionLabel: string;
+  actionDisabled: boolean;
+  previewing: boolean;
+};
+
+const garageCategories = [
+  ['body', 'ui.garage.body'],
+  ['nose', 'ui.garage.nose'],
+  ['wings', 'ui.garage.wings'],
+  ['flame', 'ui.garage.flame'],
+  ['window', 'ui.garage.window'],
+  ['extra', 'ui.garage.extra'],
+  ['support', 'ui.garage.support'],
+] as const;
+
+function readReactGarageItems(): ReactGarageItem[] {
+  return Array.from(document.querySelectorAll<HTMLElement>('#garageItems .garageItem'))
+    .map(item => {
+      const action = item.querySelector<HTMLButtonElement>('.ttGarageEquipBtn');
+      const preview = item.querySelector<HTMLButtonElement>('.previewBtn');
+      return {
+        id: item.dataset.garagePartId || '',
+        name: item.querySelector('strong')?.textContent || '',
+        detail: item.querySelector('small')?.textContent || '',
+        actionLabel: action?.getAttribute('aria-label') || '',
+        actionDisabled: Boolean(action?.disabled),
+        previewing: preview?.getAttribute('aria-pressed') === 'true',
+      };
+    })
+    .filter(item => item.id);
+}
+
+function ReactGaragePanel({ locale }: { locale: Locale }) {
+  const copy = locale as Record<string, string>;
+  const [items, setItems] = useState<ReactGarageItem[]>(readReactGarageItems);
+  const sync = () => setItems(readReactGarageItems());
+
+  useEffect(() => {
+    const garageItems = document.getElementById('garageItems');
+    if (!garageItems) return;
+    sync();
+    const initialSync = window.setTimeout(sync, 0);
+    const observer = new MutationObserver(sync);
+    observer.observe(garageItems, { childList: true, subtree: true, attributes: true });
+    return () => {
+      window.clearTimeout(initialSync);
+      observer.disconnect();
+    };
+  }, []);
+
+  const delegate = (action: () => boolean) => {
+    if (action()) window.setTimeout(sync, 0);
+  };
+
+  return (
+    <section className="card ttReactGaragePanel" aria-labelledby="ttReactGarageTitle">
+      <div className="ttReactGarageHeading">
+        <div>
+          <h2 id="ttReactGarageTitle">{copy['ui.garage.controls']}</h2>
+          <p>{copy['ui.garage.description']}</p>
+        </div>
+        <button type="button" className="btn alt" onClick={() => {
+          window.TTCoreScreensAdapter?.refresh('garage');
+          sync();
+        }}>{copy['ui.garage.refresh']}</button>
+      </div>
+      <div className="ttReactGarageCategories" role="group" aria-label={copy['ui.garage.category']}>
+        {garageCategories.map(([category, key]) => (
+          <button type="button" className="garageTab" key={category} onClick={() => {
+            delegate(() => window.TTCoreScreensAdapter?.setGarageCategory(category) || false);
+          }}>{copy[key]}</button>
+        ))}
+      </div>
+      <div className="ttReactGarageItems" aria-live="polite">
+        {items.slice(0, 12).map(item => (
+          <article className="ttReactGarageItem" key={item.id}>
+            <strong>{item.name}</strong>
+            <small>{item.detail}</small>
+            <div className="ttReactGarageActions">
+              <button type="button" className="btn alt" aria-pressed={item.previewing} onClick={() => {
+                delegate(() => window.TTCoreScreensAdapter?.previewGaragePart(item.id) || false);
+              }}>{copy['ui.garage.preview']}</button>
+              <button type="button" className="btn" disabled={item.actionDisabled} onClick={() => {
+                delegate(() => window.TTCoreScreensAdapter?.activateGaragePart(item.id) || false);
+              }}>{item.actionLabel || copy['ui.garage.equip']}</button>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ReactGaragePanelHost({ enabled, locale }: { enabled: boolean; locale: Locale }) {
+  const [host, setHost] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    if (!enabled) return;
+    const garage = document.getElementById('garage');
+    if (!garage) return;
+    const element = document.createElement('div');
+    element.dataset.reactGaragePanel = 'true';
+    garage.prepend(element);
+    setHost(element);
+    return () => {
+      element.remove();
+      setHost(null);
+    };
+  }, [enabled]);
+  return host ? createPortal(<ReactGaragePanel locale={locale} />, host) : null;
+}
+
 function CoreScreenComposition({
   screen,
   action,
@@ -219,6 +334,7 @@ function ReactCoreScreens() {
   return (
     <>
     <ReactMissionSetupHost enabled={enabled} locale={currentLocale()} />
+    <ReactGaragePanelHost enabled={enabled} locale={currentLocale()} />
     {compositionHosts.map(({ screen, action, actionKey, element }) => createPortal(
       <CoreScreenComposition screen={screen} action={action} actionKey={actionKey} locale={locale} />,
       element,
