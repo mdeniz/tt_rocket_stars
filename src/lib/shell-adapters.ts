@@ -42,6 +42,8 @@ export interface CoreScreensAdapter {
   show(screen: CoreScreenId): boolean;
   active(): CoreScreenId | null;
   refresh(screen?: CoreScreenId): void;
+  toggleMissionTable(table: number): boolean;
+  pickMissionTables(preset: 'all' | 'easy'): boolean;
   selectMissionOperation(operation: 'mul' | 'div' | 'mix'): boolean;
   selectMissionMode(mode: 'practice' | 'speed' | 'timed' | 'exam'): boolean;
   setMissionDuration(minutes: 5 | 10 | 15): boolean;
@@ -153,7 +155,7 @@ export function createCoreScreensAdapter(): CoreScreensAdapter {
       return true;
     },
     active,
-    refresh: screen => {
+        refresh: screen => {
       const target = screen || active();
       if (!target) return;
       const refreshers: Record<CoreScreenId, string | undefined> = {
@@ -165,9 +167,15 @@ export function createCoreScreensAdapter(): CoreScreensAdapter {
       };
       const name = refreshers[target];
       const fn = name && (window as unknown as Record<string, unknown>)[name];
-      if (typeof fn === 'function') (fn as () => void)();
-    },
-    selectMissionOperation: operation => callLegacyAction('choose', 'op', operation),
+          if (typeof fn === 'function') (fn as () => void)();
+        },
+        toggleMissionTable: table => Number.isInteger(table) && table >= 1 && table <= 12
+          ? callLegacyAction('toggle', table)
+          : false,
+        pickMissionTables: preset => preset === 'all' || preset === 'easy'
+          ? callLegacyAction('pick', preset)
+          : false,
+        selectMissionOperation: operation => callLegacyAction('choose', 'op', operation),
     selectMissionMode: mode => callLegacyAction('choose', 'mode', mode),
     setMissionDuration: minutes => callLegacyAction('chooseDuration', minutes),
     startMission: () => callLegacyAction('start'),

@@ -45,3 +45,11 @@ test('core screen actions delegate through fail-closed legacy boundaries', () =>
   assert.match(adapter, /if \(typeof action !== 'function'\) return false/);
   assert.match(adapter, /catch \{\n    return false;\n  \}/);
 });
+
+test('mission setup exposes validated table and configuration delegates', () => {
+  assert.match(adapter, /toggleMissionTable: table => Number\.isInteger\(table\).*callLegacyAction\('toggle', table\)/s);
+  assert.match(adapter, /pickMissionTables: preset => preset === 'all' \|\| preset === 'easy'.*callLegacyAction\('pick', preset\)/s);
+  assert.match(adapter, /selectMissionOperation: operation => callLegacyAction\('choose', 'op', operation\)/);
+  assert.match(adapter, /selectMissionMode: mode => callLegacyAction\('choose', 'mode', mode\)/);
+  assert.match(adapter, /setMissionDuration: minutes => callLegacyAction\('chooseDuration', minutes\)/);
+});

@@ -108,5 +108,22 @@
   "ui.core.garage": "Rocket Garage",
   "ui.core.awards": "Achievements",
   "ui.core.openProgress": "View progress",
-  "ui.core.openDashboard": "Back to mission control"
+  "ui.core.openDashboard": "Back to mission control",
+  "ui.mission.setup": "Prepare your mission",
+  "ui.mission.tables": "Choose multiplication tables",
+  "ui.mission.tablePresets": "Table presets",
+  "ui.mission.all": "All tables",
+  "ui.mission.easy": "Easy tables",
+  "ui.mission.operation": "Operation",
+  "ui.mission.multiply": "Multiply",
+  "ui.mission.divide": "Divide",
+  "ui.mission.mixed": "Mixed",
+  "ui.mission.mode": "Challenge",
+  "ui.mission.practice": "Practice",
+  "ui.mission.exam": "20 challenges",
+  "ui.mission.speed": "60 seconds",
+  "ui.mission.timed": "Long mission",
+  "ui.mission.duration": "Mission duration",
+  "ui.mission.minutes": "minutes",
+  "ui.mission.start": "Launch mission 🚀"
 }

@@ -13,7 +13,7 @@
 
 ## 3. Mission setup and gameplay boundary
 
-- [ ] 3.1 Add React mission setup controls that delegate table, operation, mode, duration, and start actions to the existing gameplay runtime; verify mission configuration unit tests cover all supported modes.
+- [x] 3.1 Add React mission setup controls that delegate table, operation, mode, duration, and start actions to the existing gameplay runtime; verify mission configuration unit tests cover all supported modes.
 - [ ] 3.2 Verify timer, auto-next, audio, answer progression, and local persistence remain legacy-owned and accessible; add Playwright coverage for a representative practice and timed flow.
 
 ## 4. Garage and achievements

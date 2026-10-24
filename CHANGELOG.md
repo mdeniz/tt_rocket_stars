@@ -39,3 +39,4 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 ### Known limitations
 - Domain code, SVG, and dynamic translations remain partially embedded in the legacy runtime.
 - Linux WebKit does not replace real Safari iOS testing.
+- Added an opt-in React mission setup surface with typed legacy action delegation for tables, operations, modes, durations, and launch.

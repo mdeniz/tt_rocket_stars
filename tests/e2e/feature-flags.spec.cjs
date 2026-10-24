@@ -111,3 +111,27 @@ test('React core navigation stays usable offline and preserves pilot-local ident
   expect(await page.evaluate(() => window.TTProfiles.active().id)).toBe(originalPilot);
   expect(await page.evaluate(() => localStorage.getItem('tt-rocket-profiles-v1'))).not.toBeNull();
 });
+
+test('React mission setup delegates supported configuration to gameplay', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.__TTFeatureFlags = { reactCoreScreens: true };
+  });
+  await page.goto('/');
+  await page.locator('#reactLaunchSplash').click();
+  const skip = page.locator('#ttTourSkip');
+  await skip.waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
+  if (await skip.isVisible().catch(() => false)) await skip.click();
+
+  await page.locator('.ttReactCoreNav button').nth(1).click();
+  const setup = page.locator('.ttReactMissionSetup');
+  await expect(setup).toBeVisible();
+  await setup.getByRole('button', { name: 'Table 3' }).click();
+  await expect(setup.getByRole('button', { name: 'Table 3' })).toHaveAttribute('aria-pressed', 'true');
+  await setup.getByRole('button', { name: /Divide/ }).click();
+  await setup.getByRole('button', { name: /Long mission/ }).click();
+  await setup.getByRole('button', { name: '15 minutes' }).click();
+  await expect(setup.getByRole('button', { name: '15 minutes' })).toHaveClass(/on/);
+  await setup.getByRole('button', { name: /Launch mission/ }).click();
+  await expect(page.locator('#play')).toBeVisible();
+  await expect(page.locator('#question')).not.toHaveText('');
+});

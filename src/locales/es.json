@@ -108,5 +108,22 @@
   "ui.core.garage": "Garaje espacial",
   "ui.core.awards": "Logros",
   "ui.core.openProgress": "Ver progreso",
-  "ui.core.openDashboard": "Volver al centro de mando"
+  "ui.core.openDashboard": "Volver al centro de mando",
+  "ui.mission.setup": "Prepara tu misión",
+  "ui.mission.tables": "Elige las tablas de multiplicar",
+  "ui.mission.tablePresets": "Selección rápida de tablas",
+  "ui.mission.all": "Todas las tablas",
+  "ui.mission.easy": "Tablas fáciles",
+  "ui.mission.operation": "Operación",
+  "ui.mission.multiply": "Multiplicar",
+  "ui.mission.divide": "Dividir",
+  "ui.mission.mixed": "Mezcladas",
+  "ui.mission.mode": "Desafío",
+  "ui.mission.practice": "Entrenar",
+  "ui.mission.exam": "20 retos",
+  "ui.mission.speed": "60 segundos",
+  "ui.mission.timed": "Misión larga",
+  "ui.mission.duration": "Duración de la misión",
+  "ui.mission.minutes": "minutos",
+  "ui.mission.start": "¡Despegar! 🚀"
 }

@@ -1826,4 +1826,16 @@ body:has(#sideDrawer.open) .ttSettingsBottomNav{visibility:hidden!important}
 .ttReactCoreCompositionAction:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(255,255,255,.9),0 0 0 5px rgba(255,220,126,.85)}
 @media(prefers-reduced-motion:reduce){.ttReactCoreCompositionAction{transition:none}.ttReactCoreCompositionAction:hover{transform:none}}
 body.ttReactCoreScreensEnabled #ttMainBottomNav{display:none!important}
+body.ttReactCoreScreensEnabled #home.ttReactMissionSetupEnabled>.hero,
+body.ttReactCoreScreensEnabled #home.ttReactMissionSetupEnabled>section.card{display:none!important}
+.ttReactMissionSetup{margin:16px auto;max-width:760px}
+.ttReactMissionSetup h2,.ttReactMissionSetup h3{margin-top:0;color:#fff}
+.ttReactMissionSetup h3{margin-top:22px;font-size:1rem}
+.ttMissionQuickActions,.ttMissionTableGrid,.ttMissionDurations{display:flex;flex-wrap:wrap;gap:8px}
+.ttMissionTableGrid{margin-top:12px}
+.ttMissionTableGrid .planet{border:1px solid rgba(157,196,255,.42);border-radius:12px;padding:9px 11px;color:#eaf3ff;background:rgba(16,37,79,.6);font:inherit;cursor:pointer}
+.ttMissionTableGrid .planet.on,.ttMissionTableGrid .planet:focus-visible{background:#3d6fc4;outline:2px solid #ffdc7e;outline-offset:2px}
+.ttReactMissionSetup .opts{display:flex;flex-wrap:wrap;gap:8px}
+.ttReactMissionSetup .opt{font:inherit;cursor:pointer}
+.ttReactMissionStart{width:100%;margin-top:24px}
 @media (max-width:560px){.ttReactCoreNav{width:calc(100% - 16px);justify-content:space-between}.ttReactCoreNav button{min-width:0;flex:1}.ttReactCoreNav button small{font-size:.58rem}}
