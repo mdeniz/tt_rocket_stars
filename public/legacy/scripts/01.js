@@ -10,6 +10,15 @@ function updateFullscreenMenu(){
   if(label)label.textContent=active?(es?'Salir de pantalla completa':'Exit fullscreen'):(es?'Pantalla completa':'Fullscreen');
 }
 
-function openDrawer(){document.getElementById('drawerOverlay').classList.remove('hidden');document.getElementById('sideDrawer').classList.add('open');document.getElementById('sideDrawer').setAttribute('aria-hidden','false');document.getElementById('menuBtn').setAttribute('aria-expanded','true')}
-function closeDrawer(){document.getElementById('drawerOverlay').classList.add('hidden');document.getElementById('sideDrawer').classList.remove('open');document.getElementById('sideDrawer').setAttribute('aria-hidden','true');document.getElementById('menuBtn').setAttribute('aria-expanded','false')}
+window.TTAccessibility={
+  hideRegion(region,target){
+    if(!region)return;
+    const active=document.activeElement;
+    if(active&&region.contains(active)&&target&&typeof target.focus==='function')target.focus({preventScroll:true});
+    region.classList.add('hidden');
+    region.setAttribute('aria-hidden','true');
+  }
+};
 
+function openDrawer(){const drawer=document.getElementById('sideDrawer');drawer.classList.remove('hidden');document.getElementById('drawerOverlay').classList.remove('hidden');drawer.classList.add('open');drawer.setAttribute('aria-hidden','false');document.getElementById('menuBtn').setAttribute('aria-expanded','true')}
+function closeDrawer(){const drawer=document.getElementById('sideDrawer');const menu=document.getElementById('menuBtn');drawer.classList.remove('open');window.TTAccessibility.hideRegion(drawer,menu);document.getElementById('drawerOverlay').classList.add('hidden');menu.setAttribute('aria-expanded','false')}

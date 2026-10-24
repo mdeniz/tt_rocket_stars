@@ -20,6 +20,28 @@ test('one-tap splash opens dashboard without uncaught JS errors',async({page})=>
  expect(errors,errors.join('\n')).toEqual([]);
 });
 
+test('startup and drawer closure avoid favicon and aria-hidden diagnostics',async({page})=>{
+ const diagnostics=[];const faviconRequests=[];
+ page.on('console',message=>{if(/aria-hidden|favicon/i.test(message.text()))diagnostics.push(message.text())});
+ page.on('request',request=>{if(request.url().endsWith('/favicon.ico'))faviconRequests.push(request.url())});
+ await page.goto('/');
+ await page.locator('#launchSplash').focus();
+ await page.keyboard.press('Enter');
+ await expect(page.locator('#dashboard')).toBeVisible();
+ await expect.poll(()=>page.evaluate(()=>document.activeElement?.id)).toBe('menuBtn');
+ const skip=page.locator('#ttTourSkip');
+ await page.locator('#ttTourShade').waitFor({state:'visible',timeout:3000}).catch(()=>{});
+ if(await skip.isVisible().catch(()=>false))await skip.click();
+ await page.locator('#menuBtn').click();
+ await expect(page.locator('#sideDrawer')).toHaveClass(/open/);
+ await expect(page.locator('#sideDrawer .drawerClose')).toBeVisible();
+ await page.locator('#sideDrawer .drawerClose').focus();
+ await page.locator('#sideDrawer .drawerClose').click();
+ await expect.poll(()=>page.evaluate(()=>document.activeElement?.id)).toBe('menuBtn');
+ expect(faviconRequests).toEqual([]);
+ expect(diagnostics,diagnostics.join('\n')).toEqual([]);
+});
+
 test('desktop splash entry stays windowed, including at a narrow viewport',async({page})=>{
  await installFullscreenProbe(page);
  await page.setViewportSize({width:390,height:844});

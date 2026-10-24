@@ -69,8 +69,7 @@
       try { navigate('dashboard'); } catch(e) { console.error(e); }
     } finally {
       // Reveal the fully prepared screen in one step, without a black intermediate frame.
-      splash.classList.add('hidden');
-      splash.setAttribute('aria-hidden','true');
+      window.TTAccessibility.hideRegion(splash,document.getElementById('menuBtn'));
     }
   }
   splash.addEventListener('click',enterGame);
@@ -79,7 +78,7 @@
   // The informational splash always comes first. The selector opens only from the pilot button.
   if(window.TTSessionStore.getItem('tt-profile-selected-once')==='1'){
     window.TTSessionStore.removeItem('tt-profile-selected-once');
-    splash.classList.add('hidden');
+    window.TTAccessibility.hideRegion(splash,document.getElementById('menuBtn'));
     document.getElementById('profileGate')?.classList.add('hidden');
     try{navigate('dashboard')}catch(e){}
   }
