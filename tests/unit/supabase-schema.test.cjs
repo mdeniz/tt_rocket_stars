@@ -70,6 +70,8 @@ test('crew access schema denies anonymous reads and separates membership from pi
   assert.match(crewMigration, /grant select on table public\.pilot_access to authenticated/i);
   assert.match(crewMigration, /Users can read explicitly granted pilot access/i);
   assert.match(crewMigration, /is_active_crew_member\(id\)/i);
+  assert.match(crewMigration, /status = 'active'[\s\S]*is_active_crew_member\(crew_id\)/i);
+  assert.match(crewMigration, /expires_at is null or expires_at > timezone\('utc', now\(\)\)/i);
   assert.match(crewMigration, /status = 'active'/i);
   assert.doesNotMatch(crewMigration, /service[_ -]?role|supabase_service_role/i);
 });

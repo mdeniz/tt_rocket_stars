@@ -86,6 +86,12 @@ as $$
       and user_id = (select auth.uid())
       and status = 'active'
       and (expires_at is null or expires_at > timezone('utc', now()))
+      and exists (
+        select 1
+        from public.crews
+        where crews.id = crew_memberships.crew_id
+          and crews.status = 'active'
+      )
   );
 $$;
 
@@ -101,6 +107,7 @@ as $$
     from public.crews c
     left join public.crew_memberships cm on cm.crew_id = c.id
     where c.id = p_crew_id
+      and c.status = 'active'
       and (
         c.owner_user_id = (select auth.uid())
         or (
@@ -148,7 +155,12 @@ drop policy if exists "Users can read explicitly granted pilot access" on public
 create policy "Users can read explicitly granted pilot access"
 on public.pilot_access for select to authenticated
 using (
-  user_id = (select auth.uid())
+  (
+    user_id = (select auth.uid())
+    and status = 'active'
+    and (expires_at is null or expires_at > timezone('utc', now()))
+    and public.is_active_crew_member(crew_id)
+  )
   or exists (
     select 1
     from public.pilots
