@@ -3,8 +3,8 @@
 ## 1. Validate the product baseline
 
 - [ ] 1.1 Review `product/gameplay-and-progress` with product stakeholders and confirm coverage of mathematics practice, pilots, progress, rewards, settings, backups, and mobile use; verify that every requirement has executable or reviewable scenarios.
-- [ ] 1.2 Map existing mission, profile, save/restore, and tutorial flows to the product scenarios; verify the map with `npm run test:e2e` and record gaps without inventing behavior.
-- [ ] 1.3 Define the compatible backup format and progress migration rules from current behavior; verify them with unit tests and valid/invalid restore tests before changing storage.
+- [x] 1.2 Map existing mission, profile, save/restore, and tutorial flows to the product scenarios; verify the map with `npm run test:e2e` and record gaps without inventing behavior. See `docs/product-flow-map.md`.
+- [x] 1.3 Define the compatible backup format and progress migration rules from current behavior; verify them with unit tests and valid/invalid restore tests before changing storage. See `docs/persistence-contracts.md`.
 
 ## 2. Validate the technical contracts
 
