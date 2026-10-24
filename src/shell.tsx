@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import en from './locales/en.json';
 import es from './locales/es.json';
 
@@ -21,6 +22,8 @@ export function ReactShell() {
   const [pilotName, setPilotName] = useState('');
   const [pilotError, setPilotError] = useState('');
   const [pilots, setPilots] = useState(() => window.TTPilotAdapter?.readPilots() || []);
+  const [settingsNavHost, setSettingsNavHost] = useState<HTMLElement | null>(null);
+  const [settingsPanel, setSettingsPanel] = useState('audio');
   const entering = useRef(false);
 
   useEffect(() => {
@@ -52,6 +55,25 @@ export function ReactShell() {
     };
   }, []);
 
+  useEffect(() => {
+    const findHost = () => {
+      const host = document.querySelector<HTMLElement>('#settings .ttSettingsBottomNav');
+      if (host) {
+        if (!host.dataset.reactOwned) {
+          host.replaceChildren();
+          host.dataset.reactOwned = 'true';
+        }
+        setSettingsNavHost(host);
+        const active = document.querySelector<HTMLElement>('#settings [data-settings-panel].ttSettingsActive');
+        if (active?.dataset.settingsPanel) setSettingsPanel(active.dataset.settingsPanel);
+      }
+      return Boolean(host);
+    };
+    if (findHost()) return;
+    const timer = window.setTimeout(findHost, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
+
   if (!visible) return null;
 
   const copy = currentLocale();
@@ -67,8 +89,43 @@ export function ReactShell() {
     window.setTimeout(() => setEntered(true), 0);
   };
 
+  const settingsLabels: Record<string, [string, string, string]> = {
+    audio: ['🎵', 'Sound', 'Sonido'],
+    profile: ['👩‍🚀', 'Pilot', 'Piloto'],
+    language: ['🌐', 'Language', 'Idioma'],
+    theme: ['🎨', 'Theme', 'Tema'],
+    backups: ['💾', 'Backups', 'Copias'],
+    reset: ['🗑️', 'Reset', 'Borrar'],
+  };
+  const settingsPanelSelectors: Record<string, string> = {
+    audio: '#ttAudioSettings',
+    profile: 'article:has(#settingsPilotName)',
+    language: '.settingsLanguages',
+    theme: '#themeChoices',
+    backups: '#backupList',
+    reset: '.settingsDanger',
+  };
+  const settingsNavigation = settingsNavHost && createPortal(
+    Object.entries(settingsLabels).map(([key, [emoji, english, spanish]]) => {
+      const anchor = document.querySelector<HTMLElement>(`#settings ${settingsPanelSelectors[key]}`);
+      const panel = anchor?.closest<HTMLElement>('[data-settings-panel]') || anchor;
+      const targetId = panel?.id || `ttSettingsPanel-${key}`;
+      return (
+        <button className={`ttSettingsTab${settingsPanel === key ? ' active' : ''}`} type="button" key={key} onClick={() => {
+          setSettingsPanel(key);
+          window.TTSettingsAdapter?.showSettingsPanel(key);
+        }} data-target={targetId}>
+          <span aria-hidden="true">{emoji}</span>
+          <small data-en={english} data-es={spanish}>{document.documentElement.lang === 'es' ? spanish : english}</small>
+        </button>
+      );
+    }),
+    settingsNavHost,
+  );
+
   return (
     <>
+    {settingsNavigation}
     <section
       id="reactLaunchSplash"
       className={`ttReactLaunchSplash${entered ? ' hidden' : ''}`}
