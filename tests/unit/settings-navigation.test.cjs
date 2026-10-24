@@ -29,6 +29,7 @@ test('cloud access controls include sync and deletion affordances', () => {
 
 test('cloud synchronization is injected before the legacy runtime and used by it', () => {
   const vite = fs.readFileSync('vite.config.mjs', 'utf8');
+  assert.ok(index.indexOf('TT_PERSISTENCE_RUNTIME') < index.indexOf('TT_CLOUD_SYNC_RUNTIME'));
   assert.match(index, /TT_CLOUD_SYNC_RUNTIME/);
   assert.match(vite, /window\.TTCloudSync=\{createCloudSync/);
   assert.match(cloud, /window\.TTCloudSync\?\.createCloudSync/);

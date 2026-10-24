@@ -166,6 +166,33 @@ test('does not overwrite a newer local snapshot', async () => {
   assert.equal(applied, false);
 });
 
+test('rejects malformed remote snapshots without replacing local state', async () => {
+  const { createCloudSync } = await cloudSync;
+  let applied = false;
+  const client = {
+    auth: { getSession: async () => ({ data: { session: { user: { id: 'user-1' } } } }) },
+    from: () => ({
+      select: () => ({
+        eq: () => ({
+          eq: () => ({ maybeSingle: async () => ({
+            data: { id: 'pilot-remote', local_id: 'pilot-1', name: 'Remote', language: 'xx', payload: { score: 9 }, updated_at: '2026-01-03T00:00:00.000Z' },
+            error: null,
+          }) }),
+        }),
+      }),
+    }),
+  };
+  const adapter = createCloudSync({
+    client,
+    getLocalPilot: () => ({ id: 'pilot-1', name: 'Local', language: 'en', updatedAt: '2026-01-02T00:00:00.000Z', payload: { score: 2 } }),
+    applyRemotePilot: () => { applied = true; },
+  });
+
+  const result = await adapter.download();
+  assert.equal(result.status, 'failed');
+  assert.equal(applied, false);
+});
+
 test('coalesces queued uploads and reports bounded lifecycle states', async () => {
   const { createCloudSync } = await cloudSync;
   const statuses = [];

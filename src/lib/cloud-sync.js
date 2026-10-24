@@ -2,16 +2,35 @@ const SYNC_METADATA_KEY = 'tt-rocket-cloud-sync-v1';
 
 const clone = value => JSON.parse(JSON.stringify(value ?? null));
 
+function validateSnapshot(snapshot) {
+  const validator = globalThis?.TTPersistenceContracts?.validateCloudSnapshot;
+  if (typeof validator === 'function') {
+    const result = validator(snapshot);
+    if (!result.ok) {
+      const error = new TypeError(result.error);
+      error.noRetry = true;
+      throw error;
+    }
+    return result.value;
+  }
+  if (!snapshot || typeof snapshot.localId !== 'string' || !snapshot.localId.trim() || typeof snapshot.name !== 'string' || !snapshot.payload || typeof snapshot.payload !== 'object' || Array.isArray(snapshot.payload) || !['en', 'es'].includes(snapshot.language) || typeof snapshot.updatedAt !== 'string') {
+    const error = new TypeError('Cloud snapshot is invalid.');
+    error.noRetry = true;
+    throw error;
+  }
+  return snapshot;
+}
+
 export function serializePilot(profile, now = new Date().toISOString()) {
   if (!profile?.id) throw new TypeError('A pilot id is required.');
-  return {
+  return validateSnapshot({
     localId: String(profile.id),
     name: String(profile.name || 'Pilot').trim().slice(0, 80),
     avatar: profile.avatar || null,
     language: profile.language === 'en' ? 'en' : 'es',
     payload: clone(profile.payload || {}),
     updatedAt: profile.updatedAt || now,
-  };
+  });
 }
 
 export function chooseSnapshot(localSnapshot, remoteSnapshot) {
@@ -82,15 +101,15 @@ export function createCloudSync({ client, store, getLocalPilot, applyRemotePilot
   };
   const normalizeRemotePilot = (pilot, snapshot) => {
     const snapshotPayload = snapshot?.payload;
-    return {
+    return validateSnapshot({
       localId: String(pilot?.local_id || snapshotPayload?.localId || ''),
       name: String(pilot?.name || snapshotPayload?.name || 'Pilot').trim().slice(0, 80),
       avatar: pilot?.avatar || snapshotPayload?.avatar || null,
       language: pilot?.language === 'en' || snapshotPayload?.language === 'en' ? 'en' : 'es',
       payload: clone(snapshotPayload?.payload || pilot?.payload || {}),
-      updatedAt: snapshot?.updated_at || pilot?.updated_at || null,
+      updatedAt: snapshot?.updated_at || pilot?.updated_at || new Date(0).toISOString(),
       version: Number(snapshot?.version || 0),
-    };
+    });
   };
   const writeVersion = (localId, snapshot) => {
     if (!snapshot) return;
@@ -187,7 +206,7 @@ export function createCloudSync({ client, store, getLocalPilot, applyRemotePilot
     report('syncing', { localId: local.localId });
     return retry(async () => {
       const { data: pilot, error: pilotError } = await client.from('pilots')
-        .select('id,payload,updated_at').eq('user_id', authSession.user.id)
+        .select('id,local_id,name,avatar,language,payload,updated_at').eq('user_id', authSession.user.id)
         .eq('local_id', local.localId).maybeSingle();
       if (pilotError) throw pilotError;
       if (!pilot) return result('not-found');
@@ -195,7 +214,17 @@ export function createCloudSync({ client, store, getLocalPilot, applyRemotePilot
         .select('version,payload,updated_at').eq('user_id', authSession.user.id)
         .eq('pilot_id', pilot.id).maybeSingle();
       if (snapshotError) throw snapshotError;
-      const remoteSnapshot = remote?.payload || { ...pilot.payload, updatedAt: pilot.updated_at, version: remote?.version };
+      const remoteSnapshot = validateSnapshot(remote?.payload?.localId
+        ? { ...remote.payload, updatedAt: remote.updated_at || remote.payload.updatedAt || pilot.updated_at, version: remote.version }
+        : {
+          localId: pilot.local_id || local.localId,
+          name: pilot.name || local.name || 'Pilot',
+          avatar: pilot.avatar || local.avatar,
+          language: pilot.language || local.language || 'es',
+          payload: pilot.payload || {},
+          updatedAt: pilot.updated_at || new Date(0).toISOString(),
+          version: remote?.version,
+        });
       const decision = chooseSnapshot(local, remoteSnapshot);
       if (decision?.source === 'remote') {
         const backedUp = typeof createRecoveryBackup !== 'function' || await createRecoveryBackup('Before cloud restore');

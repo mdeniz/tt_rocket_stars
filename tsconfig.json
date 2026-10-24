@@ -11,5 +11,5 @@
     "skipLibCheck": true,
     "allowSyntheticDefaultImports": true
   },
-  "include": ["src/main.tsx"]
+  "include": ["src/**/*.ts", "src/**/*.tsx"]
 }
