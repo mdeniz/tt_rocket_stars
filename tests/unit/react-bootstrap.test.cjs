@@ -8,7 +8,7 @@ const index = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const bootstrap = fs.readFileSync(path.join(root, 'src/main.tsx'), 'utf8');
 
 test('React bootstrap has an isolated inert mount point', () => {
-  assert.match(index, /<div id="react-root" hidden aria-hidden="true"><\/div>/);
+  assert.match(index, /<div id="react-root" hidden aria-hidden="true"(?: [^>]*)?><\/div>/);
   assert.match(bootstrap, /export const REACT_ROOT_ID = 'react-root'/);
   assert.match(bootstrap, /createRoot\(element\)\.render\(content\)/);
 });

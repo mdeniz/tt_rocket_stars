@@ -61,7 +61,16 @@
       deleted: 'Datos de la nube borrados. El progreso local sigue disponible.', deleteError: 'No se han podido borrar los datos de la nube. Tu progreso local no ha cambiado.'
     }
   };
-  const text = key => messages[language()][key];
+  const text = key => {
+    const translationKey = { invalidCredentials: 'ui.089' }[key];
+    if (translationKey) {
+      const selector = '[data-' + 'i18n="' + translationKey + '"]';
+      const element = document.querySelector(selector);
+      const localized = element?.dataset?.[language()];
+      if (localized) return localized;
+    }
+    return messages[language()][key];
+  };
   const api = path => `${String(config.url).replace(/\/$/, '')}/auth/v1${path}`;
   const rest = path => `${String(config.url).replace(/\/$/, '')}/rest/v1${path}`;
   const headers = token => ({ apikey: config.anonKey, Authorization: `Bearer ${token || config.anonKey}`, 'Content-Type': 'application/json' });
@@ -73,6 +82,7 @@
   const classifyError = error => {
     const message = `${error?.error_description || ''} ${error?.msg || ''} ${error?.message || ''}`.toLowerCase();
     if (message.includes('rate') || message.includes('too many')) return 'rateLimit';
+    if (message.includes('invalid login') || message.includes('invalid password') || message.includes('invalid credentials')) return 'invalidCredentials';
     if (message.includes('expired') || message.includes('invalid')) return 'expired';
     if (message.includes('signups') || message.includes('not found') || message.includes('user')) return 'denied';
     return 'generic';
