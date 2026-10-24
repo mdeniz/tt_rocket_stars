@@ -38,11 +38,16 @@ function inlineReleaseAssets() {
           .replace(/^export /gm, '')
           .replace(/\nexport \{ SYNC_METADATA_KEY \};\s*$/, '')
           + '\nwindow.TTCloudSync={createCloudSync,chooseSnapshot,serializePilot,SYNC_METADATA_KEY};';
+        const persistence = read('src/lib/persistence-runtime.js');
         const telemetrySource = read('src/lib/telemetry.js')
           .replace(/^export /gm, '')
           .replace(/\nexport \{ DEFAULT_MAX_QUEUE_SIZE, DEFAULT_RETENTION_MS, EVENT_DEFINITIONS \};\s*$/, '');
         const telemetry = `(()=>{${telemetrySource}\nwindow.TTTelemetry=createTelemetryService({consent:false});})();`;
         let output = html.replace(
+          '<!-- TT_PERSISTENCE_RUNTIME -->',
+          `<script>${escapeClosingTag(persistence, 'script')}</script>`,
+        );
+        output = output.replace(
           '<!-- TT_CLOUD_SYNC_RUNTIME -->',
           `<script>${escapeClosingTag(cloudSync, 'script')}</script>`,
         );

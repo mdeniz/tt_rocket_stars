@@ -2,12 +2,14 @@
 (function(){
  const KEY='tt-rocket-profiles-v1', ACTIVE='tt-rocket-active-profile-v1';
  const KEYS=['cosmotablas-v2','cosmotablas-history-v1','tt-rocket-garage-v1','tt-rocket-backups-v1'];
+ const contracts=window.TTPersistenceContracts||{};
+ const persistence=contracts.createPilotPersistence?.(window.TTLocalStore,KEYS);
  const language=()=>window.TTLocalStore.getItem('cosmotablas-language')==='es'?'es':'en';
- const read=()=>{try{const v=JSON.parse(window.TTLocalStore.getItem(KEY)||'[]');return Array.isArray(v)?v:[]}catch{return []}};
- const write=v=>window.TTLocalStore.setItem(KEY,JSON.stringify(v));
+ const read=()=>{const value=persistence?.readJson(KEY,[])??[];const result=contracts.validateProfiles?.(value);return result?.ok?result.value:(Array.isArray(value)?value:[])};
+ const write=v=>{const result=contracts.validateProfiles?.(v);if(result&&!result.ok)return false;return persistence?.writeJson(KEY,result?.value||v)!==false};
  const id=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
- const capture=()=>Object.fromEntries(KEYS.map(k=>[k,window.TTLocalStore.getItem(k)]));
- const apply=payload=>{KEYS.forEach(k=>{if(typeof payload?.[k]==='string')window.TTLocalStore.setItem(k,payload[k]);else window.TTLocalStore.removeItem(k)})};
+ const capture=()=>persistence?.capture()||Object.fromEntries(KEYS.map(k=>[k,window.TTLocalStore.getItem(k)]));
+ const apply=payload=>persistence?.apply(payload)||KEYS.forEach(k=>{if(typeof payload?.[k]==='string')window.TTLocalStore.setItem(k,payload[k]);else window.TTLocalStore.removeItem(k)});
  const hasLegacy=()=>KEYS.slice(0,3).some(k=>window.TTLocalStore.getItem(k)!==null);
  let profiles=read();let active=window.TTLocalStore.getItem(ACTIVE);
  if(!profiles.length&&hasLegacy()){
