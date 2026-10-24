@@ -4,4 +4,4 @@
 - [x] Restore the latest release asset as the stable Pages entrypoint.
 - [x] Update distribution checks, documentation, and release/deployment tests.
 - [x] Run automated and empirical browser verification for both entrypoints.
-- [ ] Review, publish, and merge the PR after CI passes.
+- [x] Review, publish, and merge the PR after CI passes.
