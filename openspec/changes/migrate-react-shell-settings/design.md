@@ -39,6 +39,13 @@ The repository has a typed React mount point but the ordered legacy scripts stil
 4. Verify self-contained build and browser flows.
 5. Remove superseded legacy shell markup only after dependent scripts and tests no longer require it.
 
+## Verification Evidence
+
+- `npm run test` passed with 62 unit tests and 57 Playwright tests across Chromium, Firefox, and WebKit.
+- `npm run build` passed and verified self-contained stable and development entrypoints.
+- Chrome DevTools verified the local app at `http://127.0.0.1:4183/`: the React root reports `data-react-shell-mounted=true`, all typed shell adapters are available, settings navigation exposes the sound panel, local pilot storage keys remain present, and no console errors or XHR/fetch requests occur during local-only startup.
+- The React root remains hidden and legacy DOM remains the visible owner. This is an intentional compatibility boundary, not completion of the visible React-shell migration; issue #52 must remain open until the acceptance criteria are met.
+
 ## Open Questions
 
 - None; the migrated surfaces and compatibility boundaries are fixed by the issue scope and existing specs.
