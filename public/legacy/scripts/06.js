@@ -74,6 +74,7 @@
       window.TTAccessibility.hideRegion(splash,document.getElementById('menuBtn'));
     }
   }
+  window.TTEnterGame=enterGame;
   splash.addEventListener('click',enterGame);
   splash.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();enterGame()}});
   splashLanguage();

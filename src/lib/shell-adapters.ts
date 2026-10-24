@@ -12,6 +12,7 @@ interface LegacyPilotProfile {
 }
 
 interface LegacyPilotStore {
+  sync(): void;
   read(): LegacyPilotProfile[];
   active(): LegacyPilotProfile | undefined;
   choose(id: string): void;
@@ -28,6 +29,8 @@ declare global {
     TTProfiles?: LegacyPilotStore;
     TTPilotAdapter?: PilotAdapter;
     TTSettingsAdapter?: LegacySettingsStore;
+    TTEnterGame?: () => void;
+    TTOpenPilotSelector?: () => void;
   }
 }
 

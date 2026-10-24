@@ -179,8 +179,8 @@ async function installCloudFixture(page, options = {}) {
     state,
     async openCloudSettings() {
       await page.goto('/');
-      await page.locator('#launchSplash').click();
-      await expect(page.locator('#launchSplash')).toBeHidden();
+      await page.locator('#reactLaunchSplash').click();
+      await expect(page.locator('#reactLaunchSplash')).toBeHidden();
       await page.locator('#ttTourShade').waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
       const skip = page.locator('#ttTourSkip');
       if (await skip.isVisible().catch(() => false)) await skip.click();

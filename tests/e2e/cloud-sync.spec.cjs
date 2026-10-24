@@ -22,8 +22,8 @@ test('invited users can request password recovery with Spanish feedback', async 
 test('invited account setup can return to password login without blocking local play', async ({ page }) => {
   const fixture = await installCloudFixture(page);
   await page.goto('/?token_hash=invite-token&type=invite');
-  await page.locator('#launchSplash').click();
-  await expect(page.locator('#launchSplash')).toBeHidden();
+  await page.locator('#reactLaunchSplash').click();
+  await expect(page.locator('#reactLaunchSplash')).toBeHidden();
   await page.locator('#ttTourShade').waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
   const skip = page.locator('#ttTourSkip');
   if (await skip.isVisible().catch(() => false)) await skip.click();
@@ -88,8 +88,8 @@ test('expired invitation links show a safe recovery message', async ({ page }) =
     verifyError: { status: 400, body: { error_description: 'Token has expired' } },
   });
   await page.goto('/?token_hash=expired-token&type=invite');
-  await page.locator('#launchSplash').click();
-  await expect(page.locator('#launchSplash')).toBeHidden();
+  await page.locator('#reactLaunchSplash').click();
+  await expect(page.locator('#reactLaunchSplash')).toBeHidden();
   await page.locator('#ttTourShade').waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
   const skip = page.locator('#ttTourSkip');
   if (await skip.isVisible().catch(() => false)) await skip.click();
@@ -168,7 +168,7 @@ test('local-only startup does not require a cloud request', async ({ page }) => 
     localStorage.setItem('tt-rocket-active-profile-v1', 'local-pilot');
   });
   await page.goto('/');
-  await page.locator('#launchSplash').click();
+  await page.locator('#reactLaunchSplash').click();
   await expect(page.locator('#dashboard')).toBeVisible();
   await page.locator('#ttTourShade').waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
   const skip = page.locator('#ttTourSkip');

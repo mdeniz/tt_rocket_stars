@@ -2,7 +2,7 @@ const { test, expect } = require('@playwright/test');
 
 async function enterGame(page) {
   await page.goto('/');
-  await page.locator('#launchSplash').click();
+  await page.locator('#reactLaunchSplash').click();
   await expect(page.locator('#dashboard')).toBeVisible();
   await dismissTour(page);
 }
@@ -18,6 +18,20 @@ test('pilot adapter exposes local profiles without cloud configuration', async (
   await expect.poll(() => page.evaluate(() => typeof window.TTPilotAdapter?.readPilots)).toBe('function');
   await expect.poll(() => page.evaluate(() => window.__TT_SUPABASE_CONFIG__?.url || '')).toBe('');
   expect(await page.evaluate(() => window.TTPilotAdapter.readPilots())).toHaveLength(1);
+});
+
+test('React pilot selector preserves the legacy profile contract', async ({ page }) => {
+  await enterGame(page);
+  await page.locator('#menuBtn').click();
+  await page.locator('.drawerProfileSwitch').click();
+  await expect(page.locator('.ttReactPilotSelector')).toBeVisible();
+  await expect(page.locator('.ttReactPilotTile')).toContainText('Pilot 1');
+
+  await page.locator('#ttReactPilotName').fill('React Pilot');
+  await page.locator('.ttReactPilotCreate button').click();
+  await expect(page.locator('.ttReactPilotSelector')).toBeHidden();
+  await expect(page.locator('#headerPilotName')).toHaveText('React Pilot');
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('tt-rocket-profiles-v1')).length)).toBe(2);
 });
 
 test('pilot creation and switching preserve separate local profile identities', async ({ page }) => {
