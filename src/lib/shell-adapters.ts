@@ -1,4 +1,5 @@
 import type { ShellPilotSummary } from './shell-contracts';
+import { createMissionPersistence, type MissionPersistenceAdapter } from './react-gameplay-persistence';
 
 export interface FullscreenAdapter {
   requestFullscreen(): Promise<boolean>;
@@ -19,6 +20,12 @@ interface LegacyPilotStore {
   create(name: string): string;
 }
 
+interface LegacyLocalStore {
+  getItem(key: string): string | null;
+  setItem(key: string, value: string): void | boolean;
+  removeItem(key: string): void | boolean;
+}
+
 interface LegacySettingsStore {
   showSettingsPanel(panel: string): void;
 }
@@ -33,6 +40,8 @@ declare global {
   interface Window {
     TTFullscreenAdapter?: FullscreenAdapter;
     TTProfiles?: LegacyPilotStore;
+    TTLocalStore?: LegacyLocalStore;
+    TTAudio?: { sfx?: (name: string) => void };
     TTPilotAdapter?: PilotAdapter;
     TTPersistenceBoundary?: PersistenceBoundary;
     TTBackupControls?: BackupControlsAdapter;
@@ -101,6 +110,7 @@ export interface BackupControlsAdapter {
 export interface PersistenceBoundary {
   pilots: PilotAdapter;
   backups: BackupControlsAdapter;
+  mission: MissionPersistenceAdapter;
   inventory: InventoryAdapter;
   achievements: AchievementAdapter;
 }
@@ -177,6 +187,7 @@ export function createBackupControlsAdapter(): BackupControlsAdapter {
 export function installPersistenceBoundary(): void {
   const pilots = createPilotAdapter();
   const backups = createBackupControlsAdapter();
+  const mission = createMissionPersistence(window.TTLocalStore, 'cosmotablas-v2');
   const core = window.TTCoreScreensAdapter || createCoreScreensAdapter();
   const inventory = createInventoryAdapter(core);
   const achievements = createAchievementAdapter(core);
@@ -187,6 +198,7 @@ export function installPersistenceBoundary(): void {
   window.TTPersistenceBoundary = {
     pilots,
     backups,
+    mission,
     inventory,
     achievements,
   };

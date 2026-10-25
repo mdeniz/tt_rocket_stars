@@ -7,6 +7,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 ## [Unreleased]
 
 ### Added
+- A flag-gated React mission player with shared multiplication/division rules, timed and exam progression, local-first answer persistence, audio hooks, and legacy rollback.
 - Isolated, framework-agnostic TypeScript game-rule and progression contracts with deterministic tests.
 - An isolated React mount contract and strict no-emit TypeScript bootstrap alongside the legacy runtime.
 - Credential-free Playwright coverage for invited authentication, local-first cloud synchronization, restore, conflict recovery, retries, deletion, and offline gameplay.

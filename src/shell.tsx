@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import en from './locales/en.json';
 import es from './locales/es.json';
 import type { CoreScreenId } from './lib/shell-adapters';
+import { advanceTimer, startMission as createReactMission, submitAnswer, type ReactMissionState } from './lib/react-gameplay';
 
 type Locale = typeof en;
 
@@ -49,14 +50,79 @@ const missionModes = [
 ] as const;
 const missionDurations = [5, 10, 15] as const;
 
+function persistReactAnswer(previous: ReactMissionState, answer: number): void {
+  const question = previous.question;
+  const mission = window.TTPersistenceBoundary?.mission;
+  if (!question || !mission) return;
+  const payload = mission.read();
+  const key = `${question.a}-${question.b}-${question.op}`;
+  const current = payload[key];
+  const stats = current && typeof current === 'object' && !Array.isArray(current) ? current as Record<string, unknown> : {};
+  mission.commit({
+    ...payload,
+    [key]: {
+      ...stats,
+      right: Number(stats.right || 0) + (question.result === answer ? 1 : 0),
+      wrong: Number(stats.wrong || 0) + (question.result === answer ? 0 : 1),
+    },
+  });
+}
+
+function ReactMissionPlayer({ locale, state, onChange, onExit }: {
+  locale: Locale;
+  state: ReactMissionState;
+  onChange: (state: ReactMissionState) => void;
+  onExit: () => void;
+}) {
+  const copy = locale as Record<string, string>;
+  const [answer, setAnswer] = useState('');
+  useEffect(() => {
+    if (state.status !== 'active' || state.config.mode !== 'timed') return;
+    const timer = window.setInterval(() => onChange(advanceTimer(state)), 250);
+    return () => window.clearInterval(timer);
+  }, [onChange, state]);
+  const submit = () => {
+    if (state.status !== 'active' || !state.question || !answer.trim()) return;
+    const isCorrect = state.question.result === Number(answer);
+    window.TTAudio?.sfx?.(isCorrect ? 'correct' : 'wrong');
+    persistReactAnswer(state, Number(answer));
+    onChange(submitAnswer(state, Number(answer)));
+    setAnswer('');
+  };
+  if (state.status === 'complete') {
+    return <section className="card ttReactMissionPlayer" aria-live="polite">
+      <h2>{copy['ui.reactMission.complete']}</h2>
+      <p>{copy['ui.reactMission.reward']}: ⭐ {state.reward?.total || 0}</p>
+      <button className="btn" type="button" onClick={onExit}>{copy['ui.reactMission.back']}</button>
+    </section>;
+  }
+  return <section className="card ttReactMissionPlayer" aria-labelledby="ttReactMissionQuestion">
+    <div className="ttReactMissionStatus">
+      <span>{copy['ui.reactMission.score']}: {state.correct}</span>
+      {state.remainingSeconds !== null && <span aria-label={copy['ui.reactMission.timer']}>⏱ {Math.floor(state.remainingSeconds / 60)}:{String(state.remainingSeconds % 60).padStart(2, '0')}</span>}
+    </div>
+    <h2 id="ttReactMissionQuestion" className="math"><em>{state.question?.a}</em> {state.question?.op === 'div' ? '÷' : '×'} <em>{state.question?.b}</em></h2>
+    <label htmlFor="ttReactMissionAnswer">{copy['ui.reactMission.answer']}</label>
+    <input id="ttReactMissionAnswer" className="answer" inputMode="numeric" value={answer} onChange={event => setAnswer(event.target.value.replace(/\D/g, ''))} onKeyDown={event => { if (event.key === 'Enter') submit(); }} />
+    <button className="btn" type="button" onClick={submit}>{copy['ui.reactMission.submit']}</button>
+    <p className={`feedback ${state.feedback === 'correct' ? 'good' : state.feedback === 'incorrect' ? 'bad' : ''}`} aria-live="polite">
+      {state.feedback === 'correct' ? copy['ui.reactMission.correct'] : state.feedback === 'incorrect' ? copy['ui.reactMission.incorrect'] : ''}
+    </p>
+    <button className="btn alt" type="button" onClick={onExit}>{copy['ui.reactMission.back']}</button>
+  </section>;
+}
+
 function ReactMissionSetup({ locale }: { locale: Locale }) {
   const copy = locale as Record<string, string>;
   const [tables, setTables] = useState<Set<number>>(() => new Set([1, 2, 5, 10]));
   const [operation, setOperation] = useState<'mul' | 'div' | 'mix'>('mul');
   const [mode, setMode] = useState<'practice' | 'exam' | 'speed' | 'timed'>('practice');
   const [duration, setDuration] = useState<5 | 10 | 15>(5);
+  const [mission, setMission] = useState<ReactMissionState | null>(null);
   const isSpanish = document.documentElement.lang === 'es';
   const adapter = window.TTGameplayAdapter || window.TTCoreScreensAdapter;
+
+  if (mission) return <ReactMissionPlayer locale={locale} state={mission} onChange={next => setMission(next)} onExit={() => setMission(null)} />;
 
   return (
     <section className="card ttReactMissionSetup" aria-labelledby="ttReactMissionTitle">
@@ -113,7 +179,7 @@ function ReactMissionSetup({ locale }: { locale: Locale }) {
           ))}
         </div>
       )}
-      <button className="btn ttReactMissionStart" type="button" onClick={() => adapter?.startMission()}>
+      <button className="btn ttReactMissionStart" type="button" onClick={() => setMission(createReactMission({ tables: [...tables], operation, mode, durationMinutes: mode === 'timed' ? duration : undefined }))}>
         {copy['ui.mission.start']}
       </button>
     </section>
