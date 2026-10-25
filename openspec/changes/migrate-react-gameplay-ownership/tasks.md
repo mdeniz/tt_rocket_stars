@@ -22,7 +22,7 @@
 ## 4. Integration gate
 
 - [x] 4.1 Run `npm run check`, full desktop E2E, and mobile WebKit signal checks; verify all required suites pass or document exact isolated reruns.
-- [ ] 4.2 Run the final OpenSpec scenario audit and issue #53 acceptance review; verify the React flag remains disabled by default until every unresolved dependency and device check is accounted for.
+- [x] 4.2 Run the final OpenSpec scenario audit and issue #53 acceptance review; verify the React flag remains disabled by default until every unresolved dependency and device check is accounted for.
 
 ## Workflow follow-up
 

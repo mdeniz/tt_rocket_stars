@@ -105,3 +105,24 @@ network log contained no XHR or fetch requests.
 The issue remains open because the React core-screen migration is feature-
 flagged and legacy-owned gameplay state, persistence, and inventory state
 remain authoritative. Full legacy-source retirement belongs to issue #54.
+
+## Final gameplay ownership audit
+
+The `migrate-react-gameplay-ownership` scenarios are accounted for as follows:
+
+- React-owned mission setup, question progression, timers, feedback, rewards,
+  audio hooks, and local fact persistence are covered behind the opt-in flag.
+- Disabled-flag startup, legacy mission fallback, backup compatibility, and
+  fail-closed adapter behavior remain covered and preserve existing storage
+  keys.
+- Offline/no-account play, English/Spanish labels, keyboard/touch behavior,
+  reduced motion, Chrome DevTools runtime evidence, Chromium E2E, and mobile
+  WebKit compatibility checks are complete.
+- The flag remains disabled by default in both the Vite runtime and the
+  published release path.
+
+The acceptance review does not close issue #53: the remaining legacy gameplay,
+persistence, inventory, and achievement sources of truth still require
+incremental migration and release compatibility review. Issue #54 remains
+blocked until those sources are retired. Real iOS Safari validation is not an
+acceptance gate; mobile WebKit remains the recorded compatibility signal.
