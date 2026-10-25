@@ -154,8 +154,8 @@ test('React mission setup delegates supported configuration to gameplay', async 
   await setup.getByRole('button', { name: '15 minutes' }).click();
   await expect(setup.getByRole('button', { name: '15 minutes' })).toHaveClass(/on/);
   await setup.getByRole('button', { name: /Launch mission/ }).click();
-  await expect(page.locator('#play')).toBeVisible();
-  await expect(page.locator('#question')).not.toHaveText('');
+  await expect(page.locator('.ttReactMissionPlayer')).toBeVisible();
+  await expect(page.locator('#ttReactMissionQuestion')).not.toHaveText('');
   expect(await page.evaluate(() => typeof window.TTGameplayAdapter?.startMission)).toBe('function');
 });
 
@@ -176,36 +176,51 @@ async function launchReactMission(page, mode = 'practice') {
     await setup.getByRole('button', { name: '5 minutes', exact: true }).click();
   }
   await setup.getByRole('button', { name: /Launch mission/ }).click();
-  await expect(page.locator('#play')).toBeVisible();
+  await expect(page.locator('.ttReactMissionPlayer')).toBeVisible();
   return setup;
 }
 
 test('React practice flow preserves legacy answer progression, audio, and local persistence', async ({ page }) => {
   await launchReactMission(page);
-  const initialQuestion = await page.locator('#question').innerText();
+  await page.evaluate(() => {
+    window.__reactAudioCalls = [];
+    const audio = window.TTAudio;
+    if (audio) audio.sfx = name => window.__reactAudioCalls.push(name);
+  });
+  const initialQuestion = await page.locator('#ttReactMissionQuestion').innerText();
   const match = initialQuestion.match(/(\d+)\s*[×x]\s*(\d+)/);
   expect(match).not.toBeNull();
   const correctAnswer = String(Number(match[1]) * Number(match[2]));
+  await page.locator('#ttReactMissionAnswer').fill(correctAnswer);
+  await page.getByRole('button', { name: /Check answer|Comprobar respuesta/ }).click();
 
-  for (const digit of correctAnswer) await page.getByRole('button', { name: digit, exact: true }).click();
-  await page.getByRole('button', { name: /Check|Comprobar/ }).click();
-
-  await expect(page.locator('#answer')).toBeDisabled();
-  await expect(page.locator('#score')).toContainText('10');
+  await expect(page.locator('.ttReactMissionPlayer .feedback')).toContainText(/Correct|¡Correcto/);
   await expect.poll(() => page.evaluate(() => localStorage.getItem('cosmotablas-v2'))).not.toBeNull();
-  await expect.poll(() => page.locator('#question').innerText()).not.toBe(initialQuestion, { timeout: 3000 });
-  await expect(page.locator('#answer')).toBeEnabled();
-  expect(await page.evaluate(() => typeof window.TTAudio?.sfx)).toBe('function');
+  await expect.poll(() => page.locator('#ttReactMissionQuestion').innerText()).not.toBe(initialQuestion, { timeout: 3000 });
+  expect(await page.evaluate(() => Boolean(window.TTPersistenceBoundary?.mission))).toBe(true);
+  expect(await page.evaluate(() => window.__reactAudioCalls)).toEqual(['correct']);
 });
 
-test('React timed flow exposes a running legacy timer and remains locally playable', async ({ page }) => {
+test('React timed flow exposes a running timer and remains locally playable', async ({ page }) => {
   await launchReactMission(page, 'timed');
-  const initialClock = await page.locator('#clock').innerText();
+  const initialClock = await page.locator('.ttReactMissionStatus').innerText();
   expect(initialClock).toMatch(/5:0\d/);
-  await expect.poll(() => page.locator('#clock').innerText(), { timeout: 3000 }).not.toBe(initialClock);
-  await expect(page.locator('#question')).not.toHaveText('');
-  await expect(page.locator('#answer')).toBeEnabled();
-  expect(await page.evaluate(() => typeof window.TTAudio?.sfx)).toBe('function');
+  await expect.poll(() => page.locator('.ttReactMissionStatus').innerText(), { timeout: 3000 }).not.toBe(initialClock);
+  await expect(page.locator('#ttReactMissionQuestion')).not.toHaveText('');
+  await expect(page.locator('#ttReactMissionAnswer')).toBeEnabled();
+});
+
+test('React mission remains playable offline without cloud configuration', async ({ page, context }) => {
+  await launchReactMission(page);
+  await context.setOffline(true);
+  const question = await page.locator('#ttReactMissionQuestion').innerText();
+  const match = question.match(/(\d+)\s*[×x]\s*(\d+)/);
+  expect(match).not.toBeNull();
+  await page.locator('#ttReactMissionAnswer').fill(String(Number(match[1]) * Number(match[2])));
+  await page.getByRole('button', { name: /Check answer|Comprobar respuesta/ }).click();
+  await expect(page.locator('.ttReactMissionPlayer .feedback')).toContainText(/Correct|¡Correcto/);
+  expect(await page.evaluate(() => Boolean(window.TTPersistenceBoundary?.mission))).toBe(true);
+  expect(await page.evaluate(() => localStorage.getItem('cosmotablas-v2'))).not.toBeNull();
 });
 
 test('React garage controls delegate preview and equip actions to pilot-local storage', async ({ page }) => {

@@ -2,12 +2,12 @@
 
 The application currently starts through ordered classic scripts. The hidden `#react-root` element and `src/main.tsx` provide a typed React mount contract for incremental migration, but the bootstrap is intentionally not imported by `index.html` yet.
 
-Legacy navigation, inline handlers, storage keys, translations, offline gameplay, and the self-contained release remain authoritative until each surface has an adapter and compatibility coverage. Future React migrations must mount only into the isolated root or an explicitly migrated surface; they must not reorder or duplicate legacy scripts.
+Legacy navigation, inline handlers, storage keys, translations, and the self-contained release remain authoritative by default. When `reactCoreScreens` is explicitly enabled, the React mission player owns mission configuration, question progression, timing, feedback, rewards, and local mission statistics through the typed boundary. Future React migrations must mount only into the isolated root or an explicitly migrated surface; they must not reorder or duplicate legacy scripts.
 
 ## Persistence ownership boundary
 
 React-owned surfaces use `window.TTPersistenceBoundary` as their single typed
-entry point for pilot selection and local backup controls. The boundary keeps
+entry point for pilot selection, mission persistence, and local backup controls. The boundary keeps
 `window.TTPilotAdapter` as a compatibility alias for the existing legacy
 integration while the migration is staged. Inventory and achievement state
 remain legacy-owned; their React action adapters are explicit typed members of
@@ -20,6 +20,11 @@ The boundary preserves the existing `tt-rocket-profiles-v1`,
 remain opaque so legacy and future fields survive round trips. Invalid domain
 payloads are rejected before writes, and unavailable legacy controls return a
 failure value without throwing or deleting local state.
+
+The React mission adapter records compatible fact statistics through the existing
+`cosmotablas-v2` key and keeps a raw pre-write snapshot for rollback. It does not
+introduce a new pilot key or overwrite malformed payloads. Mission answers remain
+local-first when Supabase is unavailable or the user is signed out.
 
 ## Rollback and verification
 
@@ -42,33 +47,38 @@ application: URL, action, visible result, console errors, and network requests.
 Playwright WebKit remains a compatibility signal only and does not replace
 validation on real iOS Safari.
 
-The current gameplay-boundary check on `http://127.0.0.1:5175/` enabled
-`reactCoreScreens` explicitly and verified mission setup, launch, answer
-progression, score and coin rewards through the React gameplay adapter. The
-running page persisted `cosmotablas-v2`, exposed the `TTAudio.sfx` hook, made
-no XHR/fetch requests, and reported no console errors or warnings.
+The current gameplay-boundary check on `http://127.0.0.1:5178/` enabled
+`VITE_REACT_CORE_SCREENS=true` explicitly and verified mission setup, launch,
+answer progression, score, and local fact statistics through the React
+gameplay adapter. The running page persisted `cosmotablas-v2`, exposed the
+`TTAudio.sfx` hook, made no XHR/fetch requests, and reported no console errors
+or warnings in Chrome DevTools.
 
-The accessibility check also passed in Chromium with keyboard activation,
-Spanish locale assertions, `prefers-reduced-motion: reduce`, and
-`aria-pressed` state changes. Chrome DevTools emulation at `390x844`, touch
-enabled, and reduced motion confirmed the React gameplay adapter remained
-available, with no console errors or XHR/fetch requests. This is not a claim
-of real iOS Safari equivalence.
+The accessibility checks passed in Chromium with keyboard activation, Spanish
+locale assertions, `prefers-reduced-motion: reduce`, touch-oriented controls,
+and `aria-pressed` state changes. The focused Chromium and mobile WebKit suites
+also exercised the React mission controls at responsive viewport sizes. This
+is not a claim of real iOS Safari equivalence.
 
 ## Integration verification
 
 The ownership boundary was verified from the implementation worktree on
 2026-10-25:
 
-- `npm run check`: passed; 33 legacy scripts, TypeScript, 92 unit tests, the
+- `npm run check`: passed; 33 legacy scripts, TypeScript, 100 unit tests, the
   Vite build, and the self-contained distribution check.
-- `npm run test:e2e`: 108/114 passed in the parallel desktop run; the six
-  Firefox/WebKit timeout cases passed when rerun in isolation with one worker.
-- `PLAYWRIGHT_MOBILE=1 PLAYWRIGHT_WORKERS=1 npx playwright test --project=webkit-mobile`: passed; 38 tests.
+- `PLAYWRIGHT_WORKERS=1 npx playwright test --project=chromium`: passed; 39
+  tests.
+- `PLAYWRIGHT_MOBILE=1 PLAYWRIGHT_WORKERS=1 npx playwright test
+  --project=webkit-mobile`: passed; 39 tests.
+- `npx playwright test tests/e2e/feature-flags.spec.cjs --project=chromium
+  --workers=1`: passed; 13 focused React/flag tests.
 - `git diff --check`: passed.
-- Chrome DevTools verified the typed persistence/gameplay/inventory/achievement
-  bridges, mission rewards, local persistence, reduced-motion/touch emulation,
-  no console errors, and no XHR/fetch requests.
+- Chrome DevTools verified the typed gameplay/persistence/audio bridges, local
+  mission persistence, responsive/touch controls, no console errors or
+  warnings, and no XHR/fetch requests for the running online page. The
+  separate Playwright offline scenario verified local play without cloud
+  configuration.
 
 The issue remains open because the React core-screen migration is feature-
 flagged and legacy-owned gameplay state, persistence, inventory state, and

@@ -141,5 +141,14 @@
   "ui.garage.support": "Support ships",
   "ui.achievements.controls": "Achievement progress",
   "ui.achievements.description": "Your pilot-local milestones and rewards.",
-  "ui.achievements.refresh": "Refresh achievements"
+  "ui.achievements.refresh": "Refresh achievements",
+  "ui.reactMission.complete": "Mission complete",
+  "ui.reactMission.reward": "Rocket coins",
+  "ui.reactMission.back": "Back to mission setup",
+  "ui.reactMission.score": "Correct answers",
+  "ui.reactMission.timer": "Time remaining",
+  "ui.reactMission.answer": "Your answer",
+  "ui.reactMission.submit": "Check answer",
+  "ui.reactMission.correct": "Correct!",
+  "ui.reactMission.incorrect": "Not quite. Try the next one."
 }

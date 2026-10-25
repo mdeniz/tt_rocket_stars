@@ -141,5 +141,14 @@
   "ui.garage.support": "Naves de apoyo",
   "ui.achievements.controls": "Progreso de logros",
   "ui.achievements.description": "Los hitos y recompensas de tu piloto local.",
-  "ui.achievements.refresh": "Actualizar logros"
+  "ui.achievements.refresh": "Actualizar logros",
+  "ui.reactMission.complete": "Misión completada",
+  "ui.reactMission.reward": "Monedas del cohete",
+  "ui.reactMission.back": "Volver a preparar la misión",
+  "ui.reactMission.score": "Aciertos",
+  "ui.reactMission.timer": "Tiempo restante",
+  "ui.reactMission.answer": "Tu respuesta",
+  "ui.reactMission.submit": "Comprobar respuesta",
+  "ui.reactMission.correct": "¡Correcto!",
+  "ui.reactMission.incorrect": "No del todo. Prueba la siguiente."
 }
