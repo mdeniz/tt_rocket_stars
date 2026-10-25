@@ -4,6 +4,7 @@ import en from './locales/en.json';
 import es from './locales/es.json';
 import type { CoreScreenId } from './lib/shell-adapters';
 import { advanceTimer, startMission as createReactMission, submitAnswer, type ReactMissionState } from './lib/react-gameplay';
+import { evaluateAchievements, type ReactAchievementRecord } from './lib/react-achievements';
 
 type Locale = typeof en;
 
@@ -323,32 +324,28 @@ function ReactGaragePanelHost({ enabled, locale }: { enabled: boolean; locale: L
   return host ? createPortal(<ReactGaragePanel locale={locale} />, host) : null;
 }
 
-type ReactAchievement = { title: string; description: string; locked: boolean };
-
-function readReactAchievements(): ReactAchievement[] {
-  return Array.from(document.querySelectorAll<HTMLElement>('#awardGrid .awardcard')).map(card => ({
-    title: card.querySelector('h3')?.textContent || '',
-    description: card.querySelector('p')?.textContent || '',
-    locked: card.classList.contains('locked'),
-  }));
+function readReactAchievements(): ReactAchievementRecord[] {
+  let history: unknown;
+  try {
+    const raw = window.TTLocalStore?.getItem('cosmotablas-history-v1');
+    history = raw ? JSON.parse(raw) : [];
+  } catch {
+    history = [];
+  }
+  return evaluateAchievements({
+    facts: window.TTPersistenceBoundary?.mission.read(),
+    history,
+  });
 }
 
 function ReactAchievementsPanel({ locale }: { locale: Locale }) {
   const copy = locale as Record<string, string>;
-  const [achievements, setAchievements] = useState<ReactAchievement[]>(readReactAchievements);
+  const [achievements, setAchievements] = useState<ReactAchievementRecord[]>(readReactAchievements);
   const sync = () => setAchievements(readReactAchievements());
 
   useEffect(() => {
-    const awardGrid = document.getElementById('awardGrid');
-    if (!awardGrid) return;
-    const initialSync = window.setTimeout(sync, 0);
-    const observer = new MutationObserver(sync);
-    observer.observe(awardGrid, { childList: true, subtree: true });
-    return () => {
-      window.clearTimeout(initialSync);
-      observer.disconnect();
-    };
-  }, []);
+    sync();
+  }, [locale]);
 
   return (
     <section className="card ttReactAchievementsPanel" aria-labelledby="ttReactAchievementsTitle">
@@ -357,15 +354,17 @@ function ReactAchievementsPanel({ locale }: { locale: Locale }) {
           <h2 id="ttReactAchievementsTitle">{copy['ui.achievements.controls']}</h2>
           <p>{copy['ui.achievements.description']}</p>
         </div>
-        <button type="button" className="btn alt" onClick={() => {
-          if (window.TTPersistenceBoundary?.achievements.refresh() || window.TTAchievementAdapter?.refresh() || window.TTCoreScreensAdapter?.refreshAchievements()) sync();
-        }}>{copy['ui.achievements.refresh']}</button>
+        <button type="button" className="btn alt" onClick={sync}>{copy['ui.achievements.refresh']}</button>
       </div>
       <div className="ttReactAchievementsList" aria-live="polite">
-        {achievements.map((achievement, index) => (
-          <article className={`ttReactAchievement ${achievement.locked ? 'locked' : ''}`} key={`${achievement.title}-${index}`}>
-            <span aria-hidden="true">{achievement.locked ? '🔒' : '🏅'}</span>
-            <div><strong>{achievement.title}</strong><p>{achievement.description}</p></div>
+        {achievements.map(achievement => (
+          <article className={`ttReactAchievement ${achievement.locked ? 'locked' : ''}`} key={achievement.id}>
+            <span aria-hidden="true">{achievement.locked ? '🔒' : achievement.icon}</span>
+            <div>
+              <strong>{copy[achievement.titleKey] || achievement.id}</strong>
+              <p>{copy[achievement.descriptionKey] || ''}</p>
+              {achievement.progress && <small>{achievement.progress.done} / {achievement.progress.total}</small>}
+            </div>
           </article>
         ))}
       </div>

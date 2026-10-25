@@ -63,14 +63,19 @@ test('React garage controls delegate inventory actions through the adapter', () 
   }
 });
 
-test('React achievements composition delegates refresh and preserves localized copy', () => {
+test('React achievements composition evaluates local data and preserves localized copy', () => {
   assert.match(shell, /ReactAchievementsPanel/);
-  assert.match(shell, /refreshAchievements/);
+  assert.match(shell, /evaluateAchievements/);
+  assert.doesNotMatch(shell, /#awardGrid/);
   assert.match(shell, /reactAchievementsPanel/);
   for (const key of [
     'ui.achievements.controls',
     'ui.achievements.description',
     'ui.achievements.refresh',
+    'ui.achievement.firstLaunch.title',
+    'ui.achievement.firstLaunch.description',
+    'ui.achievement.thousandCorrect.title',
+    'ui.achievement.thousandCorrect.description',
   ]) {
     assert.equal(typeof english[key], 'string', `English locale is missing ${key}`);
     assert.equal(typeof spanish[key], 'string', `Spanish locale is missing ${key}`);
