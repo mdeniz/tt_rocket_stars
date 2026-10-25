@@ -49,6 +49,11 @@
     return success({ ...clone(value), localId: value.localId.trim(), name: value.name.trim().slice(0, 80), language: snapshotLanguage, payload: clone(value.payload), ...(version === undefined ? {} : { version }) });
   }
 
+  function validatePilotDomainPayload(value) {
+    if (!object(value)) return failure('Pilot domain payload must be an object.');
+    return success(clone(value));
+  }
+
   function createSafeStorage(storage) {
     const memory = Object.create(null);
     return {
@@ -76,5 +81,40 @@
     };
   }
 
-  window.TTPersistenceContracts = { clone, validatePilot, validateProfiles, validateBackup, validateCloudSnapshot, createSafeStorage, createPilotPersistence };
+  function createDomainPersistence(storage, key) {
+    const safe = createSafeStorage(storage);
+    const validKey = typeof key === 'string' && key.trim() ? key : null;
+    return {
+      read(fallback = {}) {
+        if (!validKey) return clone(fallback);
+        try {
+          const value = safe.getItem(validKey);
+          if (value === null) return clone(fallback);
+          const parsed = JSON.parse(value);
+          const result = validatePilotDomainPayload(parsed);
+          return result.ok ? result.value : clone(fallback);
+        } catch (_) {
+          return clone(fallback);
+        }
+      },
+      write(payload) {
+        if (!validKey) return false;
+        const result = validatePilotDomainPayload(payload);
+        if (!result.ok) return false;
+        try { return safe.setItem(validKey, JSON.stringify(result.value)); } catch (_) { return false; }
+      },
+    };
+  }
+
+  window.TTPersistenceContracts = {
+    clone,
+    validatePilot,
+    validateProfiles,
+    validateBackup,
+    validateCloudSnapshot,
+    validatePilotDomainPayload,
+    createSafeStorage,
+    createPilotPersistence,
+    createDomainPersistence,
+  };
 }());
