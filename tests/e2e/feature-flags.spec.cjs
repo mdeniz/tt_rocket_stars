@@ -59,9 +59,11 @@ test('rejects invalid targeting configuration in the browser', async ({ page }) 
   expect(result).toEqual([true, true, true, true]);
 });
 
-test('React core navigation is opt-in and delegates to legacy screens', async ({ page }) => {
+test('React core navigation is opt-in and owns dashboard and progress metrics', async ({ page }) => {
   await page.addInitScript(() => {
     window.__TTFeatureFlags = { reactCoreScreens: true };
+    localStorage.setItem('cosmotablas-v2', JSON.stringify({ '2-1-mul': { right: 100, wrong: 0 } }));
+    localStorage.setItem('cosmotablas-history-v1', JSON.stringify([{ correct: 20, wrong: 0 }]));
   });
   await page.goto('/');
   await page.locator('#reactLaunchSplash').click();
@@ -70,11 +72,16 @@ test('React core navigation is opt-in and delegates to legacy screens', async ({
   await skip.waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
   if (await skip.isVisible().catch(() => false)) await skip.click();
   await expect(page.locator('.ttReactCoreNav')).toBeVisible();
-  await expect(page.locator('[data-react-core-host="dashboard"]')).toBeVisible();
+  await expect(page.locator('[data-react-core-host="dashboard"]')).toHaveCount(1);
   await expect(page.locator('[data-react-core-host="dashboard"]')).toContainText('Mission Control');
-  await page.locator('[data-react-core-host="dashboard"] button').click();
+  await expect(page.locator('.ttReactDashboardPanel')).toContainText('100');
+  expect(await page.locator('#dashboard > .dashhero').evaluate(element => element.style.display)).toBe('none');
+  await page.locator('.ttReactCoreNav button').nth(2).click();
   await expect(page.locator('#insights')).toBeVisible();
+  await expect(page.locator('[data-react-core-host="insights"]')).toHaveCount(1);
   await expect(page.locator('[data-react-core-host="insights"]')).toContainText('Progress');
+  await expect(page.locator('.ttReactProgressPanel')).toContainText('Table 2');
+  expect(await page.locator('#insights > .dashpanel').first().evaluate(element => element.style.display)).toBe('none');
 
   for (const [screen, selector] of [['home', '#home'], ['insights', '#insights'], ['garage', '#garage'], ['awards', '#awards']]) {
     await page.locator('.ttReactCoreNav button').nth(['dashboard', 'home', 'insights', 'garage', 'awards'].indexOf(screen)).click();

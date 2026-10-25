@@ -1828,6 +1828,23 @@ body:has(#sideDrawer.open) .ttSettingsBottomNav{visibility:hidden!important}
 body.ttReactCoreScreensEnabled #ttMainBottomNav{display:none!important}
 body.ttReactCoreScreensEnabled #home.ttReactMissionSetupEnabled>.hero,
 body.ttReactCoreScreensEnabled #home.ttReactMissionSetupEnabled>section.card{display:none!important}
+.ttReactDashboardEnabled> :not([data-react-dashboard-panel]),
+.ttReactProgressEnabled> :not([data-react-progress-panel]){display:none!important}
+[data-react-dashboard-legacy-hidden],[data-react-progress-legacy-hidden]{display:none!important}
+.ttReactDashboardPanel,.ttReactProgressPanel{margin:16px auto;max-width:980px}
+.ttReactDashboardHeading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.ttReactDashboardHeading h2{margin:0;color:#fff}
+.ttReactDashboardHeading p{margin:6px 0 0;color:#c6d4f0}
+.ttReactDashboardMetrics{margin-top:16px}
+.ttReactDashboardLevel{display:grid;gap:8px;margin-top:16px;color:#fff}
+.ttReactDashboardLevel span{color:#c6d4f0;font-size:.9rem}
+.ttReactProgressList{display:grid;gap:10px;margin-top:16px}
+.ttReactProgressItem{display:grid;gap:8px;padding:12px;border:1px solid rgba(157,196,255,.32);border-radius:12px;background:rgba(12,27,61,.42)}
+.ttReactProgressItem>div:first-child{display:flex;justify-content:space-between;gap:12px;color:#fff}
+.ttReactProgressItem>div:first-child span{color:#c6d4f0;font-size:.86rem;text-align:right}
+.ttReactProgressTrack{height:8px;border-radius:999px;background:rgba(157,196,255,.2);overflow:hidden}
+.ttReactProgressTrack i{display:block;height:100%;border-radius:inherit;background:#70d6e8}
+@media(max-width:700px){.ttReactDashboardHeading{flex-direction:column}.ttReactProgressItem>div:first-child{flex-direction:column;gap:4px}.ttReactProgressItem>div:first-child span{text-align:left}}
 .ttReactMissionSetup{margin:16px auto;max-width:760px}
 .ttReactMissionSetup h2,.ttReactMissionSetup h3{margin-top:0;color:#fff}
 .ttReactMissionSetup h3{margin-top:22px;font-size:1rem}

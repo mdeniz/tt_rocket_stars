@@ -5,6 +5,7 @@ import es from './locales/es.json';
 import type { CoreScreenId } from './lib/shell-adapters';
 import { advanceTimer, startMission as createReactMission, submitAnswer, type ReactMissionState } from './lib/react-gameplay';
 import { evaluateAchievements, type ReactAchievementRecord } from './lib/react-achievements';
+import { evaluateDashboard, type ReactDashboardModel } from './lib/react-dashboard';
 
 type Locale = typeof en;
 
@@ -390,6 +391,133 @@ function ReactAchievementsPanelHost({ enabled, locale }: { enabled: boolean; loc
   return host ? createPortal(<ReactAchievementsPanel locale={locale} />, host) : null;
 }
 
+function readReactDashboard(): ReactDashboardModel {
+  let history: unknown;
+  try {
+    const raw = window.TTLocalStore?.getItem('cosmotablas-history-v1');
+    history = raw ? JSON.parse(raw) : [];
+  } catch {
+    history = [];
+  }
+  return evaluateDashboard({
+    facts: window.TTPersistenceBoundary?.mission.read(),
+    history,
+  });
+}
+
+function ReactDashboardPanel({ locale }: { locale: Locale }) {
+  const copy = locale as Record<string, string>;
+  const [model, setModel] = useState<ReactDashboardModel>(readReactDashboard);
+  const sync = () => setModel(readReactDashboard());
+  return (
+    <section className="card ttReactDashboardPanel" aria-labelledby="ttReactDashboardTitle">
+      <div className="ttReactDashboardHeading">
+        <div>
+          <h2 id="ttReactDashboardTitle">{copy['ui.dashboard.controls']}</h2>
+          <p>{copy['ui.dashboard.description']}</p>
+        </div>
+        <button type="button" className="btn alt" onClick={sync}>{copy['ui.achievements.refresh']}</button>
+      </div>
+      <div className="kpis ttReactDashboardMetrics" aria-live="polite">
+        <div className="kpi"><span>🚀</span><strong>{model.missions}</strong><small>{copy['ui.dashboard.missions']}</small></div>
+        <div className="kpi"><span>✅</span><strong>{model.correct}</strong><small>{copy['ui.dashboard.correct']}</small></div>
+        <div className="kpi"><span>🎯</span><strong>{model.accuracy}%</strong><small>{copy['ui.dashboard.accuracy']}</small></div>
+        <div className="kpi"><span>⭐</span><strong>{model.experience}</strong><small>{copy['ui.dashboard.experience']}</small></div>
+      </div>
+      <div className="ttReactDashboardLevel">
+        <strong>{copy['ui.dashboard.level']} {model.level} · {copy[model.levelKey]}</strong>
+        <span>{model.levelProgress} / 500 XP</span>
+        <div className="xpTrack" aria-label={`${model.levelProgress} / 500 XP`}><div style={{ width: `${Math.min(100, Math.round((model.levelProgress / 500) * 100))}%` }} /></div>
+      </div>
+    </section>
+  );
+}
+
+function ReactProgressPanel({ locale }: { locale: Locale }) {
+  const copy = locale as Record<string, string>;
+  const [model, setModel] = useState<ReactDashboardModel>(readReactDashboard);
+  const sync = () => setModel(readReactDashboard());
+  return (
+    <section className="card ttReactProgressPanel" aria-labelledby="ttReactProgressTitle">
+      <div className="ttReactDashboardHeading">
+        <div>
+          <h2 id="ttReactProgressTitle">{copy['ui.progress.controls']}</h2>
+          <p>{copy['ui.progress.description']}</p>
+        </div>
+        <button type="button" className="btn alt" onClick={sync}>{copy['ui.achievements.refresh']}</button>
+      </div>
+      <div className="ttReactProgressList" aria-live="polite">
+        {model.tables.map(table => (
+          <article className="ttReactProgressItem" key={table.table}>
+            <div><strong>{copy['ui.progress.table']} {table.table}</strong><span>{table.right} {copy['ui.progress.answers']} · {table.accuracy}% {copy['ui.progress.accuracy']}</span></div>
+            <div className="ttReactProgressTrack" aria-label={`${table.progress}% ${copy['ui.progress.mastery']}`}><i style={{ width: `${table.progress}%` }} /></div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ReactDashboardPanelHost({ enabled, locale }: { enabled: boolean; locale: Locale }) {
+  const [host, setHost] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    if (!enabled) return;
+    const dashboard = document.getElementById('dashboard');
+    if (!dashboard) return;
+    const element = document.createElement('div');
+    element.dataset.reactDashboardPanel = 'true';
+    dashboard.classList.add('ttReactDashboardEnabled');
+    const legacyChildren = Array.from(dashboard.children).filter(child => child !== element);
+    const legacyDisplays = legacyChildren.map(child => ({ child, display: child instanceof HTMLElement ? child.style.display : '' }));
+    legacyDisplays.forEach(({ child }) => {
+      child.setAttribute('data-react-dashboard-legacy-hidden', 'true');
+      if (child instanceof HTMLElement) child.style.display = 'none';
+    });
+    dashboard.prepend(element);
+    setHost(element);
+    return () => {
+      element.remove();
+      legacyDisplays.forEach(({ child, display }) => {
+        child.removeAttribute('data-react-dashboard-legacy-hidden');
+        if (child instanceof HTMLElement) child.style.display = display;
+      });
+      dashboard.classList.remove('ttReactDashboardEnabled');
+      setHost(null);
+    };
+  }, [enabled]);
+  return host ? createPortal(<ReactDashboardPanel locale={locale} />, host) : null;
+}
+
+function ReactProgressPanelHost({ enabled, locale }: { enabled: boolean; locale: Locale }) {
+  const [host, setHost] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    if (!enabled) return;
+    const insights = document.getElementById('insights');
+    if (!insights) return;
+    const element = document.createElement('div');
+    element.dataset.reactProgressPanel = 'true';
+    insights.classList.add('ttReactProgressEnabled');
+    const legacyChildren = Array.from(insights.children).filter(child => child !== element);
+    const legacyDisplays = legacyChildren.map(child => ({ child, display: child instanceof HTMLElement ? child.style.display : '' }));
+    legacyDisplays.forEach(({ child }) => {
+      child.setAttribute('data-react-progress-legacy-hidden', 'true');
+      if (child instanceof HTMLElement) child.style.display = 'none';
+    });
+    insights.prepend(element);
+    setHost(element);
+    return () => {
+      element.remove();
+      legacyDisplays.forEach(({ child, display }) => {
+        child.removeAttribute('data-react-progress-legacy-hidden');
+        if (child instanceof HTMLElement) child.style.display = display;
+      });
+      insights.classList.remove('ttReactProgressEnabled');
+      setHost(null);
+    };
+  }, [enabled]);
+  return host ? createPortal(<ReactProgressPanel locale={locale} />, host) : null;
+}
+
 function CoreScreenComposition({
   screen,
   action,
@@ -468,6 +596,8 @@ function ReactCoreScreens() {
   const isSpanish = document.documentElement.lang === 'es';
   return (
     <>
+    <ReactDashboardPanelHost enabled={enabled} locale={currentLocale()} />
+    <ReactProgressPanelHost enabled={enabled} locale={currentLocale()} />
     <ReactMissionSetupHost enabled={enabled} locale={currentLocale()} />
     <ReactGaragePanelHost enabled={enabled} locale={currentLocale()} />
     <ReactAchievementsPanelHost enabled={enabled} locale={currentLocale()} />
