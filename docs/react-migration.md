@@ -10,9 +10,9 @@ React-owned surfaces use `window.TTPersistenceBoundary` as their single typed
 entry point for pilot selection, mission persistence, and local backup controls. The boundary keeps
 `window.TTPilotAdapter` as a compatibility alias for the existing legacy
 integration while the migration is staged. Inventory remains legacy-owned.
-When the React core flag is enabled, achievements are evaluated from the
-existing pilot-local storage by a pure React-owned evaluator; the legacy
-renderer remains available for rollback. All typed adapters must fail closed
+When the React core flag is enabled, dashboard, progress, and achievements are
+evaluated from the existing pilot-local storage by pure React-owned evaluators;
+the legacy renderers remain available for rollback. All typed adapters must fail closed
 rather than reaching into legacy globals directly.
 
 The boundary preserves the existing `tt-rocket-profiles-v1`,
@@ -88,6 +88,19 @@ with local facts and mission history, Spanish and English labels, a legacy DOM
 removal check, and offline refresh. Its deterministic evaluator unit suite
 passed malformed-payload and mastery-threshold cases. No real iOS Safari check
 is claimed or required for this migration slice.
+
+The dashboard/progress slice additionally renders mission totals, accuracy,
+experience level, and per-table progress from the existing pilot-local keys.
+Focused Chromium coverage verifies that the legacy dashboard and progress DOM
+is hidden only while the flag is enabled, that the panels work offline, and
+that the disabled flag restores the original screens.
+
+Chrome DevTools verification of the dashboard/progress slice on
+`http://127.0.0.1:5180/` rendered 2 missions, 1,100 correct answers, 98%
+accuracy, level 3, and table-specific progress from local storage. The legacy
+dashboard and progress hosts had inline `display: none` while their React
+panels were visible. Console output contained no errors or warnings, and the
+network log contained no XHR or fetch requests.
 
 The issue remains open because the React core-screen migration is feature-
 flagged and legacy-owned gameplay state, persistence, and inventory state

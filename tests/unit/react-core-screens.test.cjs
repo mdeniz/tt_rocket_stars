@@ -31,6 +31,26 @@ test('React core composition labels are complete in English and Spanish', () => 
   }
 });
 
+test('React dashboard and progress panels use local evaluators and reversible hosts', () => {
+  assert.match(shell, /ReactDashboardPanel/);
+  assert.match(shell, /ReactProgressPanel/);
+  assert.match(shell, /evaluateDashboard/);
+  assert.match(shell, /data-react-dashboard-legacy-hidden/);
+  assert.match(shell, /data-react-progress-legacy-hidden/);
+  for (const key of [
+    'ui.dashboard.controls',
+    'ui.dashboard.correct',
+    'ui.dashboard.accuracy',
+    'ui.dashboard.level.explorer',
+    'ui.progress.controls',
+    'ui.progress.table',
+    'ui.progress.mastery',
+  ]) {
+    assert.equal(typeof english[key], 'string', `English locale is missing ${key}`);
+    assert.equal(typeof spanish[key], 'string', `Spanish locale is missing ${key}`);
+  }
+});
+
 test('React mission setup renders all supported configuration controls', () => {
   assert.match(shell, /ReactMissionSetup/);
   assert.match(shell, /toggleMissionTable/);
