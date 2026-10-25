@@ -23,13 +23,24 @@ interface LegacySettingsStore {
   showSettingsPanel(panel: string): void;
 }
 
+interface LegacyBackupControls {
+  createManualBackup?: () => unknown;
+  exportBackup?: () => unknown;
+  resetWithBackup?: () => unknown;
+}
+
 declare global {
   interface Window {
     TTFullscreenAdapter?: FullscreenAdapter;
     TTProfiles?: LegacyPilotStore;
     TTPilotAdapter?: PilotAdapter;
+    TTPersistenceBoundary?: PersistenceBoundary;
+    TTBackupControls?: BackupControlsAdapter;
     TTSettingsAdapter?: LegacySettingsStore;
     TTCoreScreensAdapter?: CoreScreensAdapter;
+    TTGameplayAdapter?: GameplayAdapter;
+    TTInventoryAdapter?: InventoryAdapter;
+    TTAchievementAdapter?: AchievementAdapter;
     __TTFeatureFlags?: { reactCoreScreens?: boolean };
     TTEnterGame?: () => void;
     TTOpenPilotSelector?: () => void;
@@ -55,10 +66,43 @@ export interface CoreScreensAdapter {
   refreshAchievements(): boolean;
 }
 
+export interface GameplayAdapter {
+  toggleMissionTable(table: number): boolean;
+  pickMissionTables(preset: 'all' | 'easy'): boolean;
+  selectMissionOperation(operation: 'mul' | 'div' | 'mix'): boolean;
+  selectMissionMode(mode: 'practice' | 'speed' | 'timed' | 'exam'): boolean;
+  setMissionDuration(minutes: 5 | 10 | 15): boolean;
+  startMission(): boolean;
+}
+
+export interface InventoryAdapter {
+  refresh(): void;
+  setCategory(category: string): boolean;
+  previewPart(partId: string): boolean;
+  activatePart(partId: string): boolean;
+}
+
+export interface AchievementAdapter {
+  refresh(): boolean;
+}
+
 export interface PilotAdapter {
   readPilots(): ShellPilotSummary[];
   choosePilot(id: string): boolean;
   createPilot(name: string): string | null;
+}
+
+export interface BackupControlsAdapter {
+  createManualBackup(): boolean;
+  exportBackup(): boolean;
+  resetWithBackup(): boolean;
+}
+
+export interface PersistenceBoundary {
+  pilots: PilotAdapter;
+  backups: BackupControlsAdapter;
+  inventory: InventoryAdapter;
+  achievements: AchievementAdapter;
 }
 
 /**
@@ -105,6 +149,47 @@ export function createPilotAdapter(store: LegacyPilotStore | undefined = window.
 
 export function installPilotAdapter(): void {
   window.TTPilotAdapter = createPilotAdapter();
+}
+
+function callLegacyControl(name: keyof LegacyBackupControls): boolean {
+  const control = (window as unknown as Record<string, unknown>)[name];
+  if (typeof control !== 'function') return false;
+  try {
+    (control as () => unknown)();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function createBackupControlsAdapter(): BackupControlsAdapter {
+  return {
+    createManualBackup: () => callLegacyControl('createManualBackup'),
+    exportBackup: () => callLegacyControl('exportBackup'),
+    resetWithBackup: () => callLegacyControl('resetWithBackup'),
+  };
+}
+
+/**
+ * Installs the single typed persistence boundary consumed by React-owned code.
+ * The legacy aliases remain available for rollback and existing inline handlers.
+ */
+export function installPersistenceBoundary(): void {
+  const pilots = createPilotAdapter();
+  const backups = createBackupControlsAdapter();
+  const core = window.TTCoreScreensAdapter || createCoreScreensAdapter();
+  const inventory = createInventoryAdapter(core);
+  const achievements = createAchievementAdapter(core);
+  window.TTPilotAdapter = pilots;
+  window.TTBackupControls = backups;
+  window.TTInventoryAdapter = inventory;
+  window.TTAchievementAdapter = achievements;
+  window.TTPersistenceBoundary = {
+    pilots,
+    backups,
+    inventory,
+    achievements,
+  };
 }
 
 export function createSettingsAdapter(store: LegacySettingsStore | undefined = window.TTSettingsAdapter): LegacySettingsStore {
@@ -189,4 +274,40 @@ export function createCoreScreensAdapter(): CoreScreensAdapter {
 
 export function installCoreScreensAdapter(): void {
   window.TTCoreScreensAdapter = createCoreScreensAdapter();
+}
+
+export function createGameplayAdapter(core: CoreScreensAdapter = createCoreScreensAdapter()): GameplayAdapter {
+  return {
+    toggleMissionTable: table => core.toggleMissionTable(table),
+    pickMissionTables: preset => core.pickMissionTables(preset),
+    selectMissionOperation: operation => core.selectMissionOperation(operation),
+    selectMissionMode: mode => core.selectMissionMode(mode),
+    setMissionDuration: minutes => core.setMissionDuration(minutes),
+    startMission: () => core.startMission(),
+  };
+}
+
+export function installGameplayAdapter(): void {
+  window.TTGameplayAdapter = createGameplayAdapter(window.TTCoreScreensAdapter || createCoreScreensAdapter());
+}
+
+export function createInventoryAdapter(core: CoreScreensAdapter = createCoreScreensAdapter()): InventoryAdapter {
+  return {
+    refresh: () => core.refresh('garage'),
+    setCategory: category => core.setGarageCategory(category),
+    previewPart: partId => core.previewGaragePart(partId),
+    activatePart: partId => core.activateGaragePart(partId),
+  };
+}
+
+export function installInventoryAdapter(): void {
+  window.TTInventoryAdapter = createInventoryAdapter(window.TTCoreScreensAdapter || createCoreScreensAdapter());
+}
+
+export function createAchievementAdapter(core: CoreScreensAdapter = createCoreScreensAdapter()): AchievementAdapter {
+  return { refresh: () => core.refreshAchievements() };
+}
+
+export function installAchievementAdapter(): void {
+  window.TTAchievementAdapter = createAchievementAdapter(window.TTCoreScreensAdapter || createCoreScreensAdapter());
 }

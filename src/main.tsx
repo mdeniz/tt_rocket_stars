@@ -1,7 +1,7 @@
 import { createRoot } from 'react-dom/client';
 import type { ReactNode } from 'react';
 import { ReactShell } from './shell';
-import { installCoreScreensAdapter, installFullscreenAdapter, installPilotAdapter, installSettingsAdapter } from './lib/shell-adapters';
+import { installAchievementAdapter, installCoreScreensAdapter, installFullscreenAdapter, installGameplayAdapter, installInventoryAdapter, installPersistenceBoundary, installSettingsAdapter } from './lib/shell-adapters';
 
 export const REACT_ROOT_ID = 'react-root';
 
@@ -22,9 +22,12 @@ export function mountReactRoot(content: ReactNode = null): void {
  */
 export function bootstrapReactShell(): void {
   installFullscreenAdapter();
-  installPilotAdapter();
+  installPersistenceBoundary();
   installSettingsAdapter();
   installCoreScreensAdapter();
+  installGameplayAdapter();
+  installInventoryAdapter();
+  installAchievementAdapter();
   const mount = () => mountReactRoot(<ReactShell />);
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', mount, { once: true });

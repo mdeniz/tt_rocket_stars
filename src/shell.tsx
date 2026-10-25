@@ -56,7 +56,7 @@ function ReactMissionSetup({ locale }: { locale: Locale }) {
   const [mode, setMode] = useState<'practice' | 'exam' | 'speed' | 'timed'>('practice');
   const [duration, setDuration] = useState<5 | 10 | 15>(5);
   const isSpanish = document.documentElement.lang === 'es';
-  const adapter = window.TTCoreScreensAdapter;
+  const adapter = window.TTGameplayAdapter || window.TTCoreScreensAdapter;
 
   return (
     <section className="card ttReactMissionSetup" aria-labelledby="ttReactMissionTitle">
@@ -206,14 +206,16 @@ function ReactGaragePanel({ locale }: { locale: Locale }) {
           <p>{copy['ui.garage.description']}</p>
         </div>
         <button type="button" className="btn alt" onClick={() => {
-          window.TTCoreScreensAdapter?.refresh('garage');
+          if (window.TTPersistenceBoundary?.inventory) window.TTPersistenceBoundary.inventory.refresh();
+          else if (window.TTInventoryAdapter) window.TTInventoryAdapter.refresh();
+          else window.TTCoreScreensAdapter?.refresh('garage');
           sync();
         }}>{copy['ui.garage.refresh']}</button>
       </div>
       <div className="ttReactGarageCategories" role="group" aria-label={copy['ui.garage.category']}>
         {garageCategories.map(([category, key]) => (
           <button type="button" className="garageTab" key={category} onClick={() => {
-            delegate(() => window.TTCoreScreensAdapter?.setGarageCategory(category) || false);
+            delegate(() => window.TTPersistenceBoundary?.inventory.setCategory(category) || window.TTInventoryAdapter?.setCategory(category) || window.TTCoreScreensAdapter?.setGarageCategory(category) || false);
           }}>{copy[key]}</button>
         ))}
       </div>
@@ -224,10 +226,10 @@ function ReactGaragePanel({ locale }: { locale: Locale }) {
             <small>{item.detail}</small>
             <div className="ttReactGarageActions">
               <button type="button" className="btn alt" aria-pressed={item.previewing} onClick={() => {
-                delegate(() => window.TTCoreScreensAdapter?.previewGaragePart(item.id) || false);
+                delegate(() => window.TTPersistenceBoundary?.inventory.previewPart(item.id) || window.TTInventoryAdapter?.previewPart(item.id) || window.TTCoreScreensAdapter?.previewGaragePart(item.id) || false);
               }}>{copy['ui.garage.preview']}</button>
               <button type="button" className="btn" disabled={item.actionDisabled} onClick={() => {
-                delegate(() => window.TTCoreScreensAdapter?.activateGaragePart(item.id) || false);
+                delegate(() => window.TTPersistenceBoundary?.inventory.activatePart(item.id) || window.TTInventoryAdapter?.activatePart(item.id) || window.TTCoreScreensAdapter?.activateGaragePart(item.id) || false);
               }}>{item.actionLabel || copy['ui.garage.equip']}</button>
             </div>
           </article>
@@ -290,7 +292,7 @@ function ReactAchievementsPanel({ locale }: { locale: Locale }) {
           <p>{copy['ui.achievements.description']}</p>
         </div>
         <button type="button" className="btn alt" onClick={() => {
-          if (window.TTCoreScreensAdapter?.refreshAchievements()) sync();
+          if (window.TTPersistenceBoundary?.achievements.refresh() || window.TTAchievementAdapter?.refresh() || window.TTCoreScreensAdapter?.refreshAchievements()) sync();
         }}>{copy['ui.achievements.refresh']}</button>
       </div>
       <div className="ttReactAchievementsList" aria-live="polite">
@@ -447,7 +449,8 @@ export function ReactShell() {
   const [pilotSelectorOpen, setPilotSelectorOpen] = useState(false);
   const [pilotName, setPilotName] = useState('');
   const [pilotError, setPilotError] = useState('');
-  const [pilots, setPilots] = useState(() => window.TTPilotAdapter?.readPilots() || []);
+  const pilotAdapter = window.TTPersistenceBoundary?.pilots || window.TTPilotAdapter;
+  const [pilots, setPilots] = useState(() => pilotAdapter?.readPilots() || []);
   const [settingsNavHost, setSettingsNavHost] = useState<HTMLElement | null>(null);
   const [settingsPanel, setSettingsPanel] = useState('audio');
   const entering = useRef(false);
@@ -460,7 +463,7 @@ export function ReactShell() {
   useEffect(() => {
     const open = () => {
       window.TTProfiles?.sync();
-      setPilots(window.TTPilotAdapter?.readPilots() || []);
+      setPilots(window.TTPersistenceBoundary?.pilots.readPilots() || window.TTPilotAdapter?.readPilots() || []);
       setPilotError('');
       setPilotSelectorOpen(true);
     };
@@ -593,7 +596,7 @@ export function ReactShell() {
           <div className="ttReactPilotGrid">
             {pilots.map(pilot => (
               <button className="ttReactPilotTile" type="button" key={pilot.id} onClick={() => {
-                if (window.TTPilotAdapter?.choosePilot(pilot.id)) setPilotSelectorOpen(false);
+                if ((window.TTPersistenceBoundary?.pilots || window.TTPilotAdapter)?.choosePilot(pilot.id)) setPilotSelectorOpen(false);
               }}>
                 <span aria-hidden="true">{pilot.avatar || '🚀'}</span>
                 <strong>{pilot.name}</strong>
@@ -602,9 +605,9 @@ export function ReactShell() {
           </div>
           <form onSubmit={event => {
             event.preventDefault();
-            const id = window.TTPilotAdapter?.createPilot(pilotName.trim());
+            const id = (window.TTPersistenceBoundary?.pilots || window.TTPilotAdapter)?.createPilot(pilotName.trim());
             if (id) {
-              setPilots(window.TTPilotAdapter?.readPilots() || []);
+              setPilots(window.TTPersistenceBoundary?.pilots.readPilots() || window.TTPilotAdapter?.readPilots() || []);
               setPilotName('');
               setPilotSelectorOpen(false);
             } else setPilotError(copy['ui.101']);

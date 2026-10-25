@@ -112,6 +112,28 @@ test('React core navigation stays usable offline and preserves pilot-local ident
   expect(await page.evaluate(() => localStorage.getItem('tt-rocket-profiles-v1'))).not.toBeNull();
 });
 
+test('React persistence boundary preserves pilot switching and fails closed for unavailable backup controls', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.__TTFeatureFlags = { reactCoreScreens: true };
+  });
+  await page.goto('/');
+  const result = await page.evaluate(() => ({
+    hasPilotBoundary: Boolean(window.TTPersistenceBoundary?.pilots),
+    hasBackupBoundary: Boolean(window.TTPersistenceBoundary?.backups),
+    aliasesSame: window.TTPersistenceBoundary?.pilots === window.TTPilotAdapter,
+  }));
+  const missingBackupControl = await page.evaluate(() => {
+    window.createManualBackup = null;
+    return window.TTPersistenceBoundary?.backups.createManualBackup() ?? false;
+  });
+  expect(result).toEqual({
+    hasPilotBoundary: true,
+    hasBackupBoundary: true,
+    aliasesSame: true,
+  });
+  expect(missingBackupControl).toBe(false);
+});
+
 test('React mission setup delegates supported configuration to gameplay', async ({ page }) => {
   await page.addInitScript(() => {
     window.__TTFeatureFlags = { reactCoreScreens: true };
@@ -134,6 +156,7 @@ test('React mission setup delegates supported configuration to gameplay', async 
   await setup.getByRole('button', { name: /Launch mission/ }).click();
   await expect(page.locator('#play')).toBeVisible();
   await expect(page.locator('#question')).not.toHaveText('');
+  expect(await page.evaluate(() => typeof window.TTGameplayAdapter?.startMission)).toBe('function');
 });
 
 async function launchReactMission(page, mode = 'practice') {
@@ -205,6 +228,7 @@ test('React garage controls delegate preview and equip actions to pilot-local st
   await expect(page.locator('#garageItems .garageItem.previewing')).toHaveCount(1);
   await firstItem.getByRole('button', { name: /Equip|Equipped|Equipado/ }).click();
   await expect.poll(() => page.evaluate(() => localStorage.getItem('tt-rocket-garage-v1'))).not.toBeNull();
+  expect(await page.evaluate(() => typeof window.TTInventoryAdapter?.activatePart)).toBe('function');
 });
 
 test('React achievements render in both locales and refresh through the legacy adapter', async ({ page }) => {
@@ -223,6 +247,7 @@ test('React achievements render in both locales and refresh through the legacy a
   await expect(panel).toContainText('Achievement progress');
   await expect(panel.locator('.ttReactAchievement')).not.toHaveCount(0);
   await panel.getByRole('button', { name: 'Refresh achievements' }).click();
+  expect(await page.evaluate(() => typeof window.TTAchievementAdapter?.refresh)).toBe('function');
 
   await page.evaluate(() => localStorage.setItem('cosmotablas-language', 'es'));
   await page.reload();
@@ -233,6 +258,31 @@ test('React achievements render in both locales and refresh through the legacy a
   await page.locator('.ttReactCoreNav button').nth(4).click();
   await expect(page.locator('.ttReactAchievementsPanel')).toContainText('Progreso de logros');
   await expect(page.locator('.ttReactAchievementsPanel .ttReactAchievement')).not.toHaveCount(0);
+});
+
+test('React-owned controls retain keyboard, locale, and reduced-motion accessibility contracts', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.addInitScript(() => {
+    window.__TTFeatureFlags = { reactCoreScreens: true };
+    localStorage.setItem('cosmotablas-language', 'es');
+  });
+  await page.goto('/');
+  await page.locator('#reactLaunchSplash').click();
+  const skip = page.locator('#ttTourSkip');
+  await skip.waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
+  if (await skip.isVisible().catch(() => false)) await skip.click();
+
+  const missionNav = page.locator('.ttReactCoreNav button').nth(1);
+  await missionNav.focus();
+  await missionNav.press('Enter');
+  const setup = page.locator('.ttReactMissionSetup');
+  await expect(setup).toBeVisible();
+  await expect(setup).toContainText('Prepara tu misión');
+  const table = setup.getByRole('button', { name: 'Tabla 3' });
+  await table.focus();
+  await table.press('Enter');
+  await expect(table).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches)).resolves.toBe(true);
 });
 
 test('disabling the React core flag rolls back to legacy garage and achievements ownership', async ({ page }) => {

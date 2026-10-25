@@ -55,3 +55,32 @@ test('captures and applies the unchanged legacy storage keys', () => {
   assert.equal(native.getItem('one'), 'updated');
   assert.equal(native.getItem('two'), null);
 });
+
+test('preserves opaque inventory and achievement payload fields', () => {
+  const { validatePilotDomainPayload } = loadContracts();
+  const result = validatePilotDomainPayload({ coins: 12, legacyPart: { id: 'wing-a' }, futureField: ['kept'] });
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.value, { coins: 12, legacyPart: { id: 'wing-a' }, futureField: ['kept'] });
+});
+
+test('fails closed for invalid domain payloads without writing them', () => {
+  const { createDomainPersistence } = loadContracts();
+  const values = new Map([['inventory', JSON.stringify({ coins: 7 })]]);
+  const native = {
+    getItem: key => values.get(key) ?? null,
+    setItem: (key, value) => values.set(key, value),
+    removeItem: key => values.delete(key),
+  };
+  const adapter = createDomainPersistence(native, 'inventory');
+  assert.deepEqual(adapter.read({ coins: 0 }), { coins: 7 });
+  assert.equal(adapter.write(['not', 'an', 'object']), false);
+  assert.equal(values.get('inventory'), JSON.stringify({ coins: 7 }));
+  assert.deepEqual(adapter.read({ coins: 0 }), { coins: 7 });
+});
+
+test('uses the fallback when a domain payload is malformed', () => {
+  const { createDomainPersistence } = loadContracts();
+  const native = { getItem: () => '{invalid', setItem() {}, removeItem() {} };
+  const adapter = createDomainPersistence(native, 'achievements');
+  assert.deepEqual(adapter.read({ completed: [] }), { completed: [] });
+});
