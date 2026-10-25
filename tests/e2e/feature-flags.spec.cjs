@@ -246,10 +246,12 @@ test('React garage controls delegate preview and equip actions to pilot-local st
   expect(await page.evaluate(() => typeof window.TTInventoryAdapter?.activatePart)).toBe('function');
 });
 
-test('React achievements render in both locales and refresh through the legacy adapter', async ({ page }) => {
+test('React achievements render from pilot-local storage in both locales and offline', async ({ page }) => {
   await page.addInitScript(() => {
     window.__TTFeatureFlags = { reactCoreScreens: true };
     localStorage.setItem('cosmotablas-language', 'en');
+    localStorage.setItem('cosmotablas-v2', JSON.stringify({ '2-1-mul': { right: 100, wrong: 0 } }));
+    localStorage.setItem('cosmotablas-history-v1', JSON.stringify([{ mode: 'practice', correct: 20, wrong: 0 }]));
   });
   await page.goto('/');
   await page.locator('#reactLaunchSplash').click();
@@ -261,8 +263,12 @@ test('React achievements render in both locales and refresh through the legacy a
   await expect(panel).toBeVisible();
   await expect(panel).toContainText('Achievement progress');
   await expect(panel.locator('.ttReactAchievement')).not.toHaveCount(0);
+  await expect(panel).toContainText('One hundred correct');
+  await page.evaluate(() => { document.querySelector('#awardGrid').innerHTML = ''; });
+  await page.context().setOffline(true);
   await panel.getByRole('button', { name: 'Refresh achievements' }).click();
-  expect(await page.evaluate(() => typeof window.TTAchievementAdapter?.refresh)).toBe('function');
+  await expect(panel).toContainText('One hundred correct');
+  await page.context().setOffline(false);
 
   await page.evaluate(() => localStorage.setItem('cosmotablas-language', 'es'));
   await page.reload();
