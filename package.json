@@ -12,6 +12,7 @@
     "build": "vite build && node scripts/check-dist.cjs",
     "release": "node scripts/release.mjs",
     "check:cutover": "node scripts/check-cutover.cjs",
+    "check:retirement": "node scripts/check-legacy-retirement.cjs",
     "typecheck": "tsc --noEmit",
     "preview": "vite preview --host 0.0.0.0",
     "test": "npm run test:unit && npm run test:e2e",
@@ -19,7 +20,7 @@
     "test:e2e": "playwright test",
     "test:e2e:full": "PLAYWRIGHT_FULL=1 playwright test",
     "check:legacy": "node scripts/check-legacy.cjs",
-    "check": "npm run check:legacy && npm run check:cutover && npm run typecheck && npm run test:unit && npm run build"
+    "check": "npm run check:legacy && npm run check:cutover && npm run check:retirement && npm run typecheck && npm run test:unit && npm run build"
   },
   "devDependencies": {
     "@playwright/test": "^1.55.1",

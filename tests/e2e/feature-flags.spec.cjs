@@ -596,3 +596,55 @@ test('disabling the React core flag rolls back to legacy garage and achievements
   await expect(page.locator('#awards')).toBeVisible();
   await expect(page.locator('#awardGrid .awardcard')).not.toHaveCount(0);
 });
+
+test('disabled React ownership keeps every legacy core route usable without changing local data', async ({ page }) => {
+  page.on('dialog', dialog => dialog.dismiss());
+  await page.addInitScript(() => {
+    window.__TTFeatureFlags = { reactCoreScreens: false };
+    localStorage.setItem('cosmotablas-v2', JSON.stringify({ '2-1-mul': { right: 4, wrong: 1 } }));
+    localStorage.setItem('cosmotablas-history-v1', JSON.stringify([{ correct: 4, wrong: 1 }]));
+    localStorage.setItem('tt-rocket-garage-v1', JSON.stringify({ coins: 25, owned: ['body_red'] }));
+    localStorage.setItem('tt-rocket-backups-v1', JSON.stringify([]));
+  });
+  await page.goto('/');
+  await page.locator('#launchSplash').click();
+  await expect(page.locator('#dashboard')).toBeVisible();
+  await expect(page.locator('.ttReactCoreNav')).toHaveCount(0);
+  const tour = page.locator('#ttTourShade.ttTourVisible');
+  await tour.waitFor({ state: 'visible', timeout: 5000 }).then(() =>
+    tour.locator('#ttTourSkip').click({ force: true }),
+  ).catch(() => {});
+  const before = await page.evaluate(() => Object.fromEntries([
+    'cosmotablas-v2',
+    'cosmotablas-history-v1',
+    'tt-rocket-garage-v1',
+    'tt-rocket-backups-v1',
+  ].map(key => [key, localStorage.getItem(key)])));
+
+  const openRoute = async section => {
+    await page.locator('#menuBtn').click();
+    await page.locator(`#sideDrawer [data-section="${section}"]`).click();
+  };
+  await openRoute('home');
+  await expect(page.locator('#home')).toBeVisible();
+  await expect(page.locator('#home .missionLaunchAction')).toBeVisible();
+  await openRoute('settings');
+  await expect(page.locator('#settings')).toBeVisible();
+  await page.evaluate(() => window.TTSettingsAdapter.showSettingsPanel('backups'));
+  await expect(page.locator('#backupList')).toBeVisible();
+  await openRoute('garage');
+  await expect(page.locator('#garage')).toBeVisible();
+  await expect(page.locator('#garageItems .garageItem')).not.toHaveCount(0);
+  await openRoute('awards');
+  await expect(page.locator('#awards')).toBeVisible();
+  await expect(page.locator('#awardGrid .awardcard')).not.toHaveCount(0);
+  await openRoute('profile');
+  await expect(page.locator('#profile')).toBeVisible();
+
+  expect(await page.evaluate(() => Object.fromEntries([
+    'cosmotablas-v2',
+    'cosmotablas-history-v1',
+    'tt-rocket-garage-v1',
+    'tt-rocket-backups-v1',
+  ].map(key => [key, localStorage.getItem(key)])))).toEqual(before);
+});
