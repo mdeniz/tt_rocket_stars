@@ -1887,3 +1887,7 @@ body.ttReactCoreScreensEnabled #home.ttReactMissionSetupEnabled>section.card{dis
 @media(max-width:700px){.ttReactAchievementsHeading{flex-direction:column}.ttReactAchievementsList{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:560px){.ttReactCoreNav{width:calc(100% - 16px);justify-content:space-between}.ttReactCoreNav button{min-width:0;flex:1}.ttReactCoreNav button small{font-size:.58rem}}
 .ttReactMissionPlayer{margin:16px auto;max-width:680px;text-align:center}.ttReactMissionStatus{display:flex;justify-content:space-between;gap:12px;color:#c6d4f0;font-weight:800}.ttReactMissionPlayer .answer{margin:12px auto;max-width:260px}.ttReactMissionPlayer .btn{margin:6px}.ttReactMissionPlayer .feedback{min-height:32px}
+
+/* React ownership must win over later legacy layout overrides. */
+body.ttReactCoreScreensEnabled #dashboard > [data-react-dashboard-legacy-hidden],
+body.ttReactCoreScreensEnabled #insights > [data-react-progress-legacy-hidden]{display:none!important}

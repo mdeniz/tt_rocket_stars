@@ -30,8 +30,10 @@ const coreCompositionTargets = [
 
 function coreScreensFeatureEnabled(): boolean {
   const buildEnv = (import.meta as ImportMeta & { env?: Record<string, string> }).env;
-  return buildEnv?.VITE_REACT_CORE_SCREENS === 'true'
-    || window.__TTFeatureFlags?.reactCoreScreens === true;
+  if (typeof window.__TTFeatureFlags?.reactCoreScreens === 'boolean') {
+    return window.__TTFeatureFlags.reactCoreScreens;
+  }
+  return buildEnv?.VITE_REACT_CORE_SCREENS === 'true';
 }
 
 function localizedCoreLabel(locale: Locale, screen: CoreScreenId): string {
