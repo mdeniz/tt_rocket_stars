@@ -60,6 +60,22 @@ Expected results: cross-account pilot rows are absent; an account without an
 explicit grant receives no `pilot_access` row; and revoked or expired
 membership helpers return `false`.
 
+## Hosted empirical evidence
+
+On 2026-10-26, the checks were run against the configured Supabase project
+through the deployed `index_next.html` application using two authenticated
+browser sessions. `railsgeek@gmail.com` could read the owner pilot, crew,
+membership, and explicit grant. `moisesdenizaleman@gmail.com` could read its
+own pilot, active crew membership, and explicit grant, but received zero rows
+for the owner-only pilot and the owner's private progress snapshot. Anonymous
+requests to `crews`, `pilot_access`, and `progress_snapshots` returned HTTP
+401. The browser used only the publishable key, and no service-role credential
+was present. Disposable fixture rows were removed after the check.
+
+The repository contract check also passed with
+`npm run test:unit -- tests/unit/supabase-schema.test.cjs` (126 tests passed).
+This evidence is provider-backed and does not claim real iOS Safari coverage.
+
 ## Deletion boundary checks
 
 In a disposable project, remove one membership or crew association through the
