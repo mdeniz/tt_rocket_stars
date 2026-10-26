@@ -34,6 +34,33 @@ test('React pilot selector preserves the legacy profile contract', async ({ page
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('tt-rocket-profiles-v1')).length)).toBe(2);
 });
 
+test('flagged React pilot persistence does not depend on legacy profile mutators', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.__TTFeatureFlags = { reactCoreScreens: true };
+  });
+  await enterGame(page);
+
+  const result = await page.evaluate(() => {
+    const originalId = window.TTPersistenceBoundary.pilots.readPilots()[0].id;
+    window.TTProfiles.create = () => { throw new Error('legacy create must not be called'); };
+    window.TTProfiles.choose = () => { throw new Error('legacy choose must not be called'); };
+    const createdId = window.TTPersistenceBoundary.pilots.createPilot('Typed Pilot');
+    const createdProfile = JSON.parse(localStorage.getItem('tt-rocket-profiles-v1')).find(profile => profile.id === createdId);
+    const switched = window.TTPersistenceBoundary.pilots.choosePilot(originalId);
+    return {
+      createdId,
+      createdName: createdProfile?.name,
+      activeId: localStorage.getItem('tt-rocket-active-profile-v1'),
+      switched,
+    };
+  });
+
+  expect(result.createdId).toBeTruthy();
+  expect(result.createdName).toBe('Typed Pilot');
+  expect(result.switched).toBe(true);
+  expect(result.activeId).not.toBe(result.createdId);
+});
+
 test('pilot creation and switching preserve separate local profile identities', async ({ page }) => {
   await enterGame(page);
   await page.locator('#headerPilot').click();

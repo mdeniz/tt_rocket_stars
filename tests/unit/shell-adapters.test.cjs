@@ -23,6 +23,12 @@ test('pilot adapter delegates selection and creation to the legacy persistence b
   assert.match(adapter, /installPilotAdapter/);
 });
 
+test('flagged persistence uses the typed React pilot coordinator with legacy fallback', () => {
+  assert.match(adapter, /createReactPilotPersistence/);
+  assert.match(adapter, /reactCoreScreensEnabled/);
+  assert.match(adapter, /createReactPilotPersistence\(\) : createPilotAdapter\(\)/);
+});
+
 test('persistence boundary exposes fail-closed backup controls and keeps pilot aliases', () => {
   assert.match(adapter, /installPersistenceBoundary/);
   assert.match(adapter, /TTBackupControls\?: BackupControlsAdapter/);

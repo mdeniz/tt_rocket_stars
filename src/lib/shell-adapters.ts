@@ -1,5 +1,6 @@
 import type { ShellPilotSummary } from './shell-contracts';
 import { createMissionPersistence, type MissionPersistenceAdapter } from './react-gameplay-persistence';
+import { createReactPilotPersistence } from './react-pilot-persistence';
 
 export interface FullscreenAdapter {
   requestFullscreen(): Promise<boolean>;
@@ -115,6 +116,11 @@ export interface PersistenceBoundary {
   achievements: AchievementAdapter;
 }
 
+function reactCoreScreensEnabled(): boolean {
+  return window.__TTFeatureFlags?.reactCoreScreens === true
+    || (import.meta as ImportMeta & { env?: Record<string, string> }).env?.VITE_REACT_CORE_SCREENS === 'true';
+}
+
 /**
  * Requests fullscreen without making splash entry depend on browser support.
  * The browser call remains synchronous up to the returned promise so a user
@@ -185,7 +191,7 @@ export function createBackupControlsAdapter(): BackupControlsAdapter {
  * The legacy aliases remain available for rollback and existing inline handlers.
  */
 export function installPersistenceBoundary(): void {
-  const pilots = createPilotAdapter();
+  const pilots = reactCoreScreensEnabled() ? createReactPilotPersistence() : createPilotAdapter();
   const backups = createBackupControlsAdapter();
   const mission = createMissionPersistence(window.TTLocalStore, 'cosmotablas-v2');
   const core = window.TTCoreScreensAdapter || createCoreScreensAdapter();
