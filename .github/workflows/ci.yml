@@ -1,15 +1,19 @@
 name: CI
+
 on:
   push:
     branches: [main]
   pull_request:
   workflow_dispatch:
+
 permissions:
   contents: read
+
 jobs:
-  browser-tests:
+  repository-checks:
+    name: Repository checks
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -18,15 +22,47 @@ jobs:
           cache: npm
           cache-dependency-path: package-lock.json
       - run: npm ci --no-audit --no-fund
-      - name: Restore Playwright browsers
+      - run: npm run check
+
+  browser-tests:
+    name: Browser tests (${{ matrix.project }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - project: chromium
+            browser: chromium
+            mobile: '0'
+            workers: '2'
+          - project: firefox
+            browser: firefox
+            mobile: '0'
+            workers: '2'
+          - project: webkit
+            browser: webkit
+            mobile: '0'
+            workers: '2'
+          - project: webkit-mobile
+            browser: webkit
+            mobile: '1'
+            workers: '1'
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - name: Restore Playwright browser cache
         uses: actions/cache@v5
         with:
           path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
-      # GitHub-hosted Ubuntu provides the browser system libraries. Installing
-      # OS packages here can hang during runner image or mirror migrations.
-      # Keep browser binaries cached and install them only when the cache is cold.
+          key: ${{ runner.os }}-playwright-${{ matrix.browser }}-${{ hashFiles('package-lock.json') }}
       - name: Install WebKit runtime dependencies
+        if: matrix.browser == 'webkit'
         run: |
           sudo apt-get install -y --no-install-recommends \
             gstreamer1.0-libav \
@@ -80,21 +116,17 @@ jobs:
             libxslt1.1 \
             libx264-164 \
             libavif16
-      - run: npx playwright install chromium firefox webkit
-      - run: npm run check
-      - name: Run the full desktop browser matrix
+      - name: Install selected Playwright browser
+        run: npx playwright install ${{ matrix.browser }}
+      - name: Run selected Playwright project
         env:
-          PLAYWRIGHT_FULL: '1'
-        run: npm run test:e2e
-      - name: Run mobile WebKit checks
-        env:
-          PLAYWRIGHT_MOBILE: '1'
-          PLAYWRIGHT_WORKERS: '1'
-        run: npx playwright test --project=webkit-mobile
+          PLAYWRIGHT_MOBILE: ${{ matrix.mobile }}
+          PLAYWRIGHT_WORKERS: ${{ matrix.workers }}
+        run: npx playwright test --project=${{ matrix.project }}
       - if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.project }}
           path: |
             playwright-report/
             test-results/
