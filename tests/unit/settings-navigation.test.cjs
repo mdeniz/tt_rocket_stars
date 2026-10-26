@@ -58,6 +58,17 @@ test('authenticated users can change their password without changing local stora
   assert.match(cloud, /changeForm\.classList\.toggle\('hidden', !user \|\| setupMode\)/);
 });
 
+test('password forms expose an explicit invited-account identity', () => {
+  assert.match(cloud, /emailInput\.name = 'username'/);
+  assert.match(cloud, /emailInput\.autocomplete = 'username'/);
+  assert.match(cloud, /ttAuthSetupEmail/);
+  assert.match(cloud, /ttAuthChangeEmail/);
+  assert.match(cloud, /setupEmailInput\.autocomplete = 'username'/);
+  assert.match(cloud, /changeEmailInput\.autocomplete = 'username'/);
+  assert.match(cloud, /setupEmailInput\.value = email/);
+  assert.match(cloud, /changeEmailInput\.value = email/);
+});
+
 test('token-hash callback bypasses the game history binding', () => {
   assert.doesNotMatch(cloud, /(?<!window\.)\bhistory\.replaceState/);
 });
