@@ -283,7 +283,7 @@ test('React mission setup delegates supported configuration to gameplay', async 
   await setup.getByRole('button', { name: /Long mission/ }).click();
   await setup.getByRole('button', { name: '15 minutes' }).click();
   await expect(setup.getByRole('button', { name: '15 minutes' })).toHaveClass(/on/);
-  await setup.getByRole('button', { name: /Launch mission/ }).click();
+  await setup.getByRole('button', { name: /Launch mission|Despegar/ }).click();
   await expect(page.locator('.ttReactMissionPlayer')).toBeVisible();
   await expect(page.locator('#ttReactMissionQuestion')).not.toHaveText('');
   expect(await page.evaluate(() => typeof window.TTGameplayAdapter?.startMission)).toBe('function');
@@ -304,8 +304,10 @@ async function launchReactMission(page, mode = 'practice') {
   if (mode === 'timed') {
     await setup.getByRole('button', { name: /Long mission/ }).click();
     await setup.getByRole('button', { name: '5 minutes', exact: true }).click();
+  } else if (mode === 'exam') {
+    await setup.getByRole('button', { name: /20 challenges|20 retos/ }).click();
   }
-  await setup.getByRole('button', { name: /Launch mission/ }).click();
+  await setup.getByRole('button', { name: /Launch mission|Despegar/ }).click();
   await expect(page.locator('.ttReactMissionPlayer')).toBeVisible();
   return setup;
 }
@@ -329,6 +331,36 @@ test('React practice flow preserves legacy answer progression, audio, and local 
   await expect.poll(() => page.locator('#ttReactMissionQuestion').innerText()).not.toBe(initialQuestion, { timeout: 3000 });
   expect(await page.evaluate(() => Boolean(window.TTPersistenceBoundary?.mission))).toBe(true);
   expect(await page.evaluate(() => window.__reactAudioCalls)).toEqual(['correct']);
+});
+
+test('flagged React mission completion persists history and Rocket Coins across reloads', async ({ page }) => {
+  await launchReactMission(page, 'exam');
+  for (let index = 0; index < 20; index += 1) {
+    const question = await page.locator('#ttReactMissionQuestion').innerText();
+    const match = question.match(/(\d+)\s*[×x]\s*(\d+)/);
+    expect(match).not.toBeNull();
+    await page.locator('#ttReactMissionAnswer').fill(String(Number(match[1]) * Number(match[2])));
+    await page.getByRole('button', { name: /Check answer|Comprobar respuesta/ }).click();
+    await page.waitForTimeout(75);
+  }
+  await expect(page.locator('.ttReactMissionPlayer')).toContainText(/Mission complete|Misión completada/);
+  const saved = await page.evaluate(() => ({
+    history: JSON.parse(localStorage.getItem('cosmotablas-history-v1') || '[]'),
+    garage: JSON.parse(localStorage.getItem('tt-rocket-garage-v1') || '{}'),
+  }));
+  expect(saved.history[0]).toMatchObject({ mode: 'exam', correct: 20, wrong: 0, coins: { total: 260, achievementBonus: 220 } });
+  expect(saved.garage.coins).toBe(260);
+
+  await page.reload();
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('cosmotablas-history-v1') || '[]')[0].coins.total)).toBe(260);
+});
+
+test('React mission results retain localized labels and accessible answer controls', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('cosmotablas-language', 'es'));
+  await launchReactMission(page);
+  await expect(page.locator('#ttReactMissionAnswer')).toHaveAccessibleName('Tu respuesta');
+  await expect(page.getByRole('button', { name: 'Comprobar respuesta' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Volver a preparar la misión' })).toBeVisible();
 });
 
 test('React timed flow exposes a running timer and remains locally playable', async ({ page }) => {
