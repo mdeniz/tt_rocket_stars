@@ -47,3 +47,48 @@ test('keeps mission persistence isolated by pilot key', () => {
   assert.deepEqual(first.read(), { score: 10 });
   assert.deepEqual(second.read(), { score: 20 });
 });
+
+test('commits facts, mission history, and inventory as one compatible progress snapshot', () => {
+  const store = storage();
+  store.setItem('cosmotablas-v2', JSON.stringify({ '2-1-mul': { right: 1, wrong: 0 } }));
+  store.setItem('cosmotablas-history-v1', JSON.stringify([{ mode: 'practice', correct: 1 }]));
+  store.setItem('tt-rocket-garage-v1', JSON.stringify({ coins: 4, futureField: { keep: true } }));
+  const adapter = persistence.createMissionPersistence(store, 'cosmotablas-v2');
+
+  assert.equal(adapter.commitProgress({
+    facts: { '2-1-mul': { right: 2, wrong: 0 } },
+    history: [{ mode: 'practice', correct: 2 }],
+    inventory: { coins: 9, futureField: { keep: true } },
+  }), true);
+  assert.deepEqual(JSON.parse(store.getItem('cosmotablas-v2')), { '2-1-mul': { right: 2, wrong: 0 } });
+  assert.deepEqual(JSON.parse(store.getItem('cosmotablas-history-v1')), [{ mode: 'practice', correct: 2 }]);
+  assert.deepEqual(JSON.parse(store.getItem('tt-rocket-garage-v1')), { coins: 9, futureField: { keep: true } });
+});
+
+test('rolls back every mission progress key when a later write fails', () => {
+  const store = storage();
+  store.setItem('cosmotablas-v2', JSON.stringify({ before: true }));
+  store.setItem('cosmotablas-history-v1', JSON.stringify([{ before: true }]));
+  store.setItem('tt-rocket-garage-v1', JSON.stringify({ coins: 3 }));
+  const originalSetItem = store.setItem;
+  store.setItem = (key, value) => {
+    if (key === 'tt-rocket-garage-v1') throw new Error('quota');
+    originalSetItem(key, value);
+  };
+  const adapter = persistence.createMissionPersistence(store, 'cosmotablas-v2');
+
+  assert.equal(adapter.commitProgress({ facts: { after: true }, history: [{ after: true }], inventory: { coins: 99 } }), false);
+  assert.deepEqual(JSON.parse(store.getItem('cosmotablas-v2')), { before: true });
+  assert.deepEqual(JSON.parse(store.getItem('cosmotablas-history-v1')), [{ before: true }]);
+  assert.deepEqual(JSON.parse(store.getItem('tt-rocket-garage-v1')), { coins: 3 });
+});
+
+test('rejects malformed mission progress without changing compatible payloads', () => {
+  const store = storage();
+  store.setItem('cosmotablas-v2', JSON.stringify({ before: true }));
+  const adapter = persistence.createMissionPersistence(store, 'cosmotablas-v2');
+
+  assert.equal(adapter.commitProgress({ facts: [], history: [], inventory: { coins: -1 } }), false);
+  assert.deepEqual(adapter.read(), { before: true });
+  assert.equal(store.getItem('cosmotablas-history-v1'), null);
+});

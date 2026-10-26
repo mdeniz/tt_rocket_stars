@@ -4,6 +4,7 @@ import en from './locales/en.json';
 import es from './locales/es.json';
 import type { CoreScreenId } from './lib/shell-adapters';
 import { advanceTimer, startMission as createReactMission, submitAnswer, type ReactMissionState } from './lib/react-gameplay';
+import { missionCompletionReward, persistMissionCompletion } from './lib/react-mission-progress';
 import { evaluateAchievements, type ReactAchievementRecord } from './lib/react-achievements';
 import { evaluateDashboard, type ReactDashboardModel } from './lib/react-dashboard';
 
@@ -78,17 +79,31 @@ function ReactMissionPlayer({ locale, state, onChange, onExit }: {
 }) {
   const copy = locale as Record<string, string>;
   const [answer, setAnswer] = useState('');
+  const updateMission = (next: ReactMissionState) => {
+    if (next.status === 'complete' && state.status !== 'complete') {
+      const mission = window.TTPersistenceBoundary?.mission;
+      if (mission) {
+        const reward = missionCompletionReward(mission, next);
+        if (persistMissionCompletion(mission, next)) {
+          window.TTPersistenceBoundary?.inventory.refresh();
+          onChange(reward ? { ...next, reward } : next);
+          return;
+        }
+      }
+    }
+    onChange(next);
+  };
   useEffect(() => {
     if (state.status !== 'active' || state.config.mode !== 'timed') return;
-    const timer = window.setInterval(() => onChange(advanceTimer(state)), 250);
+    const timer = window.setInterval(() => updateMission(advanceTimer(state)), 250);
     return () => window.clearInterval(timer);
-  }, [onChange, state]);
+  }, [state]);
   const submit = () => {
     if (state.status !== 'active' || !state.question || !answer.trim()) return;
     const isCorrect = state.question.result === Number(answer);
     window.TTAudio?.sfx?.(isCorrect ? 'correct' : 'wrong');
     persistReactAnswer(state, Number(answer));
-    onChange(submitAnswer(state, Number(answer)));
+    updateMission(submitAnswer(state, Number(answer)));
     setAnswer('');
   };
   if (state.status === 'complete') {
