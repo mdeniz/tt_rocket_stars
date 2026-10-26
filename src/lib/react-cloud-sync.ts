@@ -1,30 +1,11 @@
-import type { CloudSnapshot, Language, PilotPayload } from './persistence-contracts';
+import type { BrowserCloudBoundary, CloudBoundaryResult, CloudPilotSummary } from './cloud-boundary';
 
 export type CloudSyncStatus = 'disabled' | 'signed-out' | 'pending' | 'syncing' | 'synced' | 'failed' | 'conflict';
 
-export interface CloudPilotSummary {
-  localId: string;
-  name: string;
-  avatar: string | null;
-  language: Language;
-  payload?: PilotPayload;
-  updatedAt?: string;
-}
+export type { CloudPilotSummary } from './cloud-boundary';
+export type CloudSyncResult = CloudBoundaryResult;
 
-export interface CloudSyncResult {
-  status: string;
-  snapshot?: CloudSnapshot;
-  pilots?: CloudPilotSummary[];
-  error?: unknown;
-}
-
-export interface LegacyCloudSyncAdapter {
-  upload(): Promise<CloudSyncResult>;
-  download(): Promise<CloudSyncResult>;
-  listRemotePilots(): Promise<CloudSyncResult>;
-  downloadPilot(localId: string): Promise<CloudSyncResult>;
-  queueUpload(delay?: number): Promise<CloudSyncResult>;
-}
+export type LegacyCloudSyncAdapter = BrowserCloudBoundary;
 
 export interface ReactCloudSyncBoundary {
   isAvailable(): boolean;
@@ -66,12 +47,12 @@ export function createReactCloudSyncBoundary(resolve: () => LegacyCloudSyncAdapt
     },
     listPilots: () => {
       const cloud = adapter();
-      return cloud ? safeCall(() => cloud.listRemotePilots(), { status: 'failed', pilots: [] }) : Promise.resolve({ status: 'disabled', pilots: [] });
+      return cloud ? safeCall(() => cloud.listPilots(), { status: 'failed', pilots: [] }) : Promise.resolve({ status: 'disabled', pilots: [] });
     },
     restorePilot: (localId: string) => {
       if (!localId.trim()) return Promise.resolve({ status: 'not-found' });
       const cloud = adapter();
-      return cloud ? safeCall(() => cloud.downloadPilot(localId), { status: 'failed' }) : Promise.resolve(disabled());
+      return cloud ? safeCall(() => cloud.restorePilot(localId), { status: 'failed' }) : Promise.resolve(disabled());
     },
     queueUpload: (delay?: number) => {
       const cloud = adapter();

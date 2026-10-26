@@ -200,7 +200,7 @@
   async function listCloudPilots() {
     if (!cloudAdapter) { setCloudStatus('missing', 'info'); return; }
     listCloud.disabled = true; setCloudStatus('syncPending', 'pending');
-    const result = await cloudAdapter.listRemotePilots();
+    const result = await cloudAdapter.listPilots();
     listCloud.disabled = false;
     if (result.status === 'listed') { renderCloudPilots(result.pilots); setCloudStatus('syncIdle', 'info'); }
     else if (result.status === 'failed') setCloudStatus('syncError', 'error');
@@ -209,7 +209,7 @@
     if (!cloudAdapter) return;
     const local = window.TTProfiles?.read?.().find(profile => profile.id === pilot.localId);
     restoreCloud.disabled = true; setCloudStatus('syncPending', 'pending');
-    const result = await cloudAdapter.downloadPilot(pilot.localId);
+    const result = await cloudAdapter.restorePilot(pilot.localId);
     if (result.status === 'downloaded') {
       if (local) {
         window.TTProfiles.choose(pilot.localId);
@@ -279,7 +279,16 @@
     const session = readSession();if (!session?.access_token || !session.user)return;
     if (!window.confirm(text('deleteConfirm')))return;
     deleteCloud.disabled = true;
-    try { const response = await fetch(`${rest('/rpc/delete_my_cloud_data')}`, { method: 'POST', headers: headers(session.access_token), body: '{}' });if (!response.ok) throw new Error('delete failed');setCloudStatus('deleted', 'success'); }
+    try {
+      if (cloudAdapter) {
+        const result = await cloudAdapter.deleteCloudData();
+        if (result.status !== 'deleted') throw result.error || new Error('delete failed');
+      } else if (window.__TT_FEATURES__?.legacyCloudDirectFallback === true) {
+        const response = await fetch(`${rest('/rpc/delete_my_cloud_data')}`, { method: 'POST', headers: headers(session.access_token), body: '{}' });
+        if (!response.ok) throw new Error('delete failed');
+      } else throw new Error('cloud boundary unavailable');
+      setCloudStatus('deleted', 'success');
+    }
     catch (_) { setCloudStatus('deleteError', 'error'); }
     finally { deleteCloud.disabled = false; }
   }
@@ -293,6 +302,7 @@
       if (result.status === 'downloaded') location.reload();
       return;
     }
+    if (window.__TT_FEATURES__?.legacyCloudDirectFallback !== true) { setCloudStatus('syncError', 'error'); restoreCloud.disabled = false; return; }
     try {
       const pilotQuery = `${rest('/pilots')}?select=id,name,avatar,language,payload&user_id=eq.${encodeURIComponent(session.user.id)}&local_id=eq.${encodeURIComponent(pilot.id)}&limit=1`;
       const pilotResponse = await fetch(pilotQuery, { headers: headers(session.access_token) });

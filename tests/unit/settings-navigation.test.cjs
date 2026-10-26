@@ -21,7 +21,7 @@ test('cloud access controls include sync and deletion affordances', () => {
   assert.match(cloud, /ttCloudSyncNow/);
   assert.match(cloud, /ttCloudRestore/);
   assert.match(cloud, /ttCloudList/);
-  assert.match(cloud, /listRemotePilots/);
+  assert.match(cloud, /listPilots/);
   assert.match(cloud, /restoreCloud/);
   assert.match(cloud, /ttCloudDelete/);
   assert.match(cloud, /ui\.084/);

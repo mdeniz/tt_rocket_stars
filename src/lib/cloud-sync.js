@@ -275,6 +275,19 @@ export function createCloudSync({ client, store, getLocalPilot, applyRemotePilot
     }
   }
 
+  async function deleteCloudData() {
+    if (!client) return result('disabled');
+    const authSession = await session();
+    if (!authSession?.user?.id) return result('signed-out');
+    try {
+      const { error } = await client.rpc('delete_my_cloud_data', {});
+      if (error) throw error;
+      return result('deleted');
+    } catch (error) {
+      return result('failed', { error });
+    }
+  }
+
   let queueTimer = null;
   let queuedResolve = null;
   const queueUpload = (delay = 1200) => new Promise(resolve => {
@@ -289,7 +302,19 @@ export function createCloudSync({ client, store, getLocalPilot, applyRemotePilot
       currentResolve?.(await upload());
     }, Math.max(0, Number(delay) || 0));
   });
-  return { upload, download, listRemotePilots, downloadPilot, queueUpload, sync: async () => { const pushed = await upload(); return pushed.status === 'uploaded' ? pushed : download(); } };
+  return {
+    upload,
+    download,
+    listPilots: listRemotePilots,
+    restorePilot: downloadPilot,
+    // Compatibility aliases remain available to older integrations while the
+    // browser consumers move to the provider-neutral names above.
+    listRemotePilots,
+    downloadPilot,
+    deleteCloudData,
+    queueUpload,
+    sync: async () => { const pushed = await upload(); return pushed.status === 'uploaded' ? pushed : download(); },
+  };
 }
 
 export { SYNC_METADATA_KEY };

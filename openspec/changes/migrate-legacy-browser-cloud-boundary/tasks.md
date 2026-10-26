@@ -2,10 +2,10 @@
 
 ## 1. Boundary inventory and contract
 
-- [ ] 1.1 Inventory every remaining browser cloud consumer, direct table/RPC call, public configuration path, and legacy fallback; verify the inventory names source files, consumers, operation families, and removal gates.
-- [ ] 1.2 Resolve the trusted transport available in the deployment environment without introducing a new dependency or service; verify the decision is recorded with credential, authentication, and rollback constraints.
-- [ ] 1.3 Define domain request, response, error, and capability contracts for upload, download, discovery, conflict resolution, retry status, and cloud deletion; verify TypeScript typecheck and contract fixtures compile without provider imports.
-- [ ] 1.4 Add a reversible adapter seam and feature flag with local-first defaults; verify the disabled path performs no cloud request and preserves existing local storage keys.
+- [x] 1.1 Inventory every remaining browser cloud consumer, direct table/RPC call, public configuration path, and legacy fallback; verify the inventory names source files, consumers, operation families, and removal gates.
+- [x] 1.2 Resolve the trusted transport available in the deployment environment without introducing a new dependency or service; verify the decision is recorded with credential, authentication, and rollback constraints.
+- [x] 1.3 Define domain request, response, error, and capability contracts for upload, download, discovery, conflict resolution, retry status, and cloud deletion; verify TypeScript typecheck and contract fixtures compile without provider imports.
+- [x] 1.4 Add a reversible adapter seam and feature flag with local-first defaults; verify the disabled path performs no cloud request and preserves existing local storage keys.
 
 ## 2. Upload, download, and conflict migration
 
