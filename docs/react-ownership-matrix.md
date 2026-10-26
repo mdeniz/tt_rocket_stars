@@ -1,37 +1,43 @@
-# React Cutover Ownership Matrix
+# React ownership matrix
 
-This matrix is the retirement contract for the React development entrypoint. A
-legacy global may be removed only after its row has a React owner, an explicit
-fallback, and a verified source call site.
+This matrix is the release-compatibility inventory for issue #158. It records
+the selected development path, the typed React boundary, and every legacy
+global that remains a compatibility dependency. A legacy global is not safe to
+remove until its row has a replacement, browser evidence, and a rollback
+decision.
 
-| Global or operation | Legacy source | React owner | Consumers / source call sites | Fallback disposition |
+| Domain | React owner when `reactCoreScreens` is enabled | Legacy global or source still loaded | Current responsibility | Removal gate |
 | --- | --- | --- | --- | --- |
-| `TTProfiles.read`, `active`, `choose`, `create` | `public/legacy/scripts/02.js` | `createReactPilotPersistence` | `src/lib/react-pilot-persistence.ts`, `src/components/PilotSelector.tsx` | Keep `TTProfiles` for the stable entrypoint and disabled React flag |
-| `tt-rocket-profiles-v1`, `tt-rocket-active-profile-v1` | `public/legacy/scripts/02.js` | `createReactPilotPersistence` | `src/lib/react-pilot-persistence.ts`, `src/lib/persistence-runtime.js` | Preserve both keys and the legacy profile envelope for rollback |
-| `TTProfiles.sync` | `public/legacy/scripts/02.js` | `createReactPilotPersistence` plus persistence boundary | `src/lib/react-gameplay-persistence.ts`, `src/lib/react-backup-persistence.ts`, `src/lib/shell-adapters.ts` | Keep legacy profile snapshot sync until all inline writers are retired |
-| `TTProfiles.restoreCloud` | `public/legacy/scripts/02.js` | `createReactCloudSyncBoundary` | `public/legacy/scripts/32.js`, `src/lib/react-cloud-sync.ts` | Keep cloud restore bridge; fail closed when cloud is unavailable |
-| `cosmotablas-v2`, `cosmotablas-history-v1`, `tt-rocket-garage-v1`, `tt-rocket-backups-v1` | `public/legacy/scripts/02.js`, `03.js` | Typed pilot, mission, inventory, and backup persistence adapters | `src/lib/persistence-runtime.js`, `src/lib/react-*-persistence.ts` | Preserve keys, envelopes, unknown fields, and last valid local snapshots |
-| `TTProfiles.renameActive`, `deleteActive`, `remove` | `public/legacy/scripts/02.js` | React pilot persistence actions | `src/components/PilotSelector.tsx`, `index.html` inline handlers | Retain legacy profile controls for stable rollback |
-| `navigate` and screen refresh functions | `public/legacy/scripts/03.js` | `createCoreScreensAdapter` | `src/lib/shell-adapters.ts`, `src/shell.tsx`, `index.html` inline handlers | Retain legacy navigation until every screen has a React owner |
-| Mission setup globals: `toggle`, `pick`, `choose`, `chooseDuration`, `start` | `public/legacy/scripts/03.js` | `createGameplayAdapter` / `createMissionPersistence` | `src/components/MissionSetup.tsx`, `src/lib/shell-adapters.ts` | Typed adapter delegates to legacy gameplay while the fallback is enabled |
-| Mission progression globals: `nextQuestion`, `submit`, `finish`, `requestExit`, `cancelExit`, `confirmExit` | `public/legacy/scripts/03.js` | React mission player and gameplay persistence | `src/components/MissionPlayer.tsx`, `src/lib/react-gameplay.ts` | Keep legacy player as the rollback path; no script retirement yet |
-| Rocket inventory globals: `selectFamily`, `setGarageCat`, `previewPart`, `garageAction`, `renderGarage` | `public/legacy/scripts/03.js` | `createReactInventoryPersistence` | `src/lib/react-inventory-persistence.ts`, `src/shell.tsx` | Keep `TTRocketInventoryBridge` and legacy garage rendering |
-| Achievement refresh and evaluation | `public/legacy/scripts/03.js` | React achievement adapter and evaluator | `src/lib/react-achievements.ts`, `src/shell.tsx` | Keep `renderAwards` for the stable fallback |
-| `TTCloudSyncAdapter` and authentication controls | `public/legacy/scripts/32.js` | `createReactCloudSyncBoundary` | `src/lib/react-cloud-sync.ts`, `src/shell.tsx` | Optional boundary; unavailable cloud must never block local play |
-| Password session and cloud deletion controls | `public/legacy/scripts/32.js` | React cloud boundary contract | `src/lib/react-cloud-sync.ts`, `index.html` cloud panel | Keep the legacy provider bridge until production authentication evidence is complete |
+| Core navigation and screen visibility | `TTCoreScreensAdapter` and `ReactCoreScreens` | `navigate`, ordered scripts `03.js` and `26.js` | Keeps legacy routes, inline handlers, and rollback navigation available | Migrate every route consumer and verify disabled-flag startup and rollback |
+| Mission setup and gameplay | `TTGameplayAdapter`, `ReactMissionSetupHost`, and `ReactMissionPlayer` | `start`, mission DOM handlers, `public/legacy/scripts/03.js` | Legacy gameplay remains the fallback and compatibility mirror for existing handlers | Complete parity audit for every mode, timer, auto-next, reward, audio, and history path |
+| Pilot profiles | `TTPersistenceBoundary.pilots` and `TTPilotAdapter` | `TTProfiles`, `TTSwitchProfileInPlace`, `public/legacy/scripts/02.js` | Preserves profile keys, active-pilot switching, and legacy integrations | Remove direct legacy consumers after profile, backup, cloud, and settings flows pass |
+| Mission facts and history | `TTPersistenceBoundary.mission` and React evaluators | `cosmotablas-v2`, `cosmotablas-history-v1`, legacy writes in `03.js` | Preserves payload shapes and provides the fallback write path | Prove no enabled-path write reaches the legacy source of truth and retain migration checks |
+| Inventory and rocket state | `TTPersistenceBoundary.inventory` and `ReactGaragePanel` | `TTInventoryAdapter`, `TTRocketInventoryBridge`, rocket state in `03.js` | Preserves coins, owned parts, equipment, preview, and legacy SVG refresh | Complete pilot isolation, backup round-trip, and rollback audit |
+| Achievements | `TTAchievementAdapter` and `ReactAchievementsPanel` | Legacy achievement renderer in `03.js` and `TTAchievementAdapter` fallback | Computes localized results from pilot-local facts and history while retaining rollback | Verify all achievement definitions and remove the duplicate renderer only after release audit |
+| Backups | `TTPersistenceBoundary.backups` and typed backup controls | `TTBackupControls`, backup handlers in `05.js` | Preserves versioned envelopes, recovery-before-replacement, import/export, and reset | Keep legacy handlers only until stable release promotion and rollback checks are complete |
+| Cloud synchronization | `TTPersistenceBoundary.cloud` and `TTCloudSyncAdapter` bridge | `TTCloudSync`, `TTAuth`, `TTProfiles.restoreCloud`, `32.js` | Keeps optional authentication, local-first sync, and cloud restore fail-closed | Verify authenticated sync, deletion, conflicts, redirect behavior, and no service-role exposure |
+| Settings and language | React settings host plus `TTSettingsAdapter` | `setLanguage`, `TTSettingsAdapter`, `04.js` and `26.js` | Preserves translated settings panels and legacy category handlers | Migrate every settings panel and verify both locales before removing legacy handlers |
+| Audio and splash entry | React shell entry plus `TTAudio` and `TTFullscreenAdapter` | `TTEnterGame`, `TTAudio`, `TTAccessibility`, `06.js`, `16.js` | Preserves user-gesture audio/fullscreen behavior and Safari-sensitive startup | Verify first tap, reduced motion, audio, fullscreen, and restricted storage on target devices |
+| Local storage and session storage | Typed persistence contracts | `TTLocalStore`, `TTSessionStore`, existing storage keys | Compatibility layer for all local-first payloads and session gates | No key rename or deletion; remove only after artifact and migration tests prove equivalent behavior |
 
-## Stable-only legacy globals
+The protected local keys are `tt-rocket-profiles-v1`,
+`tt-rocket-active-profile-v1`, `cosmotablas-v2`, `cosmotablas-history-v1`,
+`tt-rocket-garage-v1`, and `tt-rocket-backups-v1`.
 
-The following remain intentionally legacy-owned for this cutover slice: the
-inline event-handler surface in `index.html`, the ordered runtime in
-`public/legacy/scripts/00.js`–`31.js`, and the provider-specific implementation
-in `public/legacy/scripts/32.js`. The development flag selects typed adapters,
-but it does not authorize deleting a script without a separate ownership row and
-browser evidence.
+## Entrypoint contract
 
-## Retirement rule
+- `index.html` is the stable published release and keeps the React ownership
+  flag disabled.
+- `index_next.html` is the development artifact and enables the React core
+  path for controlled verification.
+- Both artifacts remain self-contained and preserve the ordered legacy scripts
+  until the removal gates above are complete.
+- Disabling `reactCoreScreens` must restore the legacy path without changing
+  local storage, session storage, backups, or cloud state.
 
-The next removable unit must be a whole legacy boundary, not an individual
-function copied into React. Before removal, update this matrix, add a failing
-fixture for the old dependency, run the full browser matrix, and verify the
-stable artifact remains recoverable.
+## Evidence required before retirement
+
+For each row, the workflow must record unit and browser results, the running
+application URL, the user action, the visible result, console errors, network
+requests, and rollback behavior. Playwright WebKit is a compatibility signal;
+it is not evidence of real iOS Safari equivalence.
