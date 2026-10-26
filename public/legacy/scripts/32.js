@@ -7,15 +7,19 @@
   const form = document.getElementById('ttAuthForm');
   const emailInput = document.getElementById('ttAuthEmail');
   const passwordInput = document.createElement('input');
-  passwordInput.id = 'ttAuthPassword'; passwordInput.type = 'password'; passwordInput.autocomplete = 'current-password'; passwordInput.required = true; passwordInput.minLength = 8;
+  passwordInput.id = 'ttAuthPassword'; passwordInput.name = 'password'; passwordInput.type = 'password'; passwordInput.autocomplete = 'current-password'; passwordInput.required = true; passwordInput.minLength = 8;
   const passwordLabel = document.createElement('label'); passwordLabel.htmlFor = passwordInput.id;
   const recovery = document.createElement('button'); recovery.type = 'button'; recovery.className = 'btn alt'; recovery.id = 'ttAuthRecovery';
   const setupForm = document.createElement('form'); setupForm.className = 'ttAuthForm hidden'; setupForm.id = 'ttAuthSetupForm';
+  const setupEmailLabel = document.createElement('label'); setupEmailLabel.htmlFor = 'ttAuthSetupEmail'; setupEmailLabel.className = 'sr-only';
+  const setupEmailInput = document.createElement('input'); setupEmailInput.id = 'ttAuthSetupEmail'; setupEmailInput.name = 'username'; setupEmailInput.type = 'email'; setupEmailInput.autocomplete = 'username'; setupEmailInput.readOnly = true; setupEmailInput.tabIndex = -1; setupEmailInput.className = 'sr-only';
   const setupLabel = document.createElement('label'); setupLabel.htmlFor = 'ttAuthSetupPassword';
-  const setupPassword = document.createElement('input'); setupPassword.id = 'ttAuthSetupPassword'; setupPassword.type = 'password'; setupPassword.autocomplete = 'new-password'; setupPassword.required = true; setupPassword.minLength = 8;
+  const setupPassword = document.createElement('input'); setupPassword.id = 'ttAuthSetupPassword'; setupPassword.name = 'password'; setupPassword.type = 'password'; setupPassword.autocomplete = 'new-password'; setupPassword.required = true; setupPassword.minLength = 8;
   const changeForm = document.createElement('form'); changeForm.className = 'ttAuthForm hidden'; changeForm.id = 'ttAuthChangePasswordForm';
+  const changeEmailLabel = document.createElement('label'); changeEmailLabel.htmlFor = 'ttAuthChangeEmail'; changeEmailLabel.className = 'sr-only';
+  const changeEmailInput = document.createElement('input'); changeEmailInput.id = 'ttAuthChangeEmail'; changeEmailInput.name = 'username'; changeEmailInput.type = 'email'; changeEmailInput.autocomplete = 'username'; changeEmailInput.readOnly = true; changeEmailInput.tabIndex = -1; changeEmailInput.className = 'sr-only';
   const changeLabel = document.createElement('label'); changeLabel.htmlFor = 'ttAuthChangePassword';
-  const changePassword = document.createElement('input'); changePassword.id = 'ttAuthChangePassword'; changePassword.type = 'password'; changePassword.autocomplete = 'new-password'; changePassword.required = true; changePassword.minLength = 8;
+  const changePassword = document.createElement('input'); changePassword.id = 'ttAuthChangePassword'; changePassword.name = 'password'; changePassword.type = 'password'; changePassword.autocomplete = 'new-password'; changePassword.required = true; changePassword.minLength = 8;
   const status = document.getElementById('ttAuthStatus');
   const signOut = document.getElementById('ttAuthSignOut');
   const panel = document.getElementById('ttAuthPanel');
@@ -25,16 +29,24 @@
   recovery.textContent = 'Forgot password?';
   passwordInput.placeholder = '••••••••';
   const authActions = form.querySelector('.ttAuthControls');
-  if (authActions) { form.insertBefore(passwordLabel, authActions); form.insertBefore(passwordInput, authActions); const submit = document.createElement('button'); submit.className = 'btn'; submit.type = 'submit'; submit.textContent = 'Sign in'; authActions.replaceChildren(emailInput, submit, recovery); }
+  emailInput.name = 'username'; emailInput.autocomplete = 'username';
+  if (authActions) { form.insertBefore(emailInput, authActions); form.insertBefore(passwordLabel, authActions); form.insertBefore(passwordInput, authActions); const submit = document.createElement('button'); submit.className = 'btn'; submit.type = 'submit'; submit.textContent = 'Sign in'; authActions.replaceChildren(submit, recovery); }
   setupLabel.textContent = 'Create password'; setupPassword.placeholder = '••••••••';
-  setupForm.append(setupLabel, setupPassword);
+  setupEmailLabel.textContent = 'Invited email'; setupForm.append(setupEmailLabel, setupEmailInput, setupLabel, setupPassword);
   const setupActions = document.createElement('div'); setupActions.className = 'ttAuthControls';
   const setupButton = document.createElement('button'); setupButton.className = 'btn'; setupButton.type = 'submit'; setupButton.textContent = 'Set password';
   setupActions.appendChild(setupButton); setupForm.appendChild(setupActions); form.after(setupForm);
   changeLabel.textContent = 'New password'; changePassword.placeholder = '••••••••';
+  changeEmailLabel.textContent = 'Account email';
   const changeActions = document.createElement('div'); changeActions.className = 'ttAuthControls';
   const changeButton = document.createElement('button'); changeButton.className = 'btn alt'; changeButton.type = 'submit'; changeButton.textContent = 'Change password';
-  changeActions.appendChild(changeButton); changeForm.append(changeLabel, changePassword, changeActions); setupForm.after(changeForm);
+  changeActions.appendChild(changeButton); changeForm.append(changeEmailLabel, changeEmailInput, changeLabel, changePassword, changeActions); setupForm.after(changeForm);
+
+  const syncAccountIdentity = session => {
+    const email = String(session?.user?.email || emailInput.value || '').trim();
+    setupEmailInput.value = email;
+    changeEmailInput.value = email;
+  };
 
   const language = () => {
     try { return window.TTLocalStore.getItem('cosmotablas-language') === 'es' ? 'es' : 'en'; } catch (_) { return 'en'; }
@@ -255,6 +267,7 @@
     }
   };
   const updateSessionUi = session => {
+    syncAccountIdentity(session);
     const user = session?.user;form.classList.toggle('hidden', Boolean(user) || setupMode);setupForm.classList.toggle('hidden', !user || !setupMode);changeForm.classList.toggle('hidden', !user || setupMode);signOut.classList.toggle('hidden', !user);
     if (user) { status.textContent = `${text('as')}. ${text('signedIn')}`;status.dataset.state = 'success';setCloudStatus('syncIdle', 'info'); }
     updateCloudControls(session);
