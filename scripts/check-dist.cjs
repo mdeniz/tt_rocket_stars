@@ -16,6 +16,9 @@ for (const filename of ['index.html', 'index_next.html']) {
     throw Error(`dist/${filename} does not contain package version ${packageJson.version}`);
   }
   if (/<script\b[^>]*\bsrc=/i.test(html)) throw Error(`dist/${filename} has an external script`);
+  if (/<\/script>(?!\s*<)/i.test(html)) {
+    throw Error(`dist/${filename} contains an unescaped inline script boundary`);
+  }
   if (/<link\b[^>]*\brel=["']stylesheet["']/i.test(html)) {
     throw Error(`dist/${filename} has an external stylesheet`);
   }

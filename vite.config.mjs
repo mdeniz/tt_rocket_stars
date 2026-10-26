@@ -6,7 +6,12 @@ import * as i18n from './scripts/i18n.mjs';
 
 const escapeClosingTag = (contents, tagName) => contents.replace(
   new RegExp(`</${tagName}`, 'gi'),
-  `<\\/${tagName}`,
+  `\\x3c/${tagName}`,
+);
+
+const escapeMalformedInlineScriptBoundaries = html => html.replace(
+  /<\/script>(?!\s*<)/gi,
+  '\\x3c/script>',
 );
 
 function inlineReleaseAssets() {
@@ -30,6 +35,9 @@ function inlineReleaseAssets() {
       };
       cloudAccessEnabled = config.env.VITE_ENABLE_CLOUD_ACCESS === 'true';
       appVersion = JSON.parse(fs.readFileSync(path.resolve('package.json'), 'utf8')).version;
+    },
+    renderChunk(code) {
+      return { code: escapeClosingTag(code, 'script'), map: null };
     },
     transformIndexHtml: {
       order: 'pre',
@@ -120,6 +128,7 @@ function inlineReleaseAssets() {
       builtHtml = builtHtml
         .replace(/<script type="module"[^>]*src="[^"]+"[^>]*><\/script>/g, '')
         .replace(/<link rel="modulepreload"[^>]*>/g, '');
+      builtHtml = escapeMalformedInlineScriptBoundaries(builtHtml);
       fs.writeFileSync(htmlPath, builtHtml);
       fs.rmSync(path.resolve(outDir, 'legacy'), { force: true, recursive: true });
       fs.renameSync(htmlPath, path.resolve(outDir, 'index_next.html'));

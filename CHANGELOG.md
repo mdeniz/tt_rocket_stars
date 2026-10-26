@@ -33,6 +33,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 - Added flag-gated React inventory ownership for pilot-local garage reads, preview, purchase, and equipment actions while preserving `tt-rocket-garage-v1`, backups, offline behavior, and legacy rollback.
 - Added flag-gated typed backup ownership for local create, restore, import, export, and reset flows while preserving `tt-rocket-backups-v1`, recovery-before-replacement, offline operation, and legacy rollback.
 
+### Fixed
+- Prevented self-contained release HTML from exposing inline JavaScript as visible content during startup.
+
 ## [0.1.1] - 2026-10-22
 ### Changed
 - Production releases remain self-contained HTML assets. GitHub Pages uses the latest release asset for `index.html` and keeps the current build available as `index_next.html` for internal verification.
