@@ -2,8 +2,8 @@
 
 ## 1. Ownership inventory and contracts
 
-- [ ] 1.1 Build an English technical ownership matrix for every global in `02.js`, `03.js`, and `32.js` that is referenced by React or inline HTML; verify each entry has one owner, a fallback disposition, and a source call site.
-- [ ] 1.2 Add release assertions for stable/development entrypoint separation, legacy script references, storage-key preservation, and privileged-credential absence; verify the assertions fail on an intentionally invalid fixture.
+- [x] 1.1 Build an English technical ownership matrix for every global in `02.js`, `03.js`, and `32.js` that is referenced by React or inline HTML; verify each entry has one owner, a fallback disposition, and a source call site.
+- [x] 1.2 Add release assertions for stable/development entrypoint separation, legacy script references, storage-key preservation, and privileged-credential absence; verify the assertions fail on an intentionally invalid fixture.
 - [ ] 1.3 Add unit coverage for the cutover boundary and rollback contract; verify failed validation or storage writes preserve the last valid local snapshot.
 
 ## 2. Development entrypoint cutover
