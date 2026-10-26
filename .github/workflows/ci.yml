@@ -10,8 +10,63 @@ permissions:
   contents: read
 
 jobs:
+  changes:
+    name: Determine check scope
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      full_suite: ${{ steps.classify.outputs.full_suite }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Classify changed files
+        id: classify
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          BEFORE_SHA: ${{ github.event.before }}
+          HEAD_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$EVENT_NAME" == "pull_request" && -n "$BASE_SHA" ]]; then
+            diff_range="${BASE_SHA}...${HEAD_SHA}"
+          elif [[ "$EVENT_NAME" == "push" && -n "$BEFORE_SHA" && "$BEFORE_SHA" != "0000000000000000000000000000000000000000" ]]; then
+            diff_range="${BEFORE_SHA}..${HEAD_SHA}"
+          else
+            echo "full_suite=true" >> "$GITHUB_OUTPUT"
+            echo "Unknown or manual event range; running the full suite."
+            exit 0
+          fi
+
+          changed_files="$(git diff --name-only "$diff_range")"
+          if [[ -z "$changed_files" ]]; then
+            echo "full_suite=true" >> "$GITHUB_OUTPUT"
+            echo "No changed files detected; running the full suite conservatively."
+            exit 0
+          fi
+
+          full_suite=false
+          while IFS= read -r file; do
+            case "$file" in
+              openspec/*|docs/*|*.md)
+                ;;
+              *)
+                full_suite=true
+                break
+                ;;
+            esac
+          done <<< "$changed_files"
+
+          echo "full_suite=$full_suite" >> "$GITHUB_OUTPUT"
+          printf 'Changed files:\n%s\n' "$changed_files"
+          echo "Full suite: $full_suite"
+
   repository-checks:
     name: Repository checks
+    needs: changes
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -21,11 +76,22 @@ jobs:
           node-version: '22'
           cache: npm
           cache-dependency-path: package-lock.json
-      - run: npm ci --no-audit --no-fund
-      - run: npm run check
+      - name: Run lightweight documentation checks
+        if: needs.changes.outputs.full_suite != 'true'
+        run: |
+          git diff --check
+          node scripts/check-docs.cjs
+      - name: Install dependencies
+        if: needs.changes.outputs.full_suite == 'true'
+        run: npm ci --no-audit --no-fund
+      - name: Run repository checks
+        if: needs.changes.outputs.full_suite == 'true'
+        run: npm run check
 
   browser-tests:
     name: Browser tests (${{ matrix.project }})
+    needs: changes
+    if: needs.changes.outputs.full_suite == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     strategy:
