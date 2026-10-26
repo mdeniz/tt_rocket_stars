@@ -8,7 +8,7 @@ permissions:
   contents: read
 jobs:
   browser-tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v5
@@ -26,6 +26,8 @@ jobs:
       # GitHub-hosted Ubuntu provides the browser system libraries. Installing
       # OS packages here can hang during runner image or mirror migrations.
       # Keep browser binaries cached and install them only when the cache is cold.
+      - name: Install WebKit runtime dependency
+        run: sudo apt-get install -y --no-install-recommends libevent-2.1-7t64
       - run: npx playwright install chromium firefox webkit
       - run: npm run check
       - name: Run the full desktop browser matrix
