@@ -4,8 +4,8 @@ const { assertCutoverContracts } = require('../../scripts/check-cutover.cjs');
 
 const validFixture = {
   stableSource: '<script src="./legacy/scripts/02.js"></script><script src="./legacy/scripts/03.js"></script>',
-  viteConfig: "renameSync(htmlPath, path.resolve(outDir, 'index_next.html')); copyFileSync(path.resolve(outDir, 'index_next.html'), htmlPath);",
-  pagesWorkflow: 'name: Pages\n- name: Restore stable release entrypoint',
+  pagesWorkflow: "name: Pages\nVITE_REACT_CORE_SCREENS: 'true'\n- name: Restore stable release entrypoint",
+  viteConfig: "reactCoreScreensEnabled; renameSync(htmlPath, path.resolve(outDir, 'index_next.html')); copyFileSync(path.resolve(outDir, 'index_next.html'), htmlPath);",
   matrix: [
     'tt-rocket-profiles-v1', 'tt-rocket-active-profile-v1', 'cosmotablas-v2', 'cosmotablas-history-v1',
     'tt-rocket-garage-v1', 'tt-rocket-backups-v1',

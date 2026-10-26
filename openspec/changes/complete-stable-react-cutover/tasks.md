@@ -8,7 +8,7 @@
 
 ## 2. Development entrypoint cutover
 
-- [ ] 2.1 Route the selected development entrypoint through the verified React owners without changing the stable `index.html`; verify the two generated files differ in the intended ownership configuration.
+- [x] 2.1 Route the selected development entrypoint through the verified React owners without changing the stable `index.html`; verify the two generated files differ in the intended ownership configuration.
 - [ ] 2.2 Retire only legacy scripts proven unused by the development entrypoint and retain the stable fallback; verify startup, navigation, missions, profiles, settings, backups, and garage behavior in the flag-enabled browser path.
 - [ ] 2.3 Verify signed-out, offline, malformed-storage, and unavailable-cloud startup; verify local gameplay remains usable with no mandatory network request.
 - [ ] 2.4 Verify English/Spanish labels, keyboard/touch activation, reduced motion, audio user-gesture behavior, and responsive layout; verify no uncaught browser errors.
