@@ -126,3 +126,9 @@ persistence, inventory, and achievement sources of truth still require
 incremental migration and release compatibility review. Issue #54 remains
 blocked until those sources are retired. Real iOS Safari validation is not an
 acceptance gate; mobile WebKit remains the recorded compatibility signal.
+
+The next persistence slice adds a typed React coordinator for local profile
+creation and switching behind the same flag. It preserves the existing profile,
+active-pilot, payload, and backup keys, validates before applying state, and
+keeps the legacy profile runtime available for rollback. The published release
+still leaves this coordinator disabled by default.

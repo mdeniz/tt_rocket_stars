@@ -29,6 +29,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 - Added Playwright coverage proving the React core-screen flag can roll back to legacy garage and achievement ownership without losing access to either screen.
 - Added a flag-gated React achievement evaluator backed by pilot-local facts and mission history, with localized rendering, offline refresh, malformed-payload handling, and legacy rollback coverage.
 - Added flag-gated React dashboard and progress evaluators for pilot-local mission totals, accuracy, experience levels, and per-table progress, with offline rendering and legacy rollback coverage.
+- Added flag-gated React pilot persistence for local profile creation and switching while preserving existing storage keys, backups, offline operation, and legacy rollback.
 
 ## [0.1.1] - 2026-10-22
 ### Changed

@@ -30,3 +30,16 @@ Cloud snapshots contain `localId`, `name`, `avatar`, `language`, `payload`, `upd
 ## Migration guarantee
 
 This boundary is additive. It does not rename or remove existing storage keys, rewrite unknown payload fields, require authentication, or require network access for local gameplay. Future schema changes must add a migration and compatibility fixture before changing a persisted contract.
+
+## React ownership boundary
+
+When `reactCoreScreens` is enabled explicitly, React profile creation and
+switching use the typed persistence coordinator. It validates the complete
+profile collection, captures the current payload before switching, applies the
+target payload only after validation, and updates the existing active-pilot and
+language keys. A failed operation leaves the current local state unchanged.
+
+The default release keeps the coordinator disabled and continues using the
+legacy profile runtime. The legacy aliases remain available as a rollback path;
+this migration does not remove the ordered profile script or change cloud
+synchronization ownership.
