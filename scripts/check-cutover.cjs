@@ -13,7 +13,7 @@ const requiredStorageKeys = [
   'tt-rocket-backups-v1',
 ];
 
-function assertCutoverContracts({ stableSource, viteConfig, pagesWorkflow, matrix }) {
+function assertCutoverContracts({ stableSource, viteConfig, pagesWorkflow, releaseWorkflow, matrix }) {
   if (!stableSource.includes('./legacy/scripts/02.js') || !stableSource.includes('./legacy/scripts/03.js')) {
     throw new Error('The stable source entrypoint must retain the ordered legacy runtime');
   }
@@ -28,6 +28,15 @@ function assertCutoverContracts({ stableSource, viteConfig, pagesWorkflow, matri
   }
   if (!pagesWorkflow.includes("VITE_REACT_CORE_SCREENS: 'true'")) {
     throw new Error('The Pages workflow must enable the React development entrypoint');
+  }
+  if (!pagesWorkflow.includes('gh release download') || !pagesWorkflow.includes('dist/index.html')) {
+    throw new Error('The Pages workflow must restore the previous stable artifact for rollback');
+  }
+  if (!releaseWorkflow || !releaseWorkflow.includes('cp dist/index_next.html') || !releaseWorkflow.includes('gh release create')) {
+    throw new Error('The release workflow must promote the verified development artifact explicitly');
+  }
+  if (!releaseWorkflow.includes('gh workflow run pages.yml')) {
+    throw new Error('The release workflow must refresh the stable Pages entrypoint after promotion');
   }
   if (!viteConfig.includes('reactCoreScreensEnabled')) {
     throw new Error('The build must materialize the React ownership flag in the generated entrypoint');
@@ -51,6 +60,7 @@ function validateRepository() {
     stableSource: read('index.html'),
     viteConfig: read('vite.config.mjs'),
     pagesWorkflow: read('.github/workflows/pages.yml'),
+    releaseWorkflow: read('.github/workflows/release.yml'),
     matrix: read('docs/react-ownership-matrix.md'),
   });
 }
