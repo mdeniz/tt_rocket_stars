@@ -16,7 +16,7 @@
 ## 3. Release and empirical verification
 
 - [x] 3.1 Run `npm run check`, full desktop E2E, mobile WebKit E2E, strict OpenSpec validation, and `git diff --check`; record exact results.
-- [ ] 3.2 Run Chrome DevTools against `index_next.html` and record URL, actions, visible results, storage evidence, console output, and network output for each cutover scenario.
+- [x] 3.2 Run Chrome DevTools against `index_next.html` and record URL, actions, visible results, storage evidence, console output, and network output for each cutover scenario.
 - [x] 3.3 Verify `index.html` remains the previous stable artifact and document explicit promotion plus rollback; verify the release command preserves both self-contained files.
 - [ ] 3.4 Update #158 and #54 with the ownership matrix, evidence, limitations, and final status only after all acceptance criteria are complete.
 
@@ -33,4 +33,4 @@
 - Full Chromium E2E passed 52/52 with `VITE_REACT_CORE_SCREENS=true PLAYWRIGHT_FULL=1 npx playwright test --project=chromium`.
 - Full targeted WebKit mobile E2E passed 39/39 with `VITE_REACT_CORE_SCREENS=true PLAYWRIGHT_MOBILE=1 npx playwright test tests/e2e/feature-flags.spec.cjs tests/e2e/pilot-profile.spec.cjs tests/e2e/smoke.spec.cjs --project=webkit-mobile`.
 - `openspec validate complete-stable-react-cutover --strict` and `git diff --check` passed; no changes were made to the tracked stable `index.html` or `index_next.html` source artifacts.
-- The Chrome DevTools MCP evidence required by task 3.2 is still unavailable in this environment and has not been represented as passed.
+- Chrome DevTools MCP evidence is recorded in `docs/react-cutover-chrome-devtools-verification.md`; real iPhone/iPad Safari remains unavailable.
