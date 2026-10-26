@@ -10,8 +10,8 @@
 ## 2. Verification
 
 - [x] 2.1 Validate workflow syntax and run the local repository checks; verify `npm run check` passes.
-- [ ] 2.2 Run the complete CI workflow and verify Chromium, Firefox, WebKit desktop, and WebKit mobile all report independently, with no loss of test coverage.
-- [ ] 2.3 Compare completed workflow durations and document the observed wall-clock improvement or any external runner-queue limitation.
+- [x] 2.2 Run the complete CI workflow and verify Chromium, Firefox, WebKit desktop, and WebKit mobile all report independently, with no loss of test coverage. Verified in GitHub Actions run `40376063192` on 2026-10-26: repository checks passed, and Chromium, Firefox, WebKit desktop, and WebKit mobile each completed as an independent successful job with 51 passed tests.
+- [x] 2.3 Compare completed workflow durations and document the observed wall-clock improvement or any external runner-queue limitation. Run `40376063192` completed the four browser jobs concurrently; durations were Chromium 2m09s, Firefox 1m53s, WebKit desktop 3m18s, and WebKit mobile 4m48s. The workflow wall-clock time was therefore bounded by the slowest browser job (4m48s), instead of serially adding the four browser durations (12m08s), before accounting for runner scheduling overhead.
 
 ## Workflow follow-up
 
