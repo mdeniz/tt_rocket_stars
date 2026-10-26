@@ -75,6 +75,30 @@ The application SHALL generate and display Spanish and English from declarative 
 - **WHEN** a view requests a translation that does not exist
 - **THEN** validation identifies the missing key before the distribution is published
 
+### Requirement: Cloud boundary migration preserves offline-first behavior
+
+Migrating browser cloud access MUST NOT make network access, authentication, or
+provider configuration a prerequisite for startup, navigation, gameplay, local
+progress, or backups.
+
+#### Scenario: Unconfigured offline startup
+
+- **WHEN** the application starts without cloud configuration or network access
+- **THEN** the user can start and complete local gameplay
+- **AND** no cloud data operation is attempted
+
+#### Scenario: Cloud failure during local play
+
+- **WHEN** an optional cloud operation fails while local gameplay is active
+- **THEN** the user can continue playing locally
+- **AND** the current local pilot, progress, and backup data remain unchanged
+
+#### Scenario: Compatibility inspection
+
+- **WHEN** the migrated build is inspected for local compatibility
+- **THEN** existing localStorage/sessionStorage keys, backup envelopes, pilot identifiers,
+  and progress payload fields remain supported
+
 ### Requirement: Quality is verified automatically
 Continuous integration SHALL validate legacy script syntax, translation contracts, unit tests, self-contained builds, and E2E flows in representative browsers.
 
