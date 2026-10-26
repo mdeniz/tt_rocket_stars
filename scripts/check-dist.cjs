@@ -22,6 +22,12 @@ for (const filename of ['index.html', 'index_next.html']) {
   if (/<link\b[^>]*\brel=["']stylesheet["']/i.test(html)) {
     throw Error(`dist/${filename} has an external stylesheet`);
   }
+  if (/service[_ -]?role|supabase_service_role|sb_secret/i.test(html)) {
+    throw Error(`dist/${filename} contains a privileged Supabase credential marker`);
+  }
+  if (/supabase-management|\/v1\/projects\//i.test(html)) {
+    throw Error(`dist/${filename} contains a provider-management operation`);
+  }
 }
 
 console.log('Verified stable and development self-contained releases');
