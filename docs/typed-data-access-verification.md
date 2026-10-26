@@ -19,10 +19,25 @@ The browser suites exercised local-only startup, offline gameplay, pilot-local p
 
 ## Artifact and environment findings
 
-- The production artifact contains no `service_role`, `supabase_service_role`, or `sb_secret` credential markers.
-- The browser bundle still contains provider-specific Supabase calls in the existing legacy compatibility path (`public/legacy/scripts/32.js`). The new typed repository is server-side and provider-neutral, but this issue does not yet migrate the browser legacy adapter. OpenSpec task 4.3 remains open for that follow-up migration.
+- On 2026-10-26, `dist/index.html` and `dist/index_next.html` were scanned for
+  `service_role`, `supabase_service_role`, and `sb_secret`; no administrative
+  credential markers were found. The artifacts contain only the configured
+  publishable browser configuration contract.
+- The generated browser artifacts still contain provider-specific Supabase calls
+  from the existing compatibility path (`/auth/v1`, `/rest/v1`, `on_conflict`,
+  and `delete_my_cloud_data`). This is an identified compatibility boundary, not
+  a credential leak. The trusted typed repository remains server-side and
+  provider-neutral; removing these browser calls belongs to follow-up issue #184
+  after a trusted transport is deployed and verified.
+- `dist/index.html` and `dist/index_next.html` were generated and scanned from
+  the same source revision; their SHA-256 was
+  `1c8fc75c67a4ab40a1aadcb3abb6d859daba85421c3102f2b1b25d70d8fe4440` for this
+  local verification build.
 - `npm run db:migrations:reset` was attempted and correctly reported that no local Supabase project is configured. A hosted Supabase reset was not attempted because it would be destructive.
-- Chrome DevTools MCP is not available in this environment. Playwright verification is recorded above; it is not a substitute for real iOS Safari or an unavailable DevTools integration.
+- Chrome DevTools MCP evidence for the running development application is
+  recorded in `docs/browser-cloud-boundary-verification.md` and
+  `docs/react-cutover-chrome-devtools-verification.md`. Playwright verification
+  remains separate from real iOS Safari validation.
 
 ## Manual verification follow-up
 

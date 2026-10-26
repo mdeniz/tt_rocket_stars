@@ -24,6 +24,6 @@
 
 - [x] 4.1 Verify local-first startup, offline gameplay, local storage keys, backups, pilot identifiers, and translations remain unchanged.
 - [x] 4.2 Run Supabase/RLS unit tests, relevant cloud-sync tests, build checks, and browser/offline suites.
-- [ ] 4.3 Inspect generated artifacts for service-role credentials and provider-specific queries in the browser bundle.
+- [x] 4.3 Inspect generated artifacts for service-role credentials and provider-specific queries in the browser bundle.
 - [x] 4.4 Record empirical verification evidence for the running development application and leave unavailable tools explicit.
 - [ ] 4.5 Review the issue acceptance criteria, OpenSpec requirements, CI results, security findings, and rollback readiness before marking done.
