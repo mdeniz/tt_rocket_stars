@@ -105,6 +105,16 @@ test('React core navigation is opt-in and owns dashboard and progress metrics', 
     await page.locator('.ttReactCoreNav button').nth(['dashboard', 'home', 'insights', 'garage', 'awards'].indexOf(screen)).click();
     await expect(page.locator(selector)).toBeVisible();
   }
+  for (const [selector, name] of [
+    ['#home > [data-react-mission-legacy-hidden]', 'mission'],
+    ['#garage > [data-react-garage-legacy-hidden]', 'garage'],
+    ['#awards > [data-react-achievements-legacy-hidden]', 'achievements'],
+  ]) {
+    const legacy = page.locator(selector);
+    expect(await legacy.count(), `${name} legacy child count`).toBeGreaterThan(0);
+    await expect(legacy.first()).toBeHidden();
+    expect(await legacy.first().evaluate(element => getComputedStyle(element).display)).toBe('none');
+  }
   await expect(page.locator('.ttReactCoreNav')).toHaveCount(1);
 });
 

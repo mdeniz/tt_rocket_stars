@@ -28,6 +28,32 @@ const coreCompositionTargets = [
   { screen: 'insights' as const, selector: '#insights', action: 'dashboard' as const, actionKey: 'ui.core.openDashboard' },
 ] as const;
 
+function hideLegacyHostChildren(parent: HTMLElement, reactElement: HTMLElement, marker: string): () => void {
+  const legacyChildren = Array.from(parent.children).filter(child =>
+    child !== reactElement &&
+    !(child instanceof HTMLElement && child.dataset.reactCoreComposition),
+  );
+  const snapshots = legacyChildren.map(child => ({
+    child,
+    display: child instanceof HTMLElement ? child.style.getPropertyValue('display') : '',
+    priority: child instanceof HTMLElement ? child.style.getPropertyPriority('display') : '',
+  }));
+
+  snapshots.forEach(({ child }) => {
+    child.setAttribute(marker, 'true');
+    if (child instanceof HTMLElement) child.style.setProperty('display', 'none', 'important');
+  });
+
+  return () => {
+    snapshots.forEach(({ child, display, priority }) => {
+      child.removeAttribute(marker);
+      if (!(child instanceof HTMLElement)) return;
+      if (display) child.style.setProperty('display', display, priority);
+      else child.style.removeProperty('display');
+    });
+  };
+}
+
 function coreScreensFeatureEnabled(): boolean {
   const buildEnv = (import.meta as ImportMeta & { env?: Record<string, string> }).env;
   if (typeof window.__TTFeatureFlags?.reactCoreScreens === 'boolean') {
@@ -215,8 +241,10 @@ function ReactMissionSetupHost({ enabled, locale }: { enabled: boolean; locale: 
     element.dataset.reactMissionSetup = 'true';
     home.prepend(element);
     home.classList.add('ttReactMissionSetupEnabled');
+    const restoreLegacyChildren = hideLegacyHostChildren(home, element, 'data-react-mission-legacy-hidden');
     setHost(element);
     return () => {
+      restoreLegacyChildren();
       element.remove();
       home.classList.remove('ttReactMissionSetupEnabled');
       setHost(null);
@@ -333,8 +361,10 @@ function ReactGaragePanelHost({ enabled, locale }: { enabled: boolean; locale: L
     const element = document.createElement('div');
     element.dataset.reactGaragePanel = 'true';
     garage.prepend(element);
+    const restoreLegacyChildren = hideLegacyHostChildren(garage, element, 'data-react-garage-legacy-hidden');
     setHost(element);
     return () => {
+      restoreLegacyChildren();
       element.remove();
       setHost(null);
     };
@@ -399,8 +429,10 @@ function ReactAchievementsPanelHost({ enabled, locale }: { enabled: boolean; loc
     const element = document.createElement('div');
     element.dataset.reactAchievementsPanel = 'true';
     awards.prepend(element);
+    const restoreLegacyChildren = hideLegacyHostChildren(awards, element, 'data-react-achievements-legacy-hidden');
     setHost(element);
     return () => {
+      restoreLegacyChildren();
       element.remove();
       setHost(null);
     };
