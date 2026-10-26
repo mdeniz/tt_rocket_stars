@@ -253,6 +253,44 @@ test('React garage controls delegate preview and equip actions to pilot-local st
   expect(await page.evaluate(() => typeof window.TTInventoryAdapter?.activatePart)).toBe('function');
 });
 
+test('flagged React inventory owns garage mutations without legacy action calls', async ({ page, context }) => {
+  await page.addInitScript(() => {
+    window.__TTFeatureFlags = { reactCoreScreens: true };
+    localStorage.setItem('tt-rocket-garage-v1', JSON.stringify({
+      coins: 500,
+      owned: ['body_red', 'nose_classic', 'wings_classic', 'flame_orange', 'window_round', 'extra_none'],
+      equipped: { body: 'body_red', nose: 'nose_classic', wings: 'wings_classic', flame: 'flame_orange', window: 'window_round', extra: 'extra_none' },
+      rewardedAchievements: [],
+      rewardedMissions: [],
+      family: 'compact',
+      fleet: [],
+      designs: {},
+    }));
+  });
+  await page.goto('/');
+  await page.locator('#reactLaunchSplash').click();
+  const skip = page.locator('#ttTourSkip');
+  await skip.waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
+  if (await skip.isVisible().catch(() => false)) await skip.click();
+  await page.locator('.ttReactCoreNav button').nth(3).click();
+  await expect(page.locator('.ttReactGaragePanel')).toBeVisible();
+  await context.setOffline(true);
+
+  const result = await page.evaluate(() => {
+    let legacyCalls = 0;
+    window.TTCoreScreensAdapter.previewGaragePart = () => { legacyCalls += 1; throw new Error('legacy preview must not be called'); };
+    window.TTCoreScreensAdapter.activateGaragePart = () => { legacyCalls += 1; throw new Error('legacy activation must not be called'); };
+    const previewed = window.TTPersistenceBoundary.inventory.previewPart('body_blue');
+    const activated = window.TTPersistenceBoundary.inventory.activatePart('body_blue');
+    const state = JSON.parse(localStorage.getItem('tt-rocket-garage-v1'));
+    return { previewed, activated, legacyCalls, coins: state.coins, equipped: state.equipped.body };
+  });
+
+  expect(result).toEqual({ previewed: true, activated: true, legacyCalls: 0, coins: 400, equipped: 'body_blue' });
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('tt-rocket-garage-v1')).equipped.body)).toBe('body_blue');
+  await context.setOffline(false);
+});
+
 test('React achievements render from pilot-local storage in both locales and offline', async ({ page }) => {
   await page.addInitScript(() => {
     window.__TTFeatureFlags = { reactCoreScreens: true };
