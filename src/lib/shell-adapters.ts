@@ -105,6 +105,8 @@ export interface PilotAdapter {
   readPilots(): ShellPilotSummary[];
   choosePilot(id: string): boolean;
   createPilot(name: string): string | null;
+  renamePilot?: (id: string, name: string) => boolean;
+  deletePilot?: (id: string) => boolean;
 }
 
 export interface BackupControlsAdapter {

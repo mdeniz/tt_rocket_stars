@@ -30,6 +30,8 @@ export interface ReactPilotPersistenceAdapter {
   readPilots(): PilotSummary[];
   choosePilot(id: string): boolean;
   createPilot(name: string): string | null;
+  renamePilot(id: string, name: string): boolean;
+  deletePilot(id: string): boolean;
 }
 
 const PROFILES_KEY = 'tt-rocket-profiles-v1';
@@ -67,8 +69,12 @@ function writeProfiles(profiles: PersistedPilot[]): boolean {
   const api = contracts();
   const store = persistence();
   if (!api || !store) return false;
-  const result = api.validateProfiles(profiles);
-  return result.ok && Boolean(result.value) && store.writeJson(PROFILES_KEY, result.value);
+  try {
+    const result = api.validateProfiles(profiles);
+    return result.ok && Boolean(result.value) && store.writeJson(PROFILES_KEY, result.value);
+  } catch {
+    return false;
+  }
 }
 
 function language(): 'en' | 'es' {
@@ -83,9 +89,17 @@ function syncActive(): boolean {
   const profiles = readProfiles();
   const active = profiles.find(profile => profile.id === activeId);
   if (!active) return false;
-  active.payload = store.capture() as Record<string, unknown>;
-  active.language = language();
-  return writeProfiles(profiles);
+  try {
+    active.payload = { ...active.payload, ...store.capture() } as Record<string, unknown>;
+    active.language = language();
+    return writeProfiles(profiles);
+  } catch {
+    return false;
+  }
+}
+
+function cleanPilotName(name: string): string {
+  return String(name || '').trim().replace(/\s+/g, ' ').slice(0, 24);
 }
 
 function notifyLegacyView(): void {
@@ -115,7 +129,7 @@ export function createReactPilotPersistence(): ReactPilotPersistenceAdapter {
       return true;
     },
     createPilot: name => {
-      const clean = String(name || '').trim().replace(/\s+/g, ' ').slice(0, 24);
+      const clean = cleanPilotName(name);
       if (!clean) return null;
       const local = storage();
       const store = persistence();
@@ -130,6 +144,59 @@ export function createReactPilotPersistence(): ReactPilotPersistenceAdapter {
       local.setItem(ACTIVE_KEY, id);
       notifyLegacyView();
       return id;
+    },
+    renamePilot: (id, name) => {
+      const clean = cleanPilotName(name);
+      if (!id || !clean) return false;
+      const profiles = readProfiles();
+      const target = profiles.find(profile => profile.id === id);
+      if (!target || profiles.some(profile => profile.id !== id && profile.name.toLowerCase() === clean.toLowerCase())) return false;
+      if (!syncActive()) return false;
+      const latest = readProfiles();
+      const current = latest.find(profile => profile.id === id);
+      if (!current || latest.some(profile => profile.id !== id && profile.name.toLowerCase() === clean.toLowerCase())) return false;
+      current.name = clean;
+      return writeProfiles(latest);
+    },
+    deletePilot: id => {
+      if (!id) return false;
+      const profiles = readProfiles();
+      if (profiles.length <= 1 || !profiles.some(profile => profile.id === id)) return false;
+      const activeId = storage()?.getItem(ACTIVE_KEY);
+      if (activeId === id && !syncActive()) return false;
+      const latest = readProfiles();
+      const remaining = latest.filter(profile => profile.id !== id);
+      if (remaining.length === latest.length) return false;
+      if (activeId !== id) return writeProfiles(remaining);
+
+      const deleted = latest.find(profile => profile.id === id);
+      const next = remaining[0];
+      const local = storage();
+      const store = persistence();
+      if (!deleted || !next || !local || !store) return false;
+      const restoreDeleted = () => {
+        try {
+          store.apply(deleted.payload as Record<string, string>);
+          local.setItem('cosmotablas-language', deleted.language);
+          local.setItem(ACTIVE_KEY, deleted.id);
+        } catch {
+          // Best effort only: keep the operation fail-closed.
+        }
+      };
+      try {
+        store.apply(next.payload as Record<string, string>);
+        local.setItem('cosmotablas-language', next.language);
+        local.setItem(ACTIVE_KEY, next.id);
+      } catch {
+        restoreDeleted();
+        return false;
+      }
+      if (!writeProfiles(remaining)) {
+        restoreDeleted();
+        return false;
+      }
+      notifyLegacyView();
+      return true;
     },
   };
 }
