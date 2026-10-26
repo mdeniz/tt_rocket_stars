@@ -78,7 +78,7 @@ test('React core navigation is opt-in and owns dashboard and progress metrics', 
     localStorage.setItem('cosmotablas-history-v1', JSON.stringify([{ correct: 20, wrong: 0 }]));
   });
   await page.goto('/');
-  await page.locator('#reactLaunchSplash').click();
+  await page.locator('#launchSplash').click();
   await expect(page.locator('#dashboard')).toBeVisible();
   const skip = page.locator('#ttTourSkip');
   await skip.waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
@@ -107,7 +107,7 @@ test('React core navigation stays usable offline and preserves pilot-local ident
     window.__TTFeatureFlags = { reactCoreScreens: true };
   });
   await page.goto('/');
-  await page.locator('#reactLaunchSplash').click();
+  await page.locator('#launchSplash').click();
   await expect(page.locator('#dashboard')).toBeVisible();
   const skip = page.locator('#ttTourSkip');
   await skip.waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
@@ -160,7 +160,7 @@ test('flagged backup settings preserve English and Spanish confirmations', async
     window.__TTFeatureFlags = { reactCoreScreens: true };
   });
   await page.goto('/');
-  await page.locator('#reactLaunchSplash').click();
+  await page.locator('#launchSplash').click();
   await expect(page.locator('#dashboard')).toBeVisible();
   const skip = page.locator('#ttTourSkip');
   await skip.waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
@@ -280,7 +280,7 @@ test('React mission setup delegates supported configuration to gameplay', async 
     window.__TTFeatureFlags = { reactCoreScreens: true };
   });
   await page.goto('/');
-  await page.locator('#reactLaunchSplash').click();
+  await page.locator('#launchSplash').click();
   const skip = page.locator('#ttTourSkip');
   await skip.waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
   if (await skip.isVisible().catch(() => false)) await skip.click();
@@ -305,7 +305,7 @@ async function launchReactMission(page, mode = 'practice') {
     window.__TTFeatureFlags = { reactCoreScreens: true };
   });
   await page.goto('/');
-  await page.locator('#reactLaunchSplash').click();
+  await page.locator('#launchSplash').click();
   const skip = page.locator('#ttTourSkip');
   await skip.waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
   if (await skip.isVisible().catch(() => false)) await skip.click();
@@ -421,7 +421,7 @@ test('React garage controls delegate preview and equip actions to pilot-local st
     window.__TTFeatureFlags = { reactCoreScreens: true };
   });
   await page.goto('/');
-  await page.locator('#reactLaunchSplash').click();
+  await page.locator('#launchSplash').click();
   const skip = page.locator('#ttTourSkip');
   await skip.waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
   if (await skip.isVisible().catch(() => false)) await skip.click();
@@ -454,7 +454,7 @@ test('flagged React inventory owns garage mutations without legacy action calls'
     }));
   });
   await page.goto('/');
-  await page.locator('#reactLaunchSplash').click();
+  await page.locator('#launchSplash').click();
   const skip = page.locator('#ttTourSkip');
   await skip.waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
   if (await skip.isVisible().catch(() => false)) await skip.click();
@@ -485,7 +485,7 @@ test('React achievements render from pilot-local storage in both locales and off
     localStorage.setItem('cosmotablas-history-v1', JSON.stringify([{ mode: 'practice', correct: 20, wrong: 0 }]));
   });
   await page.goto('/');
-  await page.locator('#reactLaunchSplash').click();
+  await page.locator('#launchSplash').click();
   const skip = page.locator('#ttTourSkip');
   await skip.waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
   if (await skip.isVisible().catch(() => false)) await skip.click();
@@ -503,7 +503,7 @@ test('React achievements render from pilot-local storage in both locales and off
 
   await page.evaluate(() => localStorage.setItem('cosmotablas-language', 'es'));
   await page.reload();
-  await page.locator('#reactLaunchSplash').click();
+  await page.locator('#launchSplash').click();
   const spanishSkip = page.locator('#ttTourSkip');
   await spanishSkip.waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
   if (await spanishSkip.isVisible().catch(() => false)) await spanishSkip.click();
@@ -519,7 +519,7 @@ test('React-owned controls retain keyboard, locale, and reduced-motion accessibi
     localStorage.setItem('cosmotablas-language', 'es');
   });
   await page.goto('/');
-  await page.locator('#reactLaunchSplash').click();
+  await page.locator('#launchSplash').click();
   const skip = page.locator('#ttTourSkip');
   await skip.waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
   if (await skip.isVisible().catch(() => false)) await skip.click();
@@ -539,7 +539,7 @@ test('React-owned controls retain keyboard, locale, and reduced-motion accessibi
 
 test('disabling the React core flag rolls back to legacy garage and achievements ownership', async ({ page }) => {
   await page.goto('/');
-  await page.locator('#reactLaunchSplash').click();
+  await page.locator('#launchSplash').click();
   await expect(page.locator('.ttReactCoreNav')).toHaveCount(0);
   await expect(page.locator('.ttReactGaragePanel')).toHaveCount(0);
   await expect(page.locator('.ttReactAchievementsPanel')).toHaveCount(0);

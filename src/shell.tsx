@@ -654,7 +654,7 @@ function ReactCoreScreens() {
  */
 export function ReactShell() {
   const legacySplash = document.getElementById('launchSplash');
-  const [visible] = useState(() => Boolean(legacySplash && !legacySplash.classList.contains('hidden')));
+  const [legacySplashAvailable] = useState(() => Boolean(legacySplash));
   const [entered, setEntered] = useState(false);
   const [pilotSelectorOpen, setPilotSelectorOpen] = useState(false);
   const [pilotName, setPilotName] = useState('');
@@ -664,11 +664,6 @@ export function ReactShell() {
   const [settingsNavHost, setSettingsNavHost] = useState<HTMLElement | null>(null);
   const [settingsPanel, setSettingsPanel] = useState('audio');
   const entering = useRef(false);
-
-  useEffect(() => {
-    if (!visible || !legacySplash) return;
-    legacySplash.classList.add('hidden');
-  }, [legacySplash, visible]);
 
   useEffect(() => {
     const open = () => {
@@ -712,14 +707,13 @@ export function ReactShell() {
     return () => window.clearTimeout(timer);
   }, []);
 
-  if (!visible) return null;
-
   const copy = currentLocale();
   const enterGame = () => {
     if (entering.current) return;
     entering.current = true;
     if (window.TTEnterGame) window.TTEnterGame();
-    else legacySplash?.click();
+    else if (legacySplash) legacySplash.click();
+    else (window as Window & { navigate?: (screen: string) => void }).navigate?.('dashboard');
     document.getElementById('menuBtn')?.focus({ preventScroll: true });
     // Keep the React event target mounted and hide it after the gesture. The
     // legacy adapter also observes this same gesture, so unmounting here can
@@ -765,7 +759,7 @@ export function ReactShell() {
     <>
     <ReactCoreScreens />
     {settingsNavigation}
-    <section
+    {!legacySplashAvailable && !entered && <section
       id="reactLaunchSplash"
       className={`ttReactLaunchSplash${entered ? ' hidden' : ''}`}
       role="button"
@@ -794,7 +788,7 @@ export function ReactShell() {
         <div className="splashStart">{copy['ui.094']}</div>
         <div className="splashHint">{copy['ui.095']}</div>
       </div>
-    </section>
+    </section>}
     {pilotSelectorOpen && (
       <section className="ttReactPilotSelector" role="dialog" aria-modal="true" aria-labelledby="ttReactPilotTitle">
         <div className="ttReactPilotCard">
