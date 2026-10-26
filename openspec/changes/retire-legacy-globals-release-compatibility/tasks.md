@@ -30,7 +30,7 @@
 ## 5. Integration and issue audit
 
 - [ ] 5.1 Review all issue acceptance criteria, OpenSpec requirements, CI jobs, review findings, and security findings; verify no unresolved dependency remains before changing issue status.
-- [ ] 5.2 Update #54 and #158 with the ownership matrix, exact evidence, unavailable checks, promotion decision, and rollback instructions; verify both issues use `status:verification` until every criterion is complete.
+- [x] 5.2 Update #54 and #158 with the ownership matrix, exact evidence, unavailable checks, promotion decision, and rollback instructions; verify both issues use `status:verification` until every criterion is complete.
 
 ## Workflow follow-up
 
