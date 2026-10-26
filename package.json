@@ -16,6 +16,7 @@
     "test": "npm run test:unit && npm run test:e2e",
     "test:unit": "node --test tests/unit/*.test.cjs",
     "test:e2e": "playwright test",
+    "test:e2e:full": "PLAYWRIGHT_FULL=1 playwright test",
     "check:legacy": "node scripts/check-legacy.cjs",
     "check": "npm run check:legacy && npm run typecheck && npm run test:unit && npm run build"
   },

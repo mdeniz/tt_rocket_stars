@@ -83,6 +83,45 @@ test('rolls back every mission progress key when a later write fails', () => {
   assert.deepEqual(JSON.parse(store.getItem('tt-rocket-garage-v1')), { coins: 3 });
 });
 
+for (const failedKey of ['cosmotablas-v2', 'cosmotablas-history-v1', 'tt-rocket-garage-v1']) {
+  test(`rolls back the complete snapshot when ${failedKey} rejects its write`, () => {
+    const store = storage();
+    const before = {
+      'cosmotablas-v2': JSON.stringify({ before: 'facts' }),
+      'cosmotablas-history-v1': JSON.stringify([{ before: 'history' }]),
+      'tt-rocket-garage-v1': JSON.stringify({ coins: 3, before: 'inventory' }),
+    };
+    for (const [key, value] of Object.entries(before)) store.setItem(key, value);
+    const originalSetItem = store.setItem;
+    store.setItem = (key, value) => {
+      if (key === failedKey) throw new Error('quota');
+      originalSetItem(key, value);
+    };
+    const adapter = persistence.createMissionPersistence(store, 'cosmotablas-v2');
+
+    assert.equal(adapter.commitProgress({
+      facts: { after: 'facts' },
+      history: [{ after: 'history' }],
+      inventory: { coins: 99, after: 'inventory' },
+    }), false);
+    for (const [key, value] of Object.entries(before)) assert.equal(store.getItem(key), value);
+  });
+}
+
+test('fails closed when a mission progress payload cannot be serialized', () => {
+  const store = storage();
+  const adapter = persistence.createMissionPersistence(store, 'cosmotablas-v2');
+  const circularFacts = {};
+  circularFacts.self = circularFacts;
+
+  assert.doesNotThrow(() => assert.equal(adapter.commitProgress({
+    facts: circularFacts,
+    history: [],
+    inventory: { coins: 0 },
+  }), false));
+  assert.equal(store.getItem('cosmotablas-v2'), null);
+});
+
 test('rejects malformed mission progress without changing compatible payloads', () => {
   const store = storage();
   store.setItem('cosmotablas-v2', JSON.stringify({ before: true }));

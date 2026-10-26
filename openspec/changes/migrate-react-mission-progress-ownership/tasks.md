@@ -2,14 +2,14 @@
 
 ## 1. Contract and test-first coverage
 
-- [ ] 1.1 Add unit tests for a complete mission progress transaction, duplicate completion protection, opaque payload preservation, and rollback after each domain write fails; verify the new tests fail before implementation.
-- [ ] 1.2 Add the React core and typed pilot OpenSpec deltas, then verify strict OpenSpec validation accepts the complete requirement blocks.
+- [x] 1.1 Add unit tests for a complete mission progress transaction, duplicate completion protection, opaque payload preservation, and rollback after each domain write fails; verify the new tests fail before implementation.
+- [x] 1.2 Add the React core and typed pilot OpenSpec deltas, then verify strict OpenSpec validation accepts the complete requirement blocks.
 
 ## 2. Typed transaction ownership
 
-- [ ] 2.1 Extend the typed mission persistence boundary to validate and commit facts, history, rewards, coins, and rocket state together; verify all existing storage keys and payload fields remain compatible.
-- [ ] 2.2 Route flagged React mission completion through the typed transaction without invoking legacy mission writers; verify the disabled flag retains legacy fallback behavior.
-- [ ] 2.3 Preserve duplicate-completion, pilot isolation, backup, and offline recovery semantics; verify failure paths leave the last valid snapshot readable.
+- [x] 2.1 Extend the typed mission persistence boundary to validate and commit facts, history, rewards, coins, and rocket state together; verify all existing storage keys and payload fields remain compatible.
+- [x] 2.2 Route flagged React mission completion through the typed transaction without invoking legacy mission writers; verify the disabled flag retains legacy fallback behavior.
+- [x] 2.3 Preserve duplicate-completion, pilot isolation, backup, and offline recovery semantics; verify failure paths leave the last valid snapshot readable.
 
 ## 3. Browser and release verification
 
