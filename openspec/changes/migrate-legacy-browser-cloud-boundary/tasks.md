@@ -9,10 +9,10 @@
 
 ## 2. Upload, download, and conflict migration
 
-- [ ] 2.1 Implement the domain-backed upload and download adapter for pilot and progress snapshots; verify owned reads/writes and authenticated context through in-memory provider contract tests.
-- [ ] 2.2 Migrate optimistic concurrency, stale-write conflicts, recovery backups, and local-versus-remote selection through the boundary; verify conflict unit tests preserve the remote snapshot and local recovery path.
-- [ ] 2.3 Preserve bounded retries, malformed remote payload handling, and provider failure status reporting; verify cloud-sync unit tests and offline browser scenarios pass without replacing local state.
-- [ ] 2.4 Document the operation contract, fallback flag, and failure semantics; verify each documented command and flag matches the implementation.
+- [x] 2.1 Implement the domain-backed upload and download adapter for pilot and progress snapshots; verify owned reads/writes and authenticated context through in-memory provider contract tests.
+- [x] 2.2 Migrate optimistic concurrency, stale-write conflicts, recovery backups, and local-versus-remote selection through the boundary; verify conflict unit tests preserve the remote snapshot and local recovery path.
+- [x] 2.3 Preserve bounded retries, malformed remote payload handling, and provider failure status reporting; verify cloud-sync unit tests and offline browser scenarios pass without replacing local state.
+- [x] 2.4 Document the operation contract, fallback flag, and failure semantics; verify each documented command and flag matches the implementation.
 
 ## 3. Discovery and deletion migration
 

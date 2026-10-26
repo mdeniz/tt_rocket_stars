@@ -46,7 +46,10 @@ function inlineReleaseAssets() {
       order: 'pre',
       handler(html) {
         const read = file => fs.readFileSync(path.resolve(file), 'utf8');
-        const cloudSync = read('src/lib/cloud-sync.js')
+        const cloudProvider = read('src/lib/cloud-provider.js')
+          .replace(/^export /gm, '');
+        const cloudSync = `${cloudProvider}\n${read('src/lib/cloud-sync.js')}`
+          .replace(/^import \{ createSupabaseCloudProvider \} from '\.\/cloud-provider\.js';\s*/m, '')
           .replace(/^export /gm, '')
           .replace(/\nexport \{ SYNC_METADATA_KEY \};\s*$/, '')
           + '\nwindow.TTCloudSync={createCloudSync,chooseSnapshot,serializePilot,SYNC_METADATA_KEY};';
