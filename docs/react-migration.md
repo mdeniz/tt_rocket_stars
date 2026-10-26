@@ -1,15 +1,20 @@
 # React migration boundary
 
-The application currently starts through ordered classic scripts. The hidden `#react-root` element and `src/main.tsx` provide a typed React mount contract for incremental migration, but the bootstrap is intentionally not imported by `index.html` yet.
+The application keeps ordered classic scripts for compatibility. The hidden
+`#react-root` element and `src/main.tsx` provide the typed React mount contract;
+the Pages workflow enables it only in `index_next.html`, while stable
+`index.html` remains on the legacy release path. The ownership inventory is
+maintained in [`docs/react-ownership-matrix.md`](react-ownership-matrix.md).
 
-Legacy navigation, inline handlers, storage keys, translations, and the self-contained release remain authoritative by default. When `reactCoreScreens` is explicitly enabled, the React mission player owns mission configuration, question progression, timing, feedback, rewards, and local mission statistics through the typed boundary. Future React migrations must mount only into the isolated root or an explicitly migrated surface; they must not reorder or duplicate legacy scripts.
+Legacy navigation, inline handlers, storage keys, translations, and the self-contained release remain authoritative by default. When `reactCoreScreens` is explicitly enabled, React owns the core screen surfaces and their migrated controls through typed boundaries. The legacy runtime remains loaded as a reversible compatibility path, but its screen children are hidden where React owns the visible surface. Future React migrations must mount only into the isolated root or an explicitly migrated surface; they must not reorder or duplicate legacy scripts.
 
 ## Persistence ownership boundary
 
 React-owned surfaces use `window.TTPersistenceBoundary` as their single typed
 entry point for pilot selection, cloud synchronization, mission persistence, and local backup controls. The boundary keeps
 `window.TTPilotAdapter` as a compatibility alias for the existing legacy
-integration while the migration is staged. Inventory remains legacy-owned.
+integration while the migration is staged. Inventory uses the typed boundary
+when the React core flag is enabled and retains its legacy bridge for rollback.
 
 The `cloud` member is a lazy, fail-closed adapter around the legacy cloud
 runtime. It exposes profile listing, pilot restoration, upload, download, and
@@ -17,10 +22,11 @@ queued upload without exposing a Supabase client or privileged credential to
 React code. If the legacy runtime is not ready, the public configuration is
 missing, the session is signed out, or the provider fails, operations return a
 status result and local persistence remains authoritative.
-When the React core flag is enabled, dashboard, progress, and achievements are
-evaluated from the existing pilot-local storage by pure React-owned evaluators;
-the legacy renderers remain available for rollback. All typed adapters must fail closed
-rather than reaching into legacy globals directly.
+When the React core flag is enabled, mission setup, gameplay, dashboard,
+progress, garage, achievements, pilot persistence, and backup controls use the
+typed React boundary. The legacy renderers and bridges remain available for
+rollback and compatibility with ordered inline handlers. All typed adapters
+must fail closed rather than reaching into legacy globals directly.
 
 The boundary preserves the existing `tt-rocket-profiles-v1`,
 `tt-rocket-active-profile-v1`, `cosmotablas-v2`, `cosmotablas-history-v1`,
@@ -110,8 +116,9 @@ panels were visible. Console output contained no errors or warnings, and the
 network log contained no XHR or fetch requests.
 
 The issue remains open because the React core-screen migration is feature-
-flagged and legacy-owned gameplay state, persistence, and inventory state
-remain authoritative. Full legacy-source retirement belongs to issue #54.
+flagged and the remaining legacy bridges still require the ownership matrix,
+release-compatibility audit, and promotion review. Full legacy-source retirement
+belongs to issue #54.
 
 ## Final gameplay ownership audit
 
