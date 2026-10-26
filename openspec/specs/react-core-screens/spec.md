@@ -43,6 +43,12 @@ The application SHALL preserve mission selection, timers, auto-next behavior, au
 - **THEN** the visible rocket and coin balance update
 - **AND** the pilot-local garage storage remains compatible with existing backups
 
+#### Scenario: Flagged React speed missions expire at the supported limit
+
+- **WHEN** the React mission ownership flag is enabled and a pilot starts a speed mission
+- **THEN** the visible 60-second countdown advances while the mission is active
+- **AND** the mission completes at zero through the same compatible result and persistence path as other timed missions
+
 ### Requirement: React actions delegate through a fail-closed legacy boundary
 
 The application SHALL expose typed adapter actions for mission setup, rocket customization, achievement refresh, and backup controls without allowing React components to access legacy globals directly. Backup actions SHALL validate their inputs and preserve local state when storage or legacy compatibility services are unavailable.
