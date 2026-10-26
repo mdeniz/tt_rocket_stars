@@ -130,8 +130,12 @@ export interface PersistenceBoundary {
 }
 
 function reactCoreScreensEnabled(): boolean {
-  return window.__TTFeatureFlags?.reactCoreScreens === true
-    || (import.meta as ImportMeta & { env?: Record<string, string> }).env?.VITE_REACT_CORE_SCREENS === 'true';
+  // A runtime value is an explicit rollback/enable decision. Fall back to the
+  // build-time Pages default only when no runtime decision was supplied.
+  if (typeof window.__TTFeatureFlags?.reactCoreScreens === 'boolean') {
+    return window.__TTFeatureFlags.reactCoreScreens;
+  }
+  return (import.meta as ImportMeta & { env?: Record<string, string> }).env?.VITE_REACT_CORE_SCREENS === 'true';
 }
 
 /**

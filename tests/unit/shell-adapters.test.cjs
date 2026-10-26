@@ -29,6 +29,11 @@ test('flagged persistence uses the typed React pilot coordinator with legacy fal
   assert.match(adapter, /createReactPilotPersistence\(\) : createPilotAdapter\(\)/);
 });
 
+test('runtime React core flag can explicitly override the build default', () => {
+  assert.match(adapter, /typeof window\.__TTFeatureFlags\?\.reactCoreScreens === 'boolean'/);
+  assert.match(adapter, /return window\.__TTFeatureFlags\.reactCoreScreens;/);
+});
+
 test('persistence boundary exposes fail-closed backup controls and keeps pilot aliases', () => {
   assert.match(adapter, /installPersistenceBoundary/);
   assert.match(adapter, /TTBackupControls\?: BackupControlsAdapter/);

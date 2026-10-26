@@ -87,13 +87,19 @@ test('React core navigation is opt-in and owns dashboard and progress metrics', 
   await expect(page.locator('[data-react-core-host="dashboard"]')).toHaveCount(1);
   await expect(page.locator('[data-react-core-host="dashboard"]')).toContainText('Mission Control');
   await expect(page.locator('.ttReactDashboardPanel')).toContainText('100');
-  expect(await page.locator('#dashboard > .dashhero').evaluate(element => element.style.display)).toBe('none');
+  expect(await page.locator('#dashboard > .dashhero').evaluate(element => ({
+    inline: element.style.display,
+    computed: getComputedStyle(element).display,
+  }))).toEqual({ inline: 'none', computed: 'none' });
   await page.locator('.ttReactCoreNav button').nth(2).click();
   await expect(page.locator('#insights')).toBeVisible();
   await expect(page.locator('[data-react-core-host="insights"]')).toHaveCount(1);
   await expect(page.locator('[data-react-core-host="insights"]')).toContainText('Progress');
   await expect(page.locator('.ttReactProgressPanel')).toContainText('Table 2');
-  expect(await page.locator('#insights > .dashpanel').first().evaluate(element => element.style.display)).toBe('none');
+  expect(await page.locator('#insights > .dashpanel').first().evaluate(element => ({
+    inline: element.style.display,
+    computed: getComputedStyle(element).display,
+  }))).toEqual({ inline: 'none', computed: 'none' });
 
   for (const [screen, selector] of [['home', '#home'], ['insights', '#insights'], ['garage', '#garage'], ['awards', '#awards']]) {
     await page.locator('.ttReactCoreNav button').nth(['dashboard', 'home', 'insights', 'garage', 'awards'].indexOf(screen)).click();
@@ -538,6 +544,9 @@ test('React-owned controls retain keyboard, locale, and reduced-motion accessibi
 });
 
 test('disabling the React core flag rolls back to legacy garage and achievements ownership', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.__TTFeatureFlags = { reactCoreScreens: false };
+  });
   await page.goto('/');
   await page.locator('#launchSplash').click();
   await expect(page.locator('.ttReactCoreNav')).toHaveCount(0);
