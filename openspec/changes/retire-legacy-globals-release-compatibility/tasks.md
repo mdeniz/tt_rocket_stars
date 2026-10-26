@@ -24,7 +24,7 @@
 
 - [x] 4.1 Add release assertions for the zero-consumer retirement result, stable artifact preservation, explicit promotion, and rollback; verify invalid release fixtures fail.
 - [x] 4.2 Run `npm run check`, full desktop browser E2E, mobile WebKit E2E, strict OpenSpec validation, and `git diff --check`; record exact results in the change evidence.
-- [ ] 4.3 Run Chrome DevTools MCP against `index_next.html` when available and record URL, actions, visible results, storage evidence, console output, and network output for every migrated scenario; record the integration as unavailable if it cannot connect.
+- [x] 4.3 Run Chrome DevTools MCP against `index_next.html` when available and record URL, actions, visible results, storage evidence, console output, and network output for every migrated scenario; record the integration as unavailable if it cannot connect.
 - [x] 4.4 Verify the Pages workflow publishes the latest released self-contained HTML as `index.html`, keeps the current build as `index_next.html`, and can restore the previous release; verify both artifacts contain no external runtime dependencies.
 
 ## 5. Integration and issue audit
@@ -44,4 +44,4 @@
 - `VITE_REACT_CORE_SCREENS=true PLAYWRIGHT_FULL=1 npx playwright test --project=chromium`: 53/53 passed.
 - `PLAYWRIGHT_MOBILE=1 VITE_REACT_CORE_SCREENS=true PLAYWRIGHT_FULL=1 npx playwright test --project=webkit-mobile`: 53/53 passed. This is Playwright WebKit mobile emulation, not real iOS Safari validation.
 - `git diff --check`: passed.
-- Chrome DevTools MCP is unavailable in the current tool environment; no DevTools evidence is claimed for task 4.3.
+- Chrome DevTools MCP evidence is recorded in `docs/react-cutover-chrome-devtools-verification.md`; real iPhone/iPad Safari remains unavailable.
