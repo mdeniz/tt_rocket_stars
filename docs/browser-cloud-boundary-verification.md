@@ -45,12 +45,41 @@ passed all configured checks:
 
 Playwright WebKit is not evidence of real iPhone Safari behavior.
 
-## DevTools and production-provider limitation
+## Chrome DevTools evidence
 
-Chrome DevTools MCP was not connected in this environment, so no DevTools
-console or network recording is claimed. Real iPhone/iPad Safari was also not
-used. The available running-application evidence is therefore the Playwright
-Chromium fixture run above, supplemented by the full CI browser matrix.
+Chrome DevTools MCP was connected for a signed-out verification session at:
+
+```text
+https://mdeniz.github.io/tt_rocket_stars/index_next.html?verify=167
+```
+
+The following actions and observations were recorded:
+
+1. Loaded `index_next.html` and confirmed the development artifact rendered the
+   `Progress` screen without a blank screen or application exception.
+2. Opened the game menu and selected `Settings`; the Settings screen rendered
+   successfully.
+3. Confirmed `Cloud access` is an independent panel below the settings
+   categories, with password sign-in and cloud controls visible but disabled
+   while signed out.
+4. Selected `Sound`; the `Sound & music` panel rendered the sound toggle,
+   volume sliders, soundtrack selector, and test-sound controls rather than a
+   different settings panel.
+5. Read the console and network panels after navigation. There were no
+   application errors. The only console entry was Chrome's accessibility warning
+   that password forms may include a username field. Network activity contained
+   the page document and embedded `data:` image resources; no Supabase Auth,
+   REST, or other cloud request was made while signed out.
+
+Real iPhone/iPad Safari was not used. Playwright WebKit remains a compatibility
+signal and is not evidence of real iOS Safari behavior.
+
+## Production-provider limitation
+
+The current deployment has no trusted backend or Edge Function transport. The
+publishable Supabase adapter remains behind the typed browser boundary as a
+reversible compatibility implementation. The `legacyCloudDirectFallback` flag
+is disabled by default in both stable and development builds.
 
 The current deployment has no trusted backend or Edge Function transport. The
 publishable Supabase adapter remains behind the typed browser boundary as a
