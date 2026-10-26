@@ -15,4 +15,4 @@
 - [x] 3.1 Add Chromium E2E coverage for speed countdown progression and timeout completion.
 - [x] 3.2 Verify timed missions, legacy rollback, English/Spanish labels, offline play, and accessibility regressions.
 - [x] 3.3 Run `npm run check`, focused E2E, production build, and Chrome DevTools empirical verification with no console or external network errors.
-- [ ] 3.4 Update issue #142 with evidence; archive the OpenSpec change only after CI and review pass.
+- [x] 3.4 Update issue #142 with evidence; archive the OpenSpec change only after CI and review pass.
