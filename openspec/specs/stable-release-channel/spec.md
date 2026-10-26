@@ -41,3 +41,13 @@ The build MUST write the current self-contained application before creating
 - **THEN** `dist/index_next.html` contains the current self-contained build
 - **AND** `dist/index.html` remains a self-contained stable entrypoint
 - **AND** both files pass the distribution validation checks
+
+### Requirement: Inline scripts remain parser-safe
+
+The build MUST escape malformed closing script sequences in the final self-contained HTML so generated JavaScript cannot become visible page content.
+
+#### Scenario: Validate startup markup
+
+- **WHEN** distribution validation checks run
+- **THEN** both entrypoints contain no unescaped inline script boundary followed by JavaScript text
+- **AND** loading either entrypoint starts the application without displaying the generated bundle
