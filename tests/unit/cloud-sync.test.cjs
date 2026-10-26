@@ -46,6 +46,18 @@ test('is safe when cloud access is not configured', async () => {
   assert.equal((await adapter.download()).status, 'disabled');
 });
 
+test('deletes cloud data through the domain adapter without touching local storage', async () => {
+  const { createCloudSync } = await cloudSync;
+  let rpcName = '';
+  const client = {
+    auth: { getSession: async () => ({ data: { session: { user: { id: 'user-1' } } } }) },
+    rpc: async name => { rpcName = name; return { data: null, error: null }; },
+  };
+  const adapter = createCloudSync({ client });
+  assert.equal((await adapter.deleteCloudData()).status, 'deleted');
+  assert.equal(rpcName, 'delete_my_cloud_data');
+});
+
 test('does not touch cloud storage while signed out', async () => {
   const { createCloudSync } = await cloudSync;
   let cloudCalls = 0;

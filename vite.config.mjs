@@ -18,6 +18,7 @@ function inlineReleaseAssets() {
   let outDir = '';
   let publicSupabaseConfig = { url: '', anonKey: '', siteUrl: '' };
   let cloudAccessEnabled = false;
+  let legacyCloudDirectFallbackEnabled = false;
   let reactCoreScreensEnabled = false;
   let appVersion = '';
   const inlinedScripts = new Map();
@@ -34,6 +35,7 @@ function inlineReleaseAssets() {
         siteUrl: config.env.VITE_APP_SITE_URL || '',
       };
       cloudAccessEnabled = config.env.VITE_ENABLE_CLOUD_ACCESS === 'true';
+      legacyCloudDirectFallbackEnabled = config.env.VITE_ENABLE_LEGACY_CLOUD_DIRECT_FALLBACK === 'true';
       reactCoreScreensEnabled = config.env.VITE_REACT_CORE_SCREENS === 'true';
       appVersion = JSON.parse(fs.readFileSync(path.resolve('package.json'), 'utf8')).version;
     },
@@ -71,7 +73,7 @@ function inlineReleaseAssets() {
         );
         output = output.replace(
           '<!-- TT_FEATURE_FLAGS -->',
-          `<script>window.__TT_FEATURES__=Object.assign(${JSON.stringify({ cloudAccess: cloudAccessEnabled, reactCoreScreens: reactCoreScreensEnabled })},window.__TT_FEATURES__||{});window.__TTFeatureFlags=Object.assign({reactCoreScreens:${reactCoreScreensEnabled}},window.__TTFeatureFlags||{});</script>`,
+          `<script>window.__TT_FEATURES__=Object.assign(${JSON.stringify({ cloudAccess: cloudAccessEnabled, legacyCloudDirectFallback: legacyCloudDirectFallbackEnabled, reactCoreScreens: reactCoreScreensEnabled })},window.__TT_FEATURES__||{});window.__TTFeatureFlags=Object.assign({reactCoreScreens:${reactCoreScreensEnabled}},window.__TTFeatureFlags||{});</script>`,
         );
         if (!isBuild) return output;
 
