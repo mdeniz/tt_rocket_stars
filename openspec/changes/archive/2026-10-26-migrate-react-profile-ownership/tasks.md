@@ -13,9 +13,9 @@
 
 ## 3. Browser and release verification
 
-- [ ] 3.1 Add Chromium E2E coverage for create, switch, rename, delete, localization, offline play, and profile isolation; verify the full profile flow passes.
-- [ ] 3.2 Verify disabled-flag rollback, keyboard/touch accessibility, reduced motion, backup compatibility, and malformed local profile behavior in Chromium and mobile WebKit.
-- [ ] 3.3 Run `npm run check`, focused and full E2E, production build, strict OpenSpec validation, and Chrome DevTools empirical verification with no console or external network errors.
+- [x] 3.1 Add Chromium E2E coverage for create, switch, rename, delete, localization, offline play, and profile isolation; verify the full profile flow passes.
+- [x] 3.2 Verify disabled-flag rollback, keyboard/touch accessibility, reduced motion, backup compatibility, and malformed local profile behavior in Chromium and mobile WebKit.
+- [x] 3.3 Run `npm run check`, focused and full E2E, production build, strict OpenSpec validation, and Chrome DevTools empirical verification with no console or external network errors.
 
 ## Workflow follow-up
 
