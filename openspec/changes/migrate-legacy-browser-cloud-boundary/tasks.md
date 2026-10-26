@@ -27,7 +27,7 @@
 - [x] 4.2 Run `npm run check`, full Chromium, Firefox, desktop WebKit, and mobile WebKit suites; verify all configured checks pass with no unexpected network requests in offline scenarios.
 - [x] 4.3 Verify stable `index.html`, development `index_next.html`, local storage keys, backup envelopes, pilot identifiers, translations, and rollback flag behavior; verify release and retirement guards pass.
 - [x] 4.4 Exercise the migrated behavior in the running application and record URL, action, observed result, and console/network evidence; explicitly record Chrome DevTools MCP or real Safari as unavailable when not connected.
-- [ ] 4.5 Update #170 and this issue with acceptance evidence, security findings, CI links, rollback readiness, and the decision to remove or retain the fallback; verify the issues remain open until every criterion is satisfied.
+- [x] 4.5 Update #170 and this issue with acceptance evidence, security findings, CI links, rollback readiness, and the decision to remove or retain the fallback; verify the issues remain open until every criterion is satisfied.
 
 ## Workflow follow-up
 
