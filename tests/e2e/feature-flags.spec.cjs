@@ -196,14 +196,16 @@ test('flagged backup ownership restores local state after creating a recovery ba
     return JSON.parse(localStorage.getItem('tt-rocket-backups-v1'))[0].id;
   });
   await page.evaluate(() => localStorage.setItem('cosmotablas-v2', JSON.stringify({ changed: true })));
-  await page.evaluate(id => window.TTBackupControls.restoreBackup(id), backupId);
-  await expect.poll(() => page.evaluate(() => ({
+  await Promise.all([
+    page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
+    page.evaluate(id => window.TTBackupControls.restoreBackup(id), backupId),
+  ]);
+  const result = await page.evaluate(() => ({
     progress: JSON.parse(localStorage.getItem('cosmotablas-v2')),
     backups: JSON.parse(localStorage.getItem('tt-rocket-backups-v1')),
-  }))).toEqual({
-    progress: { current: true },
-    backups: expect.arrayContaining([expect.objectContaining({ label: 'Before restore' })]),
-  });
+  }));
+  expect(result.progress).toEqual({ current: true });
+  expect(result.backups.some(item => item.label === 'Before restore')).toBe(true);
 });
 
 test('flagged backup ownership supports offline export and reset', async ({ page, context }) => {
