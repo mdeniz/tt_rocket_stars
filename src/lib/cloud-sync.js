@@ -1,3 +1,5 @@
+import { createSupabaseCloudProvider } from './cloud-provider.js';
+
 const SYNC_METADATA_KEY = 'tt-rocket-cloud-sync-v1';
 
 const clone = value => JSON.parse(JSON.stringify(value ?? null));
@@ -78,14 +80,10 @@ function writeMetadata(store, value) {
   try { store?.setItem?.(SYNC_METADATA_KEY, JSON.stringify(value)); } catch { /* local storage is optional */ }
 }
 
-function sessionFrom(client) {
-  return client?.auth?.getSession?.().then(result => result?.data?.session || null);
-}
-
-export function createCloudSync({ client, store, getLocalPilot, applyRemotePilot, createRecoveryBackup, onConflict, now = () => new Date().toISOString(), retries = 2, wait = async () => {}, onStatus = () => {} } = {}) {
+export function createCloudSync({ client, provider = client ? createSupabaseCloudProvider(client) : null, store, getLocalPilot, applyRemotePilot, createRecoveryBackup, onConflict, now = () => new Date().toISOString(), retries = 2, wait = async () => {}, onStatus = () => {} } = {}) {
   const result = (status, extra = {}) => ({ status, ...extra });
   const report = (status, extra = {}) => { try { onStatus({ ...extra, status }); } catch { /* status reporting must never affect gameplay */ } };
-  const session = async () => sessionFrom(client);
+  const session = async () => provider?.session?.() || null;
   const active = () => serializePilot(getLocalPilot?.(), now());
 
   const isConflictError = error => {
@@ -94,9 +92,7 @@ export function createCloudSync({ client, store, getLocalPilot, applyRemotePilot
     return code === '40001' || message.includes('snapshot version conflict');
   };
   const readRemoteSnapshot = async pilotId => {
-    const { data: remote, error } = await client.from('progress_snapshots')
-      .select('version,payload,updated_at').eq('pilot_id', pilotId).maybeSingle();
-    if (error) throw error;
+    const remote = await provider.readSnapshot(pilotId);
     return remote ? { ...remote.payload, version: remote.version, updatedAt: remote.updated_at } : null;
   };
   const normalizeRemotePilot = (pilot, snapshot) => {
@@ -134,50 +130,20 @@ export function createCloudSync({ client, store, getLocalPilot, applyRemotePilot
   }
   async function upload(options = {}) {
     report('pending');
-    if (!client) { report('disabled'); return result('disabled'); }
+    if (!provider) { report('disabled'); return result('disabled'); }
     const authSession = await session();
     if (!authSession?.user?.id) { report('signed-out'); return result('signed-out'); }
     const local = active();
     report('syncing', { localId: local.localId });
     return retry(async () => {
-      const pilotQuery = client.from('pilots').upsert({
-        user_id: authSession.user.id,
-        local_id: local.localId,
-        name: local.name,
-        avatar: local.avatar,
-        language: local.language,
-        payload: local.payload,
-        updated_at: local.updatedAt,
-      }, { onConflict: 'user_id,local_id' }).select('id').single();
-      const { data: pilot, error: pilotError } = await pilotQuery;
-      if (pilotError) throw pilotError;
+      const pilot = await provider.upsertPilot(authSession, local);
       const metadata = readMetadata(store);
       const expectedVersion = options.expectedVersion === undefined
         ? Number(metadata[local.localId]?.version || 0)
         : Number(options.expectedVersion || 0);
       let version = expectedVersion + 1;
-      if (typeof client.rpc === 'function') {
-        const { data: snapshot, error: snapshotError } = await client.rpc('upsert_my_progress_snapshot', {
-          p_pilot_id: pilot.id,
-          p_expected_version: expectedVersion,
-          p_payload: local,
-        });
-        if (snapshotError) {
-          if (isConflictError(snapshotError)) snapshotError.noRetry = true;
-          throw snapshotError;
-        }
-        version = Number(snapshot?.version || version);
-      } else {
-        const snapshotQuery = client.from('progress_snapshots').upsert({
-          user_id: authSession.user.id,
-          pilot_id: pilot.id,
-          version,
-          payload: local,
-          updated_at: local.updatedAt,
-        }, { onConflict: 'pilot_id' });
-        const { error: snapshotError } = await snapshotQuery;
-        if (snapshotError) throw snapshotError;
-      }
+      try { version = await provider.writeSnapshot(authSession, pilot.id, expectedVersion, local); }
+      catch (error) { if (isConflictError(error)) error.noRetry = true; throw error; }
       writeMetadata(store, { ...metadata, [local.localId]: { version, updatedAt: local.updatedAt } });
       const uploaded = result('uploaded', { version, updatedAt: local.updatedAt });
       report('synced', uploaded);
@@ -185,7 +151,7 @@ export function createCloudSync({ client, store, getLocalPilot, applyRemotePilot
     }, retries, wait).catch(async error => {
       if (!options.skipConflictHandling && isConflictError(error)) {
         try {
-          const remote = await readRemoteSnapshot(error.pilotId || (await client.from('pilots').select('id').eq('local_id', local.localId).maybeSingle())?.data?.id);
+          const remote = await readRemoteSnapshot(error.pilotId || await provider.findPilotId(local.localId));
           if (remote) return resolveConflict(result('conflict', { local, remote, error }), options);
         } catch (remoteError) {
           const failed = result('failed', { error: remoteError });
@@ -199,21 +165,15 @@ export function createCloudSync({ client, store, getLocalPilot, applyRemotePilot
 
   async function download() {
     report('pending');
-    if (!client) { report('disabled'); return result('disabled'); }
+    if (!provider) { report('disabled'); return result('disabled'); }
     const authSession = await session();
     if (!authSession?.user?.id) { report('signed-out'); return result('signed-out'); }
     const local = active();
     report('syncing', { localId: local.localId });
     return retry(async () => {
-      const { data: pilot, error: pilotError } = await client.from('pilots')
-        .select('id,local_id,name,avatar,language,payload,updated_at').eq('user_id', authSession.user.id)
-        .eq('local_id', local.localId).maybeSingle();
-      if (pilotError) throw pilotError;
+      const pilot = await provider.readPilot(authSession, local.localId);
       if (!pilot) return result('not-found');
-      const { data: remote, error: snapshotError } = await client.from('progress_snapshots')
-        .select('version,payload,updated_at').eq('user_id', authSession.user.id)
-        .eq('pilot_id', pilot.id).maybeSingle();
-      if (snapshotError) throw snapshotError;
+      const remote = await provider.readPilotSnapshot(authSession, pilot.id);
       const remoteSnapshot = validateSnapshot(remote?.payload?.localId
         ? { ...remote.payload, updatedAt: remote.updated_at || remote.payload.updatedAt || pilot.updated_at, version: remote.version }
         : {
@@ -239,15 +199,11 @@ export function createCloudSync({ client, store, getLocalPilot, applyRemotePilot
   }
 
   async function listRemotePilots() {
-    if (!client) return result('disabled', { pilots: [] });
+    if (!provider) return result('disabled', { pilots: [] });
     const authSession = await session();
     if (!authSession?.user?.id) return result('signed-out', { pilots: [] });
     try {
-      const query = client.from('pilots').select('local_id,name,avatar,language,payload,updated_at')
-        .eq('user_id', authSession.user.id).limit(50);
-      const response = typeof query.many === 'function' ? await query.many() : await query;
-      if (response?.error) throw response.error;
-      const rows = Array.isArray(response?.data) ? response.data : (response?.data ? [response.data] : []);
+      const rows = await provider.listPilots(authSession);
       return result('listed', { pilots: rows.map(row => normalizeRemotePilot(row)) });
     } catch (error) {
       return result('failed', { pilots: [], error });
@@ -255,20 +211,14 @@ export function createCloudSync({ client, store, getLocalPilot, applyRemotePilot
   }
 
   async function downloadPilot(localId) {
-    if (!client) return result('disabled');
+    if (!provider) return result('disabled');
     const authSession = await session();
     if (!authSession?.user?.id) return result('signed-out');
     if (!localId) return result('not-found');
     try {
-      const { data: pilot, error: pilotError } = await client.from('pilots')
-        .select('id,local_id,name,avatar,language,payload,updated_at').eq('user_id', authSession.user.id)
-        .eq('local_id', localId).maybeSingle();
-      if (pilotError) throw pilotError;
+      const pilot = await provider.readPilot(authSession, localId);
       if (!pilot) return result('not-found');
-      const { data: snapshot, error: snapshotError } = await client.from('progress_snapshots')
-        .select('version,payload,updated_at').eq('user_id', authSession.user.id)
-        .eq('pilot_id', pilot.id).maybeSingle();
-      if (snapshotError) throw snapshotError;
+      const snapshot = await provider.readPilotSnapshot(authSession, pilot.id);
       return result('downloaded', { snapshot: normalizeRemotePilot(pilot, snapshot) });
     } catch (error) {
       return result('failed', { error });
@@ -276,12 +226,11 @@ export function createCloudSync({ client, store, getLocalPilot, applyRemotePilot
   }
 
   async function deleteCloudData() {
-    if (!client) return result('disabled');
+    if (!provider) return result('disabled');
     const authSession = await session();
     if (!authSession?.user?.id) return result('signed-out');
     try {
-      const { error } = await client.rpc('delete_my_cloud_data', {});
-      if (error) throw error;
+      await provider.deleteCloudData(authSession);
       return result('deleted');
     } catch (error) {
       return result('failed', { error });

@@ -58,6 +58,40 @@ test('deletes cloud data through the domain adapter without touching local stora
   assert.equal(rpcName, 'delete_my_cloud_data');
 });
 
+test('runs upload and download through a provider-neutral in-memory contract', async () => {
+  const { createCloudSync } = await cloudSync;
+  const session = { user: { id: 'user-1' } };
+  const pilots = new Map();
+  const snapshots = new Map();
+  const provider = {
+    session: async () => session,
+    upsertPilot: async (_session, local) => {
+      const pilot = { id: `remote-${local.localId}`, ...local };
+      pilots.set(local.localId, pilot);
+      return pilot;
+    },
+    writeSnapshot: async (_session, pilotId, expectedVersion, local) => {
+      const version = expectedVersion + 1;
+      snapshots.set(pilotId, { version, payload: local, updated_at: local.updatedAt });
+      return version;
+    },
+    readPilot: async (_session, localId) => pilots.get(localId) || null,
+    readPilotSnapshot: async (_session, pilotId) => snapshots.get(pilotId) || null,
+    listPilots: async () => [...pilots.values()],
+    readSnapshot: async pilotId => snapshots.get(pilotId) || null,
+    findPilotId: async localId => pilots.get(localId)?.id,
+    deleteCloudData: async () => { pilots.clear(); snapshots.clear(); },
+  };
+  let local = { id: 'pilot-1', name: 'Ada', language: 'en', payload: { score: 4 }, updatedAt: '2026-01-02T00:00:00.000Z' };
+  const adapter = createCloudSync({ provider, getLocalPilot: () => local });
+  assert.equal((await adapter.upload()).status, 'uploaded');
+  local = { ...local, payload: { score: 1 }, updatedAt: '2026-01-01T00:00:00.000Z' };
+  let applied;
+  const restoring = createCloudSync({ provider, getLocalPilot: () => local, applyRemotePilot: snapshot => { applied = snapshot; } });
+  assert.equal((await restoring.download()).status, 'downloaded');
+  assert.equal(applied.payload.score, 4);
+});
+
 test('does not touch cloud storage while signed out', async () => {
   const { createCloudSync } = await cloudSync;
   let cloudCalls = 0;
