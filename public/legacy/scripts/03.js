@@ -104,6 +104,13 @@ function ensureExtraBodyParts(){
 }
 ensureExtraBodyParts();
 
+window.TTRocketInventoryBridge={
+ catalog:()=>rocketParts.map(({id,cat,price,compat})=>({id,cat,price,compat})),
+ refresh:()=>{try{const raw=window.TTLocalStore.getItem(ROCKET_KEY);const value=raw?JSON.parse(raw):null;if(value&&typeof value==='object')rocketState={...rocketState,...value,equipped:{...rocketState.equipped,...value.equipped}}}catch{};try{updateCoins();renderGarage()}catch{}},
+ setCategory:category=>{if(rocketCats.includes(category)){garageCategory=category;garagePreviewId=null;try{renderGarage()}catch{}}},
+ previewPart:partId=>{if(rocketParts.some(part=>part.id===partId)){garagePreviewId=partId;try{renderGarage()}catch{}}}
+};
+
 // Attachment positions are measured in the body SVG's shared 180 x 270 coordinate system.
 // Every body supplies its own anchor and scale. Arrays: [x, y, scale].
 const ROCKET_BODY_ANCHORS = {

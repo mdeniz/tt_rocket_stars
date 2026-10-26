@@ -43,3 +43,17 @@ The default release keeps the coordinator disabled and continues using the
 legacy profile runtime. The legacy aliases remain available as a rollback path;
 this migration does not remove the ordered profile script or change cloud
 synchronization ownership.
+
+## React inventory ownership boundary
+
+When `reactCoreScreens` is enabled explicitly, React inventory actions use a
+typed coordinator over the active pilot's `tt-rocket-garage-v1` payload. The
+coordinator validates catalog entries, coins, owned parts, equipped parts,
+support fleet limits, and compatible future fields before writing. Preview and
+category state remain local UI state; purchase and equip operations update the
+active profile payload atomically and refresh the legacy visual mirror.
+
+Unknown parts, malformed payloads, insufficient coins, full support fleets, and
+storage failures fail closed without deleting the previous valid inventory.
+The legacy inventory adapter remains selected when the flag is disabled, so
+published behavior and backup compatibility are unchanged.

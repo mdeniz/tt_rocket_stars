@@ -83,6 +83,8 @@ test('garage actions use a dedicated typed inventory boundary with legacy fallba
   assert.match(adapter, /InventoryAdapter/);
   assert.match(adapter, /TTInventoryAdapter\?: InventoryAdapter/);
   assert.match(adapter, /createInventoryAdapter/);
+  assert.match(adapter, /createReactInventoryPersistence/);
+  assert.match(adapter, /reactCoreScreensEnabled\(\)\s*\?\s*createReactInventoryAdapter/);
   assert.match(adapter, /installInventoryAdapter/);
   assert.match(adapter, /refresh: \(\) => core\.refresh\('garage'\)/);
   assert.match(adapter, /previewPart: partId => core\.previewGaragePart\(partId\)/);

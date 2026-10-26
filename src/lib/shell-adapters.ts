@@ -1,6 +1,7 @@
 import type { ShellPilotSummary } from './shell-contracts';
 import { createMissionPersistence, type MissionPersistenceAdapter } from './react-gameplay-persistence';
 import { createReactPilotPersistence } from './react-pilot-persistence';
+import { createReactInventoryPersistence, type InventoryCompatibilityBridge, type ReactInventoryPersistenceAdapter } from './react-inventory-persistence';
 
 export interface FullscreenAdapter {
   requestFullscreen(): Promise<boolean>;
@@ -51,6 +52,7 @@ declare global {
     TTGameplayAdapter?: GameplayAdapter;
     TTInventoryAdapter?: InventoryAdapter;
     TTAchievementAdapter?: AchievementAdapter;
+    TTRocketInventoryBridge?: InventoryCompatibilityBridge;
     __TTFeatureFlags?: { reactCoreScreens?: boolean };
     TTEnterGame?: () => void;
     TTOpenPilotSelector?: () => void;
@@ -195,7 +197,9 @@ export function installPersistenceBoundary(): void {
   const backups = createBackupControlsAdapter();
   const mission = createMissionPersistence(window.TTLocalStore, 'cosmotablas-v2');
   const core = window.TTCoreScreensAdapter || createCoreScreensAdapter();
-  const inventory = createInventoryAdapter(core);
+  const inventory = reactCoreScreensEnabled()
+    ? createReactInventoryAdapter(createReactInventoryPersistence())
+    : createInventoryAdapter(core);
   const achievements = createAchievementAdapter(core);
   window.TTPilotAdapter = pilots;
   window.TTBackupControls = backups;
@@ -207,6 +211,15 @@ export function installPersistenceBoundary(): void {
     mission,
     inventory,
     achievements,
+  };
+}
+
+function createReactInventoryAdapter(adapter: ReactInventoryPersistenceAdapter): InventoryAdapter {
+  return {
+    refresh: () => { adapter.refresh(); },
+    setCategory: category => adapter.setCategory(category),
+    previewPart: partId => adapter.previewPart(partId),
+    activatePart: partId => adapter.activatePart(partId),
   };
 }
 

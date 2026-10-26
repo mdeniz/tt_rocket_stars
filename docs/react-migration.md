@@ -132,3 +132,19 @@ creation and switching behind the same flag. It preserves the existing profile,
 active-pilot, payload, and backup keys, validates before applying state, and
 keeps the legacy profile runtime available for rollback. The published release
 still leaves this coordinator disabled by default.
+
+The inventory ownership slice adds a typed coordinator for the flag-enabled
+garage. It reads and writes the existing `tt-rocket-garage-v1` payload, keeps
+unknown compatible fields, validates purchases and equipment changes, and
+refreshes the legacy SVG view as a compatibility mirror. Invalid operations and
+unavailable storage fail closed. The disabled-flag path continues to use the
+legacy inventory adapter, and the published release remains unchanged.
+
+Chrome DevTools verification of the inventory slice on
+`http://127.0.0.1:5182/` enabled `VITE_REACT_CORE_SCREENS=true` and showed the
+React garage with categories and inventory controls. Offline preview and
+purchase/equip of `body_blue` changed the active garage payload from 500 to 400
+coins, equipped the selected part, and updated the active profile payload.
+Legacy garage action calls were instrumented and remained at zero. The page
+reported no console errors or warnings and no XHR/fetch requests. This is local
+Chrome evidence only; real iOS Safari validation is not claimed.
