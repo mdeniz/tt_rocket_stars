@@ -7,9 +7,16 @@ Legacy navigation, inline handlers, storage keys, translations, and the self-con
 ## Persistence ownership boundary
 
 React-owned surfaces use `window.TTPersistenceBoundary` as their single typed
-entry point for pilot selection, mission persistence, and local backup controls. The boundary keeps
+entry point for pilot selection, cloud synchronization, mission persistence, and local backup controls. The boundary keeps
 `window.TTPilotAdapter` as a compatibility alias for the existing legacy
 integration while the migration is staged. Inventory remains legacy-owned.
+
+The `cloud` member is a lazy, fail-closed adapter around the legacy cloud
+runtime. It exposes profile listing, pilot restoration, upload, download, and
+queued upload without exposing a Supabase client or privileged credential to
+React code. If the legacy runtime is not ready, the public configuration is
+missing, the session is signed out, or the provider fails, operations return a
+status result and local persistence remains authoritative.
 When the React core flag is enabled, dashboard, progress, and achievements are
 evaluated from the existing pilot-local storage by pure React-owned evaluators;
 the legacy renderers remain available for rollback. All typed adapters must fail closed

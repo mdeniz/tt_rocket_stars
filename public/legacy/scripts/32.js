@@ -153,6 +153,7 @@
       if (event.status === 'failed') setCloudStatus('syncError', 'error');
     },
   });
+  window.TTCloudSyncAdapter = cloudAdapter;
   const controls = document.createElement('div');
   controls.className = 'ttCloudControls';
   controls.innerHTML = '<p class="ttPrivacyNote" data-i18n="ui.087">Cloud access is optional. Your local progress stays on this device, and cloud data belongs to your invited account.</p><p id="ttCloudStatus" class="ttCloudStatus" role="status" aria-live="polite" data-i18n="ui.084">Cloud sync is ready.</p><div class="ttCloudActions"><button id="ttCloudSyncNow" class="btn alt" type="button" data-i18n="ui.085">Sync now</button><button id="ttCloudRestore" class="btn alt" type="button">Restore from cloud</button><button id="ttCloudList" class="btn alt" type="button">Find cloud pilots</button><button id="ttCloudDelete" class="btn alt dangerBtn" type="button" data-i18n="ui.086">Delete cloud data</button></div><div id="ttCloudPilots" class="ttCloudPilots" aria-live="polite"></div>';

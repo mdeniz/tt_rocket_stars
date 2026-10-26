@@ -1,5 +1,17 @@
 const { test, expect } = require('@playwright/test');
 
+test('React cloud boundary remains local-safe when Supabase is unavailable', async ({ page }) => {
+  await page.goto('/');
+  const result = await page.evaluate(async () => ({
+    exists: Boolean(window.TTPersistenceBoundary?.cloud),
+    available: window.TTPersistenceBoundary?.cloud.isAvailable(),
+    upload: (await window.TTPersistenceBoundary?.cloud.upload())?.status,
+    pilots: (await window.TTPersistenceBoundary?.cloud.listPilots())?.status,
+  }));
+
+  expect(result).toEqual({ exists: true, available: false, upload: 'disabled', pilots: 'disabled' });
+});
+
 test('evaluates targeted flags with offline-safe deterministic behavior', async ({ page }) => {
   await page.goto('/');
   const result = await page.evaluate(async () => {
