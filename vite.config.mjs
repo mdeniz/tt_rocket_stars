@@ -4,14 +4,13 @@ import path from 'node:path';
 import { defineConfig } from 'vite';
 import * as i18n from './scripts/i18n.mjs';
 
+const escapeInlineScriptMarkup = contents => contents
+  .replace(/<script/gi, '\\x3cscript')
+  .replace(/<\/script/gi, '\\x3c/script');
+
 const escapeClosingTag = (contents, tagName) => contents.replace(
   new RegExp(`</${tagName}`, 'gi'),
   `\\x3c/${tagName}`,
-);
-
-const escapeMalformedInlineScriptBoundaries = html => html.replace(
-  /<\/script>(?!\s*<)/gi,
-  '\\x3c/script>',
 );
 
 function inlineReleaseAssets() {
@@ -37,7 +36,7 @@ function inlineReleaseAssets() {
       appVersion = JSON.parse(fs.readFileSync(path.resolve('package.json'), 'utf8')).version;
     },
     renderChunk(code) {
-      return { code: escapeClosingTag(code, 'script'), map: null };
+      return { code: escapeInlineScriptMarkup(code), map: null };
     },
     transformIndexHtml: {
       order: 'pre',
@@ -54,15 +53,15 @@ function inlineReleaseAssets() {
         const telemetry = `(()=>{${telemetrySource}\nwindow.TTTelemetry=createTelemetryService({consent:false});})();`;
         let output = html.replace(
           '<!-- TT_PERSISTENCE_RUNTIME -->',
-          `<script>${escapeClosingTag(persistence, 'script')}</script>`,
+          `<script>${escapeInlineScriptMarkup(persistence)}</script>`,
         );
         output = output.replace(
           '<!-- TT_CLOUD_SYNC_RUNTIME -->',
-          `<script>${escapeClosingTag(cloudSync, 'script')}</script>`,
+          `<script>${escapeInlineScriptMarkup(cloudSync)}</script>`,
         );
         output = output.replace(
           '<!-- TT_TELEMETRY_RUNTIME -->',
-          `<script>${escapeClosingTag(telemetry, 'script')}</script>`,
+          `<script>${escapeInlineScriptMarkup(telemetry)}</script>`,
         );
         output = output.replace(
           '<!-- TT_APP_VERSION -->',
@@ -87,49 +86,38 @@ function inlineReleaseAssets() {
 
         output = output.replace(
           /<script src="\.\/legacy\/scripts\/([^\"]+)"><\/script>/g,
-          (_, filename) => `<script>${escapeClosingTag(read(`public/legacy/scripts/${filename}`), 'script')}</script>`,
+          (_, filename) => `<script>${escapeInlineScriptMarkup(read(`public/legacy/scripts/${filename}`))}</script>`,
         );
         return output;
       },
     },
     generateBundle(_, bundle) {
       if (!isBuild) return;
-      const htmlAsset = bundle['index.html'];
-      if (!htmlAsset || htmlAsset.type !== 'asset' || typeof htmlAsset.source !== 'string') {
-        throw new Error('Expected Vite to emit index.html before inlining the React shell');
-      }
-      let builtHtml = htmlAsset.source;
       for (const [fileName, output] of Object.entries(bundle)) {
         if (output.type !== 'chunk' || !fileName.endsWith('.js')) continue;
-        const escapedFileName = fileName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        builtHtml = builtHtml.replace(
-          new RegExp(`<script type="module"[^>]*src="[^"]*${escapedFileName}"[^>]*><\\/script>`, 'g'),
-          `<script>${escapeClosingTag(output.code, 'script')}</script>`,
-        );
         inlinedScripts.set(fileName, output.code);
-        delete bundle[fileName];
       }
-      htmlAsset.source = builtHtml;
     },
     writeBundle() {
       if (!isBuild) return;
       const htmlPath = path.resolve(outDir, 'index.html');
       let builtHtml = fs.readFileSync(htmlPath, 'utf8');
       for (const [fileName, script] of inlinedScripts) {
+        const safeScript = escapeInlineScriptMarkup(script);
         const escapedFileName = fileName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         builtHtml = builtHtml.replace(
           new RegExp(`<script[^>]*src="[^"]*${escapedFileName}"[^>]*><\\/script>`, 'g'),
-          `<script>${escapeClosingTag(script, 'script')}</script>`,
+          () => `<script>${safeScript}</script>`,
         );
       }
       // Vite may append the original module tag after Rollup has emitted the
       // already-inlined chunk. Remove that duplicate external reference from
       // the final file, together with any modulepreload hint.
       builtHtml = builtHtml
-        .replace(/<script type="module"[^>]*src="[^"]+"[^>]*><\/script>/g, '')
+        .replace(/<script type="module"[^>]*src="[^"]+"[^>]*><\/script>/, '')
         .replace(/<link rel="modulepreload"[^>]*>/g, '');
-      builtHtml = escapeMalformedInlineScriptBoundaries(builtHtml);
       fs.writeFileSync(htmlPath, builtHtml);
+      fs.rmSync(path.resolve(outDir, 'assets'), { force: true, recursive: true });
       fs.rmSync(path.resolve(outDir, 'legacy'), { force: true, recursive: true });
       fs.renameSync(htmlPath, path.resolve(outDir, 'index_next.html'));
       copyFileSync(path.resolve(outDir, 'index_next.html'), htmlPath);
@@ -142,6 +130,6 @@ export default defineConfig({
   plugins: [{ name: 'tt-locales', transformIndexHtml(html) {
     return i18n.injectTranslations(html, i18n.loadLocales());
   }}, inlineReleaseAssets()],
-  build: { outDir: 'dist', emptyOutDir: true },
+  build: { outDir: 'dist', emptyOutDir: true, modulePreload: false },
   server: { port: 5173 },
 });
