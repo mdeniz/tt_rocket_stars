@@ -15,7 +15,7 @@
 ## 3. Delivery documentation
 
 - [x] 3.1 Document migration application order, rollback limits, and the boundary between issue #55 data contracts and issue #56 administration operations; verify all commands and table names match the migration.
-- [ ] 3.2 Perform Chrome DevTools empirical verification against a configured local or hosted Supabase environment, confirming no browser service-role key, no anonymous crew data access, and unchanged offline startup; record the result in the PR and issue #55.
+- [x] 3.2 Perform Chrome DevTools empirical verification against a configured local or hosted Supabase environment, confirming no browser service-role key, no anonymous crew data access, and unchanged offline startup; record the result in the PR and issue #55.
 
 ## Workflow follow-up
 
