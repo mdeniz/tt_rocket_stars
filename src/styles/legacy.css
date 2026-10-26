@@ -1376,6 +1376,7 @@ body.ttMainNavReady{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
 /* The side drawer must remain fully interactive, including its bottom items. */
 body:has(#sideDrawer.open) #ttMainBottomNav{display:none!important}
 body:has(#sideDrawer.open) .ttSettingsBottomNav{visibility:hidden!important}
+body:has(#sideDrawer.open) .ttReactCoreNav{visibility:hidden!important;pointer-events:none!important}
 
 
 /* Original <style> block 59 */
@@ -1891,3 +1892,5 @@ body.ttReactCoreScreensEnabled #home.ttReactMissionSetupEnabled>section.card{dis
 /* React ownership must win over later legacy layout overrides. */
 body.ttReactCoreScreensEnabled #dashboard > [data-react-dashboard-legacy-hidden],
 body.ttReactCoreScreensEnabled #insights > [data-react-progress-legacy-hidden]{display:none!important}
+/* Shared accessibility utility: hidden live regions must never intercept touch input. */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;pointer-events:none}

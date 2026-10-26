@@ -1,5 +1,24 @@
 const { test, expect } = require('@playwright/test');
 
+test('React startup fails safe when compatible local storage is malformed', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+  await page.addInitScript(() => {
+    localStorage.setItem('tt-rocket-profiles-v1', '{malformed profiles');
+    localStorage.setItem('tt-rocket-active-profile-v1', '{malformed active profile');
+    localStorage.setItem('cosmotablas-v2', '{malformed progress');
+    localStorage.setItem('cosmotablas-history-v1', '{malformed history');
+    localStorage.setItem('tt-rocket-garage-v1', '{malformed garage');
+    localStorage.setItem('tt-rocket-backups-v1', '{malformed backups');
+  });
+
+  await page.goto('/');
+  await expect(page.locator('#launchSplash')).toBeVisible();
+  await page.locator('#launchSplash').click();
+  await expect(page.locator('#dashboard')).toBeVisible();
+  expect(pageErrors).toEqual([]);
+});
+
 test('React cloud boundary remains local-safe when Supabase is unavailable', async ({ page }) => {
   await page.goto('/');
   const result = await page.evaluate(async () => ({
@@ -276,7 +295,7 @@ test('flagged backup ownership supports offline export and reset', async ({ page
     window.TTBackupControls.importBackup({ target: input });
   }, imported);
   await importedReload;
-  await page.waitForTimeout(250);
+  await page.waitForFunction(() => typeof window.TTBackupControls?.resetWithBackup === 'function');
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('cosmotablas-v2')))).toEqual({ imported: true });
 
   const resetReload = page.waitForEvent('framenavigated');
