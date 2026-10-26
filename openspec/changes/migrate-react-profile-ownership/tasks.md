@@ -2,14 +2,14 @@
 
 ## 1. Contract and test-first coverage
 
-- [ ] 1.1 Add unit tests for typed profile rename, deletion, active-profile synchronization, duplicate-name rejection, and storage-failure isolation; verify the new tests fail before implementation.
-- [ ] 1.2 Add the `typed-pilot-persistence` spec delta and verify strict OpenSpec validation accepts the complete requirement block.
+- [x] 1.1 Add unit tests for typed profile rename, deletion, active-profile synchronization, duplicate-name rejection, and storage-failure isolation; verify the new tests fail before implementation.
+- [x] 1.2 Add the `typed-pilot-persistence` spec delta and verify strict OpenSpec validation accepts the complete requirement block.
 
 ## 2. Typed profile lifecycle implementation
 
-- [ ] 2.1 Extend the typed pilot adapter with validated rename and delete operations, preserving IDs, payload fields, language, limits, and active-profile semantics; verify the focused unit suite passes.
-- [ ] 2.2 Route the flag-enabled React profile controls through the typed adapter while retaining legacy fallback and compatibility view notifications; verify no legacy profile mutator is called in focused browser coverage.
-- [ ] 2.3 Preserve recovery behavior when synchronization or storage writes fail, including active-pilot payload isolation and opaque compatible fields; verify failure-path unit and E2E coverage passes.
+- [x] 2.1 Extend the typed pilot adapter with validated rename and delete operations, preserving IDs, payload fields, language, limits, and active-profile semantics; verify the focused unit suite passes.
+- [x] 2.2 Route the flag-enabled React profile controls through the typed adapter while retaining legacy fallback and compatibility view notifications; verify no legacy profile mutator is called in focused browser coverage.
+- [x] 2.3 Preserve recovery behavior when synchronization or storage writes fail, including active-pilot payload isolation and opaque compatible fields; verify failure-path unit and E2E coverage passes.
 
 ## 3. Browser and release verification
 

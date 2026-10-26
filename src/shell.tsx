@@ -672,7 +672,6 @@ export function ReactShell() {
 
   useEffect(() => {
     const open = () => {
-      window.TTProfiles?.sync();
       setPilots(window.TTPersistenceBoundary?.pilots.readPilots() || window.TTPilotAdapter?.readPilots() || []);
       setPilotError('');
       setPilotSelectorOpen(true);
@@ -805,12 +804,29 @@ export function ReactShell() {
           <p>{copy['ui.100']}</p>
           <div className="ttReactPilotGrid">
             {pilots.map(pilot => (
-              <button className="ttReactPilotTile" type="button" key={pilot.id} onClick={() => {
-                if ((window.TTPersistenceBoundary?.pilots || window.TTPilotAdapter)?.choosePilot(pilot.id)) setPilotSelectorOpen(false);
-              }}>
-                <span aria-hidden="true">{pilot.avatar || '🚀'}</span>
-                <strong>{pilot.name}</strong>
-              </button>
+              <div className="ttReactPilotTile" key={pilot.id}>
+                <button type="button" onClick={() => {
+                  if ((window.TTPersistenceBoundary?.pilots || window.TTPilotAdapter)?.choosePilot(pilot.id)) setPilotSelectorOpen(false);
+                }}>
+                  <span aria-hidden="true">{pilot.avatar || '🚀'}</span>
+                  <strong>{pilot.name}</strong>
+                </button>
+                {pilotAdapter?.renamePilot && <button className="btn alt" type="button" onClick={() => {
+                  const proposed = window.prompt(copy['ui.106'], pilot.name);
+                  if (proposed === null) return;
+                  if (pilotAdapter.renamePilot?.(pilot.id, proposed)) {
+                    setPilots(pilotAdapter.readPilots());
+                    setPilotError('');
+                  } else setPilotError(copy['ui.101']);
+                }}>{copy['ui.104']}</button>}
+                {pilotAdapter?.deletePilot && <button className="btn alt" type="button" onClick={() => {
+                  if (!window.confirm(copy['ui.107'])) return;
+                  if (pilotAdapter.deletePilot?.(pilot.id)) {
+                    setPilots(pilotAdapter.readPilots());
+                    setPilotError('');
+                  } else setPilotError(copy['ui.108']);
+                }}>{copy['ui.105']}</button>}
+              </div>
             ))}
           </div>
           <form onSubmit={event => {

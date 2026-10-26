@@ -61,6 +61,36 @@ test('flagged React pilot persistence does not depend on legacy profile mutators
   expect(result.activeId).not.toBe(result.createdId);
 });
 
+test('flagged React profile controls rename and delete pilots without legacy mutators', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.__TTFeatureFlags = { reactCoreScreens: true };
+    window.TTProfiles = undefined;
+  });
+  await enterGame(page);
+  await page.evaluate(() => {
+    window.TTProfiles.create = () => { throw new Error('legacy create must not be called'); };
+    window.TTProfiles.remove = () => { throw new Error('legacy remove must not be called'); };
+  });
+  await page.locator('#menuBtn').click();
+  await page.locator('.drawerProfileSwitch').click();
+  await expect(page.locator('.ttReactPilotSelector')).toBeVisible();
+
+  page.once('dialog', dialog => dialog.accept('Renamed Pilot'));
+  await page.locator('.ttReactPilotTile').filter({ hasText: 'Pilot 1' }).getByRole('button', { name: 'Rename' }).click();
+  await expect(page.locator('.ttReactPilotTile').filter({ hasText: 'Renamed Pilot' })).toBeVisible();
+
+  await page.locator('#ttReactPilotName').fill('Second Pilot');
+  await page.locator('.ttReactPilotCreate button').click();
+  await expect(page.locator('.ttReactPilotSelector')).toBeHidden();
+  await dismissTour(page);
+  await page.locator('#menuBtn').click();
+  await page.locator('.drawerProfileSwitch').click();
+  await page.once('dialog', dialog => dialog.accept());
+  await page.locator('.ttReactPilotTile').filter({ hasText: 'Second Pilot' }).getByRole('button', { name: 'Delete' }).click();
+  await expect(page.locator('.ttReactPilotTile').filter({ hasText: 'Second Pilot' })).toHaveCount(0);
+  await expect(page.locator('.ttReactPilotTile').filter({ hasText: 'Renamed Pilot' })).toBeVisible();
+});
+
 test('pilot creation and switching preserve separate local profile identities', async ({ page }) => {
   await enterGame(page);
   await page.locator('#headerPilot').click();
