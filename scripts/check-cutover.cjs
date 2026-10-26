@@ -26,6 +26,12 @@ function assertCutoverContracts({ stableSource, viteConfig, pagesWorkflow, matri
   if (!pagesWorkflow.includes('Restore stable release entrypoint')) {
     throw new Error('The Pages workflow must restore the published stable artifact');
   }
+  if (!pagesWorkflow.includes("VITE_REACT_CORE_SCREENS: 'true'")) {
+    throw new Error('The Pages workflow must enable the React development entrypoint');
+  }
+  if (!viteConfig.includes('reactCoreScreensEnabled')) {
+    throw new Error('The build must materialize the React ownership flag in the generated entrypoint');
+  }
   if (/service[-_ ]?role|service_role|SUPABASE_SERVICE_ROLE/i.test(`${stableSource}\n${viteConfig}\n${pagesWorkflow}`)) {
     throw new Error('Privileged Supabase credentials must never enter the browser build');
   }
