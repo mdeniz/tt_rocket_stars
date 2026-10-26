@@ -3,6 +3,7 @@ import { createMissionPersistence, type MissionPersistenceAdapter } from './reac
 import { createReactPilotPersistence } from './react-pilot-persistence';
 import { createReactInventoryPersistence, type InventoryCompatibilityBridge, type ReactInventoryPersistenceAdapter } from './react-inventory-persistence';
 import { createReactBackupPersistence, type ReactBackupPersistenceAdapter } from './react-backup-persistence';
+import { createReactCloudSyncBoundary, type ReactCloudSyncBoundary, type LegacyCloudSyncAdapter } from './react-cloud-sync';
 
 export interface FullscreenAdapter {
   requestFullscreen(): Promise<boolean>;
@@ -49,6 +50,7 @@ declare global {
     TTAudio?: { sfx?: (name: string) => void };
     TTPilotAdapter?: PilotAdapter;
     TTPersistenceBoundary?: PersistenceBoundary;
+    TTCloudSyncAdapter?: LegacyCloudSyncAdapter;
     TTBackupControls?: BackupControlsAdapter;
     TTSettingsAdapter?: LegacySettingsStore;
     TTCoreScreensAdapter?: CoreScreensAdapter;
@@ -120,6 +122,7 @@ export interface BackupControlsAdapter {
 
 export interface PersistenceBoundary {
   pilots: PilotAdapter;
+  cloud: ReactCloudSyncBoundary;
   backups: BackupControlsAdapter;
   mission: MissionPersistenceAdapter;
   inventory: InventoryAdapter;
@@ -225,12 +228,14 @@ export function installPersistenceBoundary(): void {
     ? createReactInventoryAdapter(createReactInventoryPersistence())
     : createInventoryAdapter(core);
   const achievements = createAchievementAdapter(core);
+  const cloud = createReactCloudSyncBoundary(() => window.TTCloudSyncAdapter);
   window.TTPilotAdapter = pilots;
   window.TTBackupControls = backups;
   window.TTInventoryAdapter = inventory;
   window.TTAchievementAdapter = achievements;
   window.TTPersistenceBoundary = {
     pilots,
+    cloud,
     backups,
     mission,
     inventory,
