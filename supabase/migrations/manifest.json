@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "migrations": [
+    {
+      "file": "20261023000000_initial_cloud_progress.sql",
+      "timestamp": "20261023000000",
+      "sha256": "4d3f512a92666281d961283bbf0ee1162ce35d47e726a48fe34dd0272bc359b7"
+    },
+    {
+      "file": "20261023010000_optimistic_cloud_snapshots.sql",
+      "timestamp": "20261023010000",
+      "sha256": "44a1ccde849a8ec21a78ddbdf4593969fada484b0c35c969dd2de33907201a16"
+    },
+    {
+      "file": "20261023020000_harden_cloud_access.sql",
+      "timestamp": "20261023020000",
+      "sha256": "d0e1d57d623b5c991e3fa03145f005f7f9561e696a2837e3f9dc8717161cfafb"
+    },
+    {
+      "file": "20261023030000_crew_access_model.sql",
+      "timestamp": "20261023030000",
+      "sha256": "542d9ff33e281cc10b3341a78cae36742245c112562342b2ae13981bab093158"
+    }
+  ]
+}
