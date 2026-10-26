@@ -111,14 +111,16 @@ export function createMissionPersistence(storage: MissionStorage | undefined, ke
     },
     commitProgress(progress) {
       if (!isPayload(progress) || !isPayload(progress.facts) || !isHistory(progress.history) || !isInventory(progress.inventory)) return false;
-      const values = new Map<string, string>([
-        [key, JSON.stringify(progress.facts)],
-        [historyKey, JSON.stringify(progress.history)],
-        [inventoryKey, JSON.stringify(progress.inventory)],
-      ]);
-      const previous = new Map<string, string | null>();
+      let previous: Map<string, string | null> | null = null;
       try {
-        values.forEach((value, name) => previous.set(name, backing.getItem(name)));
+        const values = new Map<string, string>([
+          [key, JSON.stringify(progress.facts)],
+          [historyKey, JSON.stringify(progress.history)],
+          [inventoryKey, JSON.stringify(progress.inventory)],
+        ]);
+        const snapshot = new Map<string, string | null>();
+        previous = snapshot;
+        values.forEach((value, name) => snapshot.set(name, backing.getItem(name)));
         values.forEach((value, name) => {
           const result = backing.setItem(name, value);
           if (result === false) throw new Error('Mission progress storage write rejected.');
@@ -127,7 +129,7 @@ export function createMissionPersistence(storage: MissionStorage | undefined, ke
         profiles?.sync?.();
         return true;
       } catch {
-        previous.forEach((value, name) => {
+        previous?.forEach((value, name) => {
           try {
             if (value === null) backing.removeItem(name);
             else backing.setItem(name, value);

@@ -36,7 +36,10 @@ jobs:
         run: npx playwright install-deps webkit
       - run: npx playwright install chromium firefox webkit
       - run: npm run check
-      - run: npm run test:e2e
+      - name: Run the full desktop browser matrix
+        env:
+          PLAYWRIGHT_FULL: '1'
+        run: npm run test:e2e
       - name: Run mobile WebKit checks
         env:
           PLAYWRIGHT_MOBILE: '1'

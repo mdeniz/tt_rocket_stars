@@ -336,6 +336,10 @@ test('React practice flow preserves legacy answer progression, audio, and local 
 
 test('flagged React mission completion persists history and Rocket Coins across reloads', async ({ page }) => {
   await launchReactMission(page, 'exam');
+  await page.evaluate(() => {
+    window.__legacyMissionFinishCalls = 0;
+    window.finish = () => { window.__legacyMissionFinishCalls += 1; };
+  });
   for (let index = 0; index < 20; index += 1) {
     const question = await page.locator('#ttReactMissionQuestion').innerText();
     const match = question.match(/(\d+)\s*[×x]\s*(\d+)/);
@@ -351,6 +355,7 @@ test('flagged React mission completion persists history and Rocket Coins across 
   }));
   expect(saved.history[0]).toMatchObject({ mode: 'exam', correct: 20, wrong: 0, coins: { total: 260, achievementBonus: 220 } });
   expect(saved.garage.coins).toBe(260);
+  expect(await page.evaluate(() => window.__legacyMissionFinishCalls)).toBe(0);
 
   await page.reload();
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('cosmotablas-history-v1') || '[]')[0].coins.total)).toBe(260);
