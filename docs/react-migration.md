@@ -148,3 +148,24 @@ coins, equipped the selected part, and updated the active profile payload.
 Legacy garage action calls were instrumented and remained at zero. The page
 reported no console errors or warnings and no XHR/fetch requests. This is local
 Chrome evidence only; real iOS Safari validation is not claimed.
+
+The backup ownership slice adds a typed coordinator for the flag-enabled backup
+controls. It preserves `tt-rocket-backups-v1`, the version-1 envelope, the
+three existing gameplay payload keys, five-entry retention, localized
+confirmations, file export/import, and recovery backups before restore or reset.
+Legacy handlers remain as the rollback path while the flag is disabled. Invalid
+envelopes and storage failures fail closed without replacing the current local
+state.
+
+Chrome DevTools verification of the backup slice on
+`http://127.0.0.1:5182/?dev=backup` enabled `reactCoreScreens` through an init
+script and verified typed ownership, manual backup creation, restore with a
+`Before restore` recovery backup, and File API import. Restored payloads were
+visible in local storage, the console had no errors or warnings, and the
+network panel had no XHR or fetch requests. Chromium E2E also covered offline
+export and reset; mobile WebKit passed the same backup ownership scenarios.
+The final verification ran `npm run check` (119 unit tests and a self-contained
+build), full Chromium E2E (44/44), full WebKit E2E (44/44), strict OpenSpec
+validation, and `git diff --check`. The ownership flag remains disabled by
+default. This is local Chrome/WebKit evidence only; real iOS Safari validation
+is not claimed.

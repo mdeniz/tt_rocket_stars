@@ -31,6 +31,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 - Added flag-gated React dashboard and progress evaluators for pilot-local mission totals, accuracy, experience levels, and per-table progress, with offline rendering and legacy rollback coverage.
 - Added flag-gated React pilot persistence for local profile creation and switching while preserving existing storage keys, backups, offline operation, and legacy rollback.
 - Added flag-gated React inventory ownership for pilot-local garage reads, preview, purchase, and equipment actions while preserving `tt-rocket-garage-v1`, backups, offline behavior, and legacy rollback.
+- Added flag-gated typed backup ownership for local create, restore, import, export, and reset flows while preserving `tt-rocket-backups-v1`, recovery-before-replacement, offline operation, and legacy rollback.
 
 ## [0.1.1] - 2026-10-22
 ### Changed

@@ -106,6 +106,79 @@
     };
   }
 
+  function createBackupPersistence(storage, options = {}) {
+    const safe = createSafeStorage(storage);
+    const backupKey = 'tt-rocket-backups-v1';
+    const payloadKeys = Array.isArray(options.keys) && options.keys.length
+      ? options.keys.slice()
+      : ['cosmotablas-v2', 'cosmotablas-history-v1', 'tt-rocket-garage-v1'];
+    const now = typeof options.now === 'function' ? options.now : () => new Date().toISOString();
+    const id = typeof options.id === 'function'
+      ? options.id
+      : () => Date.now() + '-' + Math.random().toString(36).slice(2, 7);
+    const failure = error => ({ ok: false, error });
+    const success = value => ({ ok: true, value });
+    const readList = () => {
+      try {
+        const value = safe.getItem(backupKey);
+        if (value === null) return [];
+        const parsed = JSON.parse(value);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (_) {
+        return [];
+      }
+    };
+    const capture = () => Object.fromEntries(payloadKeys.map(key => [key, safe.getItem(key)]));
+    const writeList = value => {
+      if (!Array.isArray(value)) return failure('Backup list must be an array.');
+      const written = safe.setItem(backupKey, JSON.stringify(value));
+      return written === false ? failure('Backup list could not be saved.') : success(value);
+    };
+    const apply = payload => {
+      const previous = capture();
+      try {
+        for (const key of payloadKeys) {
+          const value = payload[key];
+          const written = value === null ? safe.removeItem(key) : safe.setItem(key, value);
+          if (written === false) throw Error('Backup payload could not be applied.');
+        }
+        return success(true);
+      } catch (error) {
+        for (const key of payloadKeys) {
+          if (previous[key] === null) safe.removeItem(key);
+          else safe.setItem(key, previous[key]);
+        }
+        return failure(error.message || 'Backup payload could not be applied.');
+      }
+    };
+    return {
+      list: () => clone(readList()),
+      snapshot: () => ({ format: 'tt-rocket-stars-backup', version: 1, createdAt: now(), payload: capture() }),
+      create(label) {
+        const item = { ...this.snapshot(), label, id: id() };
+        const list = [item, ...readList()].slice(0, 5);
+        const result = writeList(list);
+        return result.ok ? success(item) : result;
+      },
+      saveList(value) {
+        return writeList(clone(value));
+      },
+      restore(value) {
+        const result = validateBackup(value, payloadKeys);
+        if (!result.ok) return result;
+        const applied = apply(result.value.payload);
+        return applied.ok ? result : failure(applied.error);
+      },
+      replace(value, recoveryLabel) {
+        const valid = validateBackup(value, payloadKeys);
+        if (!valid.ok) return valid;
+        const recovery = this.create(recoveryLabel);
+        if (!recovery.ok) return recovery;
+        return this.restore(valid.value);
+      },
+    };
+  }
+
   window.TTPersistenceContracts = {
     clone,
     validatePilot,
@@ -116,5 +189,6 @@
     createSafeStorage,
     createPilotPersistence,
     createDomainPersistence,
+    createBackupPersistence,
   };
 }());

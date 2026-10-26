@@ -84,3 +84,69 @@ test('uses the fallback when a domain payload is malformed', () => {
   const adapter = createDomainPersistence(native, 'achievements');
   assert.deepEqual(adapter.read({ completed: [] }), { completed: [] });
 });
+
+test('creates compatible backups and retains unknown envelope fields', () => {
+  const { createBackupPersistence } = loadContracts();
+  const values = new Map([
+    ['cosmotablas-v2', '{}'],
+    ['cosmotablas-history-v1', '[]'],
+    ['tt-rocket-garage-v1', '{"coins":12}'],
+  ]);
+  const native = {
+    getItem: key => values.get(key) ?? null,
+    setItem: (key, value) => { values.set(key, value); return true; },
+    removeItem: key => { values.delete(key); return true; },
+  };
+  const adapter = createBackupPersistence(native, {
+    now: () => '2026-01-01T00:00:00.000Z',
+    id: () => 'backup-1',
+  });
+  const item = adapter.create('Manual');
+  assert.equal(item.ok, true);
+  assert.equal(item.value.id, 'backup-1');
+  assert.equal(item.value.payload['tt-rocket-garage-v1'], '{"coins":12}');
+  const withUnknown = { ...item.value, futureField: { keep: true } };
+  assert.equal(adapter.saveList([withUnknown]).ok, true);
+  assert.deepEqual(adapter.list()[0].futureField, { keep: true });
+});
+
+test('rejects invalid backups without replacing local state', () => {
+  const { createBackupPersistence } = loadContracts();
+  const values = new Map([
+    ['cosmotablas-v2', '{"current":true}'],
+    ['cosmotablas-history-v1', '[]'],
+    ['tt-rocket-garage-v1', '{}'],
+  ]);
+  const native = {
+    getItem: key => values.get(key) ?? null,
+    setItem: (key, value) => { values.set(key, value); return true; },
+    removeItem: key => { values.delete(key); return true; },
+  };
+  const adapter = createBackupPersistence(native);
+  const result = adapter.restore({ format: 'wrong', version: 1, payload: {} });
+  assert.equal(result.ok, false);
+  assert.equal(values.get('cosmotablas-v2'), '{"current":true}');
+});
+
+test('requires a recovery backup before replacing local state', () => {
+  const { createBackupPersistence } = loadContracts();
+  const values = new Map([
+    ['cosmotablas-v2', '{"current":true}'],
+    ['cosmotablas-history-v1', '[]'],
+    ['tt-rocket-garage-v1', '{}'],
+  ]);
+  const native = {
+    getItem: key => values.get(key) ?? null,
+    setItem: (key, value) => { values.set(key, value); return true; },
+    removeItem: key => { values.delete(key); return true; },
+  };
+  const adapter = createBackupPersistence(native, { id: () => 'recovery-1' });
+  const target = { format: 'tt-rocket-stars-backup', version: 1, createdAt: '2026-01-01T00:00:00.000Z', payload: {
+    'cosmotablas-v2': '{"restored":true}',
+    'cosmotablas-history-v1': '[]',
+    'tt-rocket-garage-v1': '{}',
+  } };
+  assert.equal(adapter.replace(target, 'Before restore').ok, true);
+  assert.equal(values.get('cosmotablas-v2'), '{"restored":true}');
+  assert.equal(adapter.list()[0].label, 'Before restore');
+});

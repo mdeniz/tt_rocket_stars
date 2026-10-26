@@ -119,7 +119,8 @@ test('React core navigation stays usable offline and preserves pilot-local ident
   expect(await page.evaluate(() => localStorage.getItem('tt-rocket-profiles-v1'))).not.toBeNull();
 });
 
-test('React persistence boundary preserves pilot switching and fails closed for unavailable backup controls', async ({ page }) => {
+test('React persistence boundary owns backup controls when the flag is enabled', async ({ page }) => {
+  page.on('dialog', dialog => dialog.dismiss());
   await page.addInitScript(() => {
     window.__TTFeatureFlags = { reactCoreScreens: true };
   });
@@ -129,7 +130,7 @@ test('React persistence boundary preserves pilot switching and fails closed for 
     hasBackupBoundary: Boolean(window.TTPersistenceBoundary?.backups),
     aliasesSame: window.TTPersistenceBoundary?.pilots === window.TTPilotAdapter,
   }));
-  const missingBackupControl = await page.evaluate(() => {
+  const backupCreated = await page.evaluate(() => {
     window.createManualBackup = null;
     return window.TTPersistenceBoundary?.backups.createManualBackup() ?? false;
   });
@@ -138,7 +139,129 @@ test('React persistence boundary preserves pilot switching and fails closed for 
     hasBackupBoundary: true,
     aliasesSame: true,
   });
-  expect(missingBackupControl).toBe(false);
+  expect(backupCreated).toBe(true);
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('tt-rocket-backups-v1') || '[]').length)).toBe(1);
+});
+
+test('flagged backup settings preserve English and Spanish confirmations', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.__TTFeatureFlags = { reactCoreScreens: true };
+  });
+  await page.goto('/');
+  await page.locator('#reactLaunchSplash').click();
+  await expect(page.locator('#dashboard')).toBeVisible();
+  const skip = page.locator('#ttTourSkip');
+  await skip.waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
+  if (await skip.isVisible().catch(() => false)) await skip.click();
+  await page.locator('#menuBtn').click();
+  await page.evaluate(() => window.navigate('settings'));
+  await expect(page.locator('#settings')).toBeVisible();
+  await page.locator('#settings .ttSettingsBottomNav .ttSettingsTab').filter({ hasText: 'Backups' }).click();
+
+  let englishMessage;
+  page.once('dialog', async dialog => {
+    englishMessage = dialog.message();
+    await dialog.dismiss();
+  });
+  await page.getByRole('button', { name: 'Save backup' }).click();
+  expect(englishMessage).toBe('Backup saved on this device.');
+
+  await page.evaluate(() => window.setLanguage('es'));
+  await expect(page.getByRole('button', { name: 'Guardar copia' })).toBeVisible();
+  let spanishMessage;
+  page.once('dialog', async dialog => {
+    spanishMessage = dialog.message();
+    await dialog.dismiss();
+  });
+  await page.getByRole('button', { name: 'Guardar copia' }).click();
+  expect(spanishMessage).toBe('Copia guardada en este dispositivo.');
+});
+
+test('flagged backup ownership restores local state after creating a recovery backup', async ({ page }) => {
+  page.on('dialog', async dialog => {
+    if (dialog.type() === 'confirm') await dialog.accept();
+    else await dialog.dismiss();
+  });
+  await page.addInitScript(() => {
+    window.__TTFeatureFlags = { reactCoreScreens: true };
+  });
+  await page.goto('/');
+  await page.evaluate(() => {
+    localStorage.setItem('cosmotablas-v2', JSON.stringify({ current: true }));
+    localStorage.setItem('cosmotablas-history-v1', JSON.stringify([]));
+    localStorage.setItem('tt-rocket-garage-v1', JSON.stringify({ coins: 25 }));
+  });
+  const backupId = await page.evaluate(() => {
+    window.TTBackupControls.createManualBackup();
+    return JSON.parse(localStorage.getItem('tt-rocket-backups-v1'))[0].id;
+  });
+  await page.evaluate(() => localStorage.setItem('cosmotablas-v2', JSON.stringify({ changed: true })));
+  await Promise.all([
+    page.waitForLoadState('load'),
+    page.evaluate(id => window.TTBackupControls.restoreBackup(id), backupId),
+  ]);
+  await page.waitForTimeout(250);
+  const result = await page.evaluate(() => ({
+    progress: JSON.parse(localStorage.getItem('cosmotablas-v2')),
+    backups: JSON.parse(localStorage.getItem('tt-rocket-backups-v1')),
+  }));
+  expect(result.progress).toEqual({ current: true });
+  expect(result.backups.some(item => item.label === 'Before restore')).toBe(true);
+});
+
+test('flagged backup ownership supports offline export and reset', async ({ page, context }) => {
+  page.on('dialog', async dialog => {
+    if (dialog.type() === 'confirm') await dialog.accept();
+    else await dialog.dismiss();
+  });
+  await page.addInitScript(() => {
+    window.__TTFeatureFlags = { reactCoreScreens: true };
+  });
+  await page.goto('/');
+  await page.evaluate(() => {
+    localStorage.setItem('cosmotablas-v2', JSON.stringify({ current: true }));
+    localStorage.setItem('cosmotablas-history-v1', JSON.stringify([]));
+    localStorage.setItem('tt-rocket-garage-v1', JSON.stringify({ coins: 25 }));
+  });
+  await context.setOffline(true);
+  const download = page.waitForEvent('download');
+  await page.evaluate(() => window.TTBackupControls.exportBackup());
+  expect((await download).suggestedFilename()).toMatch(/^tt-rocket-stars-backup-.*\.json$/);
+  await context.setOffline(false);
+
+  const imported = JSON.stringify({
+    format: 'tt-rocket-stars-backup',
+    version: 1,
+    createdAt: '2026-01-01T00:00:00.000Z',
+    payload: {
+      'cosmotablas-v2': JSON.stringify({ imported: true }),
+      'cosmotablas-history-v1': JSON.stringify([{ correct: 1 }]),
+      'tt-rocket-garage-v1': JSON.stringify({ coins: 99 }),
+    },
+  });
+  const importedReload = page.waitForEvent('framenavigated');
+  await page.evaluate(json => {
+    const input = document.getElementById('backupImport');
+    const file = new File([json], 'backup.json', { type: 'application/json' });
+    const transfer = new DataTransfer();
+    transfer.items.add(file);
+    Object.defineProperty(input, 'files', { configurable: true, value: transfer.files });
+    window.TTBackupControls.importBackup({ target: input });
+  }, imported);
+  await importedReload;
+  await page.waitForTimeout(250);
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('cosmotablas-v2')))).toEqual({ imported: true });
+
+  const resetReload = page.waitForEvent('framenavigated');
+  await page.evaluate(() => window.TTBackupControls.resetWithBackup());
+  await resetReload;
+  await page.waitForTimeout(250);
+  const resetState = await page.evaluate(() => ({
+    progress: localStorage.getItem('cosmotablas-v2'),
+    backups: JSON.parse(localStorage.getItem('tt-rocket-backups-v1') || '[]'),
+  }));
+  expect(resetState.progress).toBeNull();
+  expect(resetState.backups.some(item => item.label === 'Before reset')).toBe(true);
 });
 
 test('React mission setup delegates supported configuration to gameplay', async ({ page }) => {

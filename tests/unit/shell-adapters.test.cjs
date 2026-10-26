@@ -40,6 +40,14 @@ test('persistence boundary exposes fail-closed backup controls and keeps pilot a
   assert.match(adapter, /achievements,/);
 });
 
+test('flagged persistence owns backup mutations through the typed adapter', () => {
+  assert.match(adapter, /createReactBackupPersistence/);
+  assert.match(adapter, /ownsBackups/);
+  assert.match(adapter, /importBackup/);
+  assert.match(adapter, /reactCoreScreensEnabled\(\)\s*\?\s*createReactBackupControls/);
+  assert.match(adapter, /createReactBackupPersistence\(\)/);
+});
+
 test('core screen adapter keeps navigation and refresh behind stable legacy contracts', () => {
   assert.match(adapter, /CoreScreenId = 'dashboard' \| 'home' \| 'insights' \| 'garage' \| 'awards'/);
   assert.match(adapter, /createCoreScreensAdapter/);
