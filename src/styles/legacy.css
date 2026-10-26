@@ -169,7 +169,10 @@ html[data-rocket-theme] .btn.alt{background:var(--theme-panel3)!important;color:
 /* Original <style> block 02 */
 
 /* Responsive tablet / landscape layout */
-html,body{min-height:100%;}main{max-width:1180px;width:100%;padding-bottom:24px}
+html,body{min-height:100%;}
+/* Keep the fixed scenery layer behind short documents without constraining long pages. */
+html,body{min-height:100vh;min-height:100dvh;}
+main{max-width:1180px;width:100%;padding-bottom:24px}
 #play .game{max-width:100%;margin:12px auto}
 #play .game{display:grid;grid-template-columns:minmax(0,1fr) minmax(270px,0.8fr);grid-template-areas:"hud hud" "meter meter" "prompt keypad" "question keypad" "label keypad" "answer keypad" "feedback actions";column-gap:clamp(16px,3vw,44px);align-items:center}
 #play .game>div:first-child{grid-area:hud}

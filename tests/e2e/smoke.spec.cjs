@@ -140,3 +140,26 @@ test('settings navigation isolates local categories', async ({ page }) => {
  }
  await expect(page.locator('#ttAuthPanel')).toBeHidden();
 });
+
+test('theme background covers a tall viewport on short settings pages', async ({ page }) => {
+ await page.setViewportSize({width:1280,height:1500});
+ await page.goto('/');await page.locator('#launchSplash').click();
+ await expect(page.locator('#launchSplash')).toBeHidden();
+ const skip=page.locator('#ttTourSkip');
+ await page.locator('#ttTourShade').waitFor({state:'visible',timeout:3000}).catch(()=>{});
+ if(await skip.isVisible().catch(()=>false))await skip.click();
+ await page.locator('#menuBtn').click();
+ await page.locator('#sideDrawer [data-section="settings"]').click();
+ await expect(page.locator('#settings')).toBeVisible();
+ await page.evaluate(()=>window.setRocketTheme('galaxy'));
+ const metrics=await page.evaluate(()=>({
+  viewportHeight:window.innerHeight,
+  rootHeight:document.documentElement.getBoundingClientRect().height,
+  bodyHeight:document.body.getBoundingClientRect().height,
+  scrollWidth:document.documentElement.scrollWidth,
+  clientWidth:document.documentElement.clientWidth,
+ }));
+ expect(metrics.rootHeight).toBeGreaterThanOrEqual(metrics.viewportHeight);
+ expect(metrics.bodyHeight).toBeGreaterThanOrEqual(metrics.viewportHeight);
+ expect(metrics.scrollWidth).toBeLessThanOrEqual(metrics.clientWidth);
+});

@@ -35,6 +35,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 
 ### Fixed
 - Prevented self-contained release HTML from exposing inline JavaScript as visible content during startup.
+- Ensured themed backgrounds cover the full viewport on short pages without restricting long-page scrolling.
 
 ## [0.1.1] - 2026-10-22
 ### Changed
