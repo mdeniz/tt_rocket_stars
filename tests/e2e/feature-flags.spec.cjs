@@ -304,6 +304,8 @@ async function launchReactMission(page, mode = 'practice') {
   if (mode === 'timed') {
     await setup.getByRole('button', { name: /Long mission/ }).click();
     await setup.getByRole('button', { name: '5 minutes', exact: true }).click();
+  } else if (mode === 'speed') {
+    await setup.getByRole('button', { name: /60 seconds|60 segundos/ }).click();
   } else if (mode === 'exam') {
     await setup.getByRole('button', { name: /20 challenges|20 retos/ }).click();
   }
@@ -370,6 +372,19 @@ test('React timed flow exposes a running timer and remains locally playable', as
   await expect.poll(() => page.locator('.ttReactMissionStatus').innerText(), { timeout: 3000 }).not.toBe(initialClock);
   await expect(page.locator('#ttReactMissionQuestion')).not.toHaveText('');
   await expect(page.locator('#ttReactMissionAnswer')).toBeEnabled();
+});
+
+test('React speed flow advances its countdown and completes at timeout', async ({ page }) => {
+  await launchReactMission(page, 'speed');
+  const initialClock = await page.locator('.ttReactMissionStatus').innerText();
+  expect(initialClock).toMatch(/1:00/);
+  await expect.poll(() => page.locator('.ttReactMissionStatus').innerText(), { timeout: 3000 }).not.toBe(initialClock);
+
+  await page.evaluate(() => {
+    const originalNow = Date.now;
+    Date.now = () => originalNow() + 61_000;
+  });
+  await expect(page.locator('.ttReactMissionPlayer')).toContainText(/Mission complete|Misión completada/, { timeout: 3000 });
 });
 
 test('React mission remains playable offline without cloud configuration', async ({ page, context }) => {

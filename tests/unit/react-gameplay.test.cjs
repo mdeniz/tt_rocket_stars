@@ -69,3 +69,12 @@ test('supports exam completion and speed timeout semantics', () => {
   assert.equal(expired.status, 'complete');
   assert.equal(expired.remainingSeconds, 0);
 });
+
+test('preserves the speed timeout reward after a valid answer streak', () => {
+  let speed = gameplay.startMission({ tables: [2], operation: 'mul', mode: 'speed' }, 1000, () => 0);
+  for (let index = 0; index < 5; index += 1) speed = gameplay.submitAnswer(speed, speed.question.result, 1000 + index);
+  const expired = gameplay.advanceTimer(speed, 61_001);
+  assert.equal(expired.status, 'complete');
+  assert.equal(expired.reward.total, 15);
+  assert.equal(expired.reward.bonus, 10);
+});

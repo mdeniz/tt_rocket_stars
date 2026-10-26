@@ -94,7 +94,7 @@ function ReactMissionPlayer({ locale, state, onChange, onExit }: {
     onChange(next);
   };
   useEffect(() => {
-    if (state.status !== 'active' || state.config.mode !== 'timed') return;
+    if (state.status !== 'active' || !['timed', 'speed'].includes(state.config.mode)) return;
     const timer = window.setInterval(() => updateMission(advanceTimer(state)), 250);
     return () => window.clearInterval(timer);
   }, [state]);
