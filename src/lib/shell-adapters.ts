@@ -2,6 +2,7 @@ import type { ShellPilotSummary } from './shell-contracts';
 import { createMissionPersistence, type MissionPersistenceAdapter } from './react-gameplay-persistence';
 import { createReactPilotPersistence } from './react-pilot-persistence';
 import { createReactInventoryPersistence, type InventoryCompatibilityBridge, type ReactInventoryPersistenceAdapter } from './react-inventory-persistence';
+import { createReactBackupPersistence, type ReactBackupPersistenceAdapter } from './react-backup-persistence';
 
 export interface FullscreenAdapter {
   requestFullscreen(): Promise<boolean>;
@@ -36,6 +37,8 @@ interface LegacyBackupControls {
   createManualBackup?: () => unknown;
   exportBackup?: () => unknown;
   resetWithBackup?: () => unknown;
+  restoreBackup?: (id: string) => unknown;
+  importBackup?: (event: Event) => unknown;
 }
 
 declare global {
@@ -105,9 +108,12 @@ export interface PilotAdapter {
 }
 
 export interface BackupControlsAdapter {
+  ownsBackups(): boolean;
   createManualBackup(): boolean;
   exportBackup(): boolean;
   resetWithBackup(): boolean;
+  restoreBackup(id: string): boolean;
+  importBackup(event: Event): void;
 }
 
 export interface PersistenceBoundary {
@@ -169,11 +175,11 @@ export function installPilotAdapter(): void {
   window.TTPilotAdapter = createPilotAdapter();
 }
 
-function callLegacyControl(name: keyof LegacyBackupControls): boolean {
+function callLegacyControl(name: keyof LegacyBackupControls, ...args: unknown[]): boolean {
   const control = (window as unknown as Record<string, unknown>)[name];
   if (typeof control !== 'function') return false;
   try {
-    (control as () => unknown)();
+    (control as (...values: unknown[]) => unknown)(...args);
     return true;
   } catch {
     return false;
@@ -182,9 +188,23 @@ function callLegacyControl(name: keyof LegacyBackupControls): boolean {
 
 export function createBackupControlsAdapter(): BackupControlsAdapter {
   return {
+    ownsBackups: () => false,
     createManualBackup: () => callLegacyControl('createManualBackup'),
     exportBackup: () => callLegacyControl('exportBackup'),
     resetWithBackup: () => callLegacyControl('resetWithBackup'),
+    restoreBackup: id => callLegacyControl('restoreBackup', id),
+    importBackup: event => { callLegacyControl('importBackup', event); },
+  };
+}
+
+export function createReactBackupControls(adapter: ReactBackupPersistenceAdapter = createReactBackupPersistence()): BackupControlsAdapter {
+  return {
+    ownsBackups: () => true,
+    createManualBackup: () => adapter.createManualBackup(),
+    exportBackup: () => adapter.exportBackup(),
+    resetWithBackup: () => adapter.resetWithBackup(),
+    restoreBackup: id => adapter.restoreBackup(id),
+    importBackup: event => { adapter.importBackup(event); },
   };
 }
 
@@ -194,7 +214,9 @@ export function createBackupControlsAdapter(): BackupControlsAdapter {
  */
 export function installPersistenceBoundary(): void {
   const pilots = reactCoreScreensEnabled() ? createReactPilotPersistence() : createPilotAdapter();
-  const backups = createBackupControlsAdapter();
+  const backups = reactCoreScreensEnabled()
+    ? createReactBackupControls(createReactBackupPersistence())
+    : createBackupControlsAdapter();
   const mission = createMissionPersistence(window.TTLocalStore, 'cosmotablas-v2');
   const core = window.TTCoreScreensAdapter || createCoreScreensAdapter();
   const inventory = reactCoreScreensEnabled()
