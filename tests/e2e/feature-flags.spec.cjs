@@ -154,7 +154,8 @@ test('flagged backup settings preserve English and Spanish confirmations', async
   await skip.waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
   if (await skip.isVisible().catch(() => false)) await skip.click();
   await page.locator('#menuBtn').click();
-  await page.locator('#sideDrawer [data-section="settings"]').click();
+  await page.evaluate(() => window.navigate('settings'));
+  await expect(page.locator('#settings')).toBeVisible();
   await page.locator('#settings .ttSettingsBottomNav .ttSettingsTab').filter({ hasText: 'Backups' }).click();
 
   let englishMessage;
