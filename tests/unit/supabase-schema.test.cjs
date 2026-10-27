@@ -10,7 +10,9 @@ const hardeningMigration = fs.readFileSync(path.join(__dirname, '../../supabase/
 const crewMigration = fs.readFileSync(path.join(__dirname, '../../supabase/migrations/20261023030000_crew_access_model.sql'), 'utf8');
 const cloudRpcMigration = fs.readFileSync(path.join(__dirname, '../../supabase/migrations/20261027150000_cloud_access_rpcs.sql'), 'utf8');
 const snapshotLockMigration = fs.readFileSync(path.join(__dirname, '../../supabase/migrations/20261027145301_bound_snapshot_lock_wait.sql'), 'utf8');
+const securityMigration = fs.readFileSync(path.join(__dirname, '../../supabase/migrations/20261027220642_harden_function_grants_and_indexes.sql'), 'utf8');
 const schemaDocs = fs.readFileSync(path.join(__dirname, '../../docs/supabase-schema.md'), 'utf8');
+const securityDocs = fs.readFileSync(path.join(__dirname, '../../docs/supabase-security-hardening.md'), 'utf8');
 
 test('cloud schema defines user-owned pilot and versioned progress tables', () => {
   assert.match(migration, /create table if not exists public\.pilots/i);
@@ -103,4 +105,24 @@ test('crew schema documentation states ownership, access, and migration boundari
   assert.match(schemaDocs, /membership alone/i);
   assert.match(schemaDocs, /20261023030000_crew_access_model\.sql/i);
   assert.match(schemaDocs, /issue #56/i);
+});
+
+test('security hardening migration fixes function boundaries and advisor indexes', () => {
+  assert.match(securityMigration, /where evtname = 'ensure_rls'/i);
+  assert.match(securityMigration, /trigger_enabled <> 'O'/i);
+  assert.match(securityMigration, /revoke all on function public\.rls_auto_enable\(\) from public, anon, authenticated/i);
+  assert.match(securityMigration, /alter function public\.set_updated_at\(\) set search_path = public, pg_catalog/i);
+  assert.match(securityMigration, /revoke all on function public\.set_updated_at\(\) from public, anon, authenticated/i);
+  assert.match(securityMigration, /grant execute on function public\.is_active_crew_member\(uuid\) to authenticated/i);
+  assert.match(securityMigration, /grant execute on function public\.is_active_crew_admin\(uuid\) to authenticated/i);
+  assert.match(securityMigration, /revoke all on function public\.is_active_crew_member\(uuid\) from public, anon/i);
+  assert.match(securityMigration, /revoke all on function public\.is_active_crew_admin\(uuid\) from public, anon/i);
+  assert.match(crewMigration, /user_id = \(select auth\.uid\(\)\)/i);
+  assert.match(crewMigration, /owner_user_id = \(select auth\.uid\(\)\)/i);
+  assert.match(securityMigration, /create index if not exists pilot_access_granted_by_user_id_idx/i);
+  assert.match(securityMigration, /create index if not exists pilot_access_user_id_idx/i);
+  assert.match(securityMigration, /create index if not exists progress_snapshots_pilot_id_user_id_idx/i);
+  assert.doesNotMatch(securityMigration, /service[_ -]?role|supabase_service_role/i);
+  assert.match(securityDocs, /Leaked-password protection/i);
+  assert.match(securityDocs, /provider-managed exception/i);
 });
