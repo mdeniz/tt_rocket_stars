@@ -186,7 +186,11 @@ async function installCloudFixture(page, options = {}) {
       if (await skip.isVisible().catch(() => false)) await skip.click();
       await page.locator('#menuBtn').click();
       await page.locator('#sideDrawer [data-section="settings"]').click();
-      await page.locator('#ttAuthPanel').scrollIntoViewIfNeeded();
+      const cloudTab = page.locator('#settings .ttSettingsBottomNav .ttSettingsTab[data-target="ttAuthPanel"]');
+      await expect(cloudTab).toHaveCount(1);
+      await cloudTab.click();
+      await expect(cloudTab).toHaveClass(/active/);
+      await expect(page.locator('#ttAuthPanel')).toHaveClass(/ttSettingsActive/);
       await expect(page.locator('#ttCloudSyncNow')).toBeVisible();
     },
   };

@@ -58,6 +58,7 @@ declare global {
     TTInventoryAdapter?: InventoryAdapter;
     TTAchievementAdapter?: AchievementAdapter;
     TTRocketInventoryBridge?: InventoryCompatibilityBridge;
+    __TT_FEATURES__?: { cloudAccess?: boolean };
     __TTFeatureFlags?: { reactCoreScreens?: boolean };
     TTEnterGame?: () => void;
     TTOpenPilotSelector?: () => void;
