@@ -20,5 +20,8 @@
 
 ## Workflow follow-up
 
+- Task 2.1 is blocked in the approved free Supabase plan because the provider
+  exposes leaked-password protection only on Pro and higher plans. Do not
+  upgrade the plan without an explicit cost decision.
 - Archive the change only after all acceptance criteria, CI, review, advisor, and hosted verification evidence are complete.
 - Keep #184 and #170 in verification until their dependencies and compatibility exception are explicitly resolved.
