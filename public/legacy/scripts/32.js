@@ -285,7 +285,10 @@
     if (user) { status.textContent = `${text('as')}. ${text('signedIn')}`;status.dataset.state = 'success';setCloudStatus('syncIdle', 'info'); }
     updateCloudControls(session);
   };
-  async function syncCloud() {
+  async function syncCloud(options = {}) {
+    const manual = options?.manual === true;
+    if (cloudAutoSyncSuppressed && !manual) return;
+    if (manual) cloudAutoSyncSuppressed = false;
     const session = readSession(); const pilot = localPilot();
     if (!session?.access_token || !session.user) { setCloudStatus('missing', 'info'); return; }
     if (!pilot) { await listCloudPilots(); return; }
@@ -294,12 +297,20 @@
     try {
       const result = await cloudAdapter.upload();
       if (result.status === 'uploaded') try { window.TTLocalStore.setItem(syncKey, new Date().toISOString()); } catch (_) {}
+      if (result.status === 'failed') cloudAutoSyncSuppressed = true;
     } finally { syncNow.disabled = false; }
   }
   let syncTimer = null;
+  let cloudAutoSyncSuppressed = false;
   const scheduleSync = () => {
+    cloudAutoSyncSuppressed = false;
     if (syncTimer) clearTimeout(syncTimer);
-    syncTimer = setTimeout(() => { syncTimer = null; cloudAdapter?.queueUpload?.(0); }, 1200);
+    syncTimer = setTimeout(() => {
+      syncTimer = null;
+      Promise.resolve(cloudAdapter?.queueUpload?.(0)).then(result => {
+        if (result?.status === 'failed') cloudAutoSyncSuppressed = true;
+      }).catch(() => { cloudAutoSyncSuppressed = true; });
+    }, 1200);
   };
   async function deleteCloudData() {
     const session = readSession();if (!session?.access_token || !session.user)return;
@@ -384,7 +395,7 @@
     catch (error) { setStatus(classifyError(error), 'error'); } finally { recovery.disabled = false; }
   });
   signOut.addEventListener('click', async () => { const session = readSession(); if (syncTimer) clearTimeout(syncTimer); syncTimer = null; cloudAdapter?.cancel?.(); clearSession();updateSessionUi(null);if (session?.access_token) { try { await fetch(api('/logout'), { method: 'POST', headers: headers(session.access_token) }); } catch (_) {} }setStatus('signedOut', 'success'); });
-  syncNow.addEventListener('click', syncCloud);restoreCloud.addEventListener('click', restoreCloudData);listCloud.addEventListener('click', listCloudPilots);deleteCloud.addEventListener('click', deleteCloudData);
+  syncNow.addEventListener('click', () => syncCloud({ manual: true }));restoreCloud.addEventListener('click', restoreCloudData);listCloud.addEventListener('click', listCloudPilots);deleteCloud.addEventListener('click', deleteCloudData);
   async function restoreSession() {
     if (!config.url || !config.anonKey) { form.classList.add('hidden');setStatus('missing', 'info');updateCloudControls(null);return; }
     let session;
@@ -409,8 +420,8 @@
     };
   }
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') scheduleSync(); });
-  window.setInterval(() => { if (document.visibilityState === 'visible' && readSession()?.access_token) syncCloud(); }, 30000);
-  window.TTAuth = { getSession: readSession, signOut: () => signOut.click(), syncNow: syncCloud, scheduleSync };
+  window.setInterval(() => { if (document.visibilityState === 'visible' && readSession()?.access_token && !cloudAutoSyncSuppressed) syncCloud(); }, 30000);
+  window.TTAuth = { getSession: readSession, signOut: () => signOut.click(), syncNow: () => syncCloud({ manual: true }), scheduleSync };
   new MutationObserver(updateCloudLabels).observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
   updateCloudLabels();updateCloudControls(readSession());restoreSession();
 }());

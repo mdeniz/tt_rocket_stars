@@ -56,3 +56,13 @@ write synchronization metadata for the previous session.
 - **WHEN** a second invited account signs in after a first account has an active cloud request
 - **THEN** the first account's request cannot publish results or retry under the second account
 - **AND** a later synchronization uses only the second account's access token and local pilot
+
+### Requirement: Automatic synchronization failures are bounded
+
+Automatic synchronization MUST stop retrying after a bounded provider failure until
+the user manually requests synchronization or creates new local work.
+
+#### Scenario: Automatic retries stop after a bounded failure
+- **WHEN** an automatic synchronization attempt exhausts its bounded retries
+- **THEN** the application reports the failure and stops periodic automatic attempts
+- **AND** a manual synchronization request or new local save resumes synchronization
