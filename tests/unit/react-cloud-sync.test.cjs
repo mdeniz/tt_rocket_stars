@@ -23,3 +23,10 @@ test('persistence boundary resolves the legacy cloud adapter lazily', () => {
   assert.match(legacy, /cloudAdapter\.listPilots/);
   assert.match(legacy, /cloudAdapter\.restorePilot/);
 });
+
+test('automatic cloud retries stop after a failure until local work or a manual sync resumes them', () => {
+  assert.match(legacy, /let cloudAutoSyncSuppressed = false/);
+  assert.match(legacy, /if \(cloudAutoSyncSuppressed && !manual\) return;/);
+  assert.match(legacy, /cloudAutoSyncSuppressed = true/);
+  assert.match(legacy, /cloudAutoSyncSuppressed = false/);
+});
