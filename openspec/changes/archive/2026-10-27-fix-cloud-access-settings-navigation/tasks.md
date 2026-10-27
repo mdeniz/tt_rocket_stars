@@ -9,7 +9,7 @@
 
 - [x] 2.1 Update the cloud E2E fixture to open Cloud access through its Settings tab and verify the signed-out state performs no authenticated cloud request.
 - [x] 2.2 Verify English and Spanish Cloud access labels, local category isolation, and the default hidden state with the relevant unit/E2E tests.
-- [ ] 2.3 Run `npm run check`, the relevant browser suites, `npm run build`, strict OpenSpec validation, and Chrome DevTools against the deployed development artifact; record URL, actions, visible results, console output, and network evidence.
+- [x] 2.3 Run `npm run check`, the relevant browser suites, `npm run build`, strict OpenSpec validation, and Chrome DevTools against the deployed development artifact; record URL, actions, visible results, console output, and network evidence.
 
 ## Workflow follow-up
 
