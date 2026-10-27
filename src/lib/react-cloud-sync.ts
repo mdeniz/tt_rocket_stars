@@ -9,6 +9,7 @@ export type LegacyCloudSyncAdapter = BrowserCloudBoundary;
 
 export interface ReactCloudSyncBoundary {
   isAvailable(): boolean;
+  cancel(): void;
   upload(): Promise<CloudSyncResult>;
   download(): Promise<CloudSyncResult>;
   listPilots(): Promise<CloudSyncResult>;
@@ -37,6 +38,7 @@ export function createReactCloudSyncBoundary(resolve: () => LegacyCloudSyncAdapt
   };
   return Object.freeze({
     isAvailable: () => Boolean(adapter()),
+    cancel: () => { adapter()?.cancel?.(); },
     upload: () => {
       const cloud = adapter();
       return cloud ? safeCall(() => cloud.upload(), { status: 'failed' }) : Promise.resolve(disabled());

@@ -25,11 +25,13 @@ export function createTrustedCloudProvider({ functionUrl, getSession = async () 
     ? Number(requestTimeoutMs)
     : DEFAULT_REQUEST_TIMEOUT_MS;
   const cache = new Map();
+  const activeControllers = new Set();
   const request = async (operation, payload = {}) => {
     if (!endpoint || typeof fetchImpl !== 'function') throw Object.assign(new Error('Trusted cloud transport is unavailable.'), { code: 'unavailable' });
     const session = await getSession();
     if (!session?.access_token || !session?.user?.id) return null;
     const controller = typeof AbortController === 'function' ? new AbortController() : null;
+    if (controller) activeControllers.add(controller);
     let timedOut = false;
     let timer;
     const timeoutError = Object.assign(new Error('Cloud request timed out.'), { code: 'timeout' });
@@ -51,9 +53,11 @@ export function createTrustedCloudProvider({ functionUrl, getSession = async () 
       result = await Promise.race([requestPromise, timeoutPromise]);
     } catch (error) {
       if (timedOut) throw timeoutError;
+      if (controller?.signal.aborted) throw Object.assign(new Error('Cloud request cancelled.'), { code: 'cancelled', noRetry: true });
       throw error;
     } finally {
       clearTimeout(timer);
+      if (controller) activeControllers.delete(controller);
     }
     const { response, body } = result;
     if (!response.ok) {
@@ -66,6 +70,10 @@ export function createTrustedCloudProvider({ functionUrl, getSession = async () 
 
   return {
     session: getSession,
+    cancelPending() {
+      for (const controller of activeControllers) controller.abort();
+      activeControllers.clear();
+    },
     async upsertPilot(_session, local) { return { id: local.localId }; },
     async writeSnapshot(_session, _pilotId, expectedVersion, local) {
       const result = await request('upload', { expectedVersion, pilot: local });

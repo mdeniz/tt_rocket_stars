@@ -13,6 +13,7 @@
 - [x] 2.2 Add a feature flag with a disabled-by-default fallback to the existing compatibility adapter and verify signed-out, unconfigured, offline, timeout, malformed-response, and rollback flows preserve local gameplay and backups.
 - [x] 2.3 Run the shared cloud contract tests against the trusted adapter and compatibility adapter, covering upload, download, discovery, conflict, retry, deletion, malformed data, and per-account isolation; verify no local state is replaced on failure.
 - [x] 2.4 Run the generated-artifact checks and `npm run check`; verify both stable `index.html` and development `index_next.html` remain self-contained and no privileged credential is present.
+- [x] 2.5 Cancel active trusted requests, queued uploads, and retry attempts when the authenticated session is signed out or replaced; verify cancelled work cannot publish stale failures or synchronization metadata.
 
 ## 3. Hosted Supabase verification
 

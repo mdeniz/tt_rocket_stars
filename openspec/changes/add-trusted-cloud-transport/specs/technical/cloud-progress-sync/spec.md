@@ -38,3 +38,21 @@ Function MUST not block local gameplay or delete local progress.
 - **THEN** the function returns a retryable `cloud_timeout` response with HTTP
   `504`
 - **AND** the browser preserves local progress and can retry the operation later
+
+### Requirement: Cloud operations follow the authenticated session lifecycle
+
+The browser cloud boundary MUST cancel pending requests, queued uploads, and
+retry attempts when the authenticated session is signed out or replaced by a
+different session. A cancelled operation MUST NOT publish a stale failure or
+write synchronization metadata for the previous session.
+
+#### Scenario: Sign-out cancels pending synchronization
+- **WHEN** a user signs out while an upload or queued retry is pending
+- **THEN** the browser aborts the pending trusted request and clears the queued work
+- **AND** local pilot and backup data remain unchanged
+- **AND** the cancelled operation does not change the UI to a stale error state
+
+#### Scenario: Account switch isolates synchronization
+- **WHEN** a second invited account signs in after a first account has an active cloud request
+- **THEN** the first account's request cannot publish results or retry under the second account
+- **AND** a later synchronization uses only the second account's access token and local pilot

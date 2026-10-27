@@ -65,6 +65,28 @@ test('bounds a trusted request that never resolves', async () => {
   await assert.rejects(() => provider.listPilots(), error => error.code === 'timeout');
 });
 
+test('cancels active trusted requests when the session lifecycle ends', async () => {
+  const { createTrustedCloudProvider } = await transport;
+  let aborted = false;
+  const provider = createTrustedCloudProvider({
+    functionUrl: 'https://example.com/function',
+    getSession: async () => ({ access_token: 'token', user: { id: 'user-1' } }),
+    fetchImpl: async (_url, options) => new Promise((_resolve, reject) => {
+      options.signal.addEventListener('abort', () => {
+        aborted = true;
+        reject(Object.assign(new Error('aborted'), { name: 'AbortError' }));
+      }, { once: true });
+    }),
+  });
+
+  const request = provider.listPilots();
+  await new Promise(resolve => setImmediate(resolve));
+  provider.cancelPending();
+
+  await assert.rejects(request, error => error.code === 'cancelled');
+  assert.equal(aborted, true);
+});
+
 test('runs the cloud-sync contract through the trusted provider', async () => {
   const [{ createTrustedCloudProvider }, { createCloudSync }] = await Promise.all([transport, cloudSync]);
   const calls = [];

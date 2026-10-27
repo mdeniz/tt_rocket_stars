@@ -288,6 +288,31 @@ test('serializes direct and queued uploads while preserving the latest pending w
   assert.equal(uploads, 2);
 });
 
+test('cancels an active upload without reporting a stale failure', async () => {
+  const { createCloudSync } = await cloudSync;
+  const statuses = [];
+  let rejectWrite;
+  const provider = {
+    session: async () => ({ user: { id: 'user-1' } }),
+    upsertPilot: async () => ({ id: 'pilot-1' }),
+    writeSnapshot: async () => new Promise((_, reject) => { rejectWrite = reject; }),
+    cancelPending: () => rejectWrite?.(Object.assign(new Error('cancelled'), { code: 'cancelled', noRetry: true })),
+  };
+  const adapter = createCloudSync({
+    provider,
+    getLocalPilot: () => ({ id: 'pilot-1', name: 'Ada', payload: {} }),
+    onStatus: event => statuses.push(event.status),
+    retries: 2,
+  });
+
+  const upload = adapter.upload();
+  await new Promise(resolve => setImmediate(resolve));
+  adapter.cancel();
+
+  assert.equal((await upload).status, 'cancelled');
+  assert.equal(statuses.includes('failed'), false);
+});
+
 test('surfaces a stale write with the current remote snapshot instead of overwriting it', async () => {
   const { createCloudSync } = await cloudSync;
   let rpcCalls = 0;
