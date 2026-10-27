@@ -32,6 +32,11 @@ feature flag are explicitly configured.
 Trusted browser requests have an eight-second timeout, including response-body
 reading. A timeout is reported as a retryable cloud failure and must never
 replace local progress or leave the synchronization UI pending indefinitely.
+The Edge Function applies the same eight-second bound to authenticated data
+operations and returns HTTP `504` with `cloud_timeout` when the provider does
+not complete in time. This bounds both sides of the request and does not alter
+the normal `not-found` response used for a pilot that is not owned by the
+authenticated account.
 
 ## Hosted deployment
 
