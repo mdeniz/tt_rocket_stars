@@ -11,10 +11,11 @@ The function source is under `supabase/functions/trusted-cloud/` and the shared
 request contract is under `supabase/functions/_shared/`. Local gameplay does not
 require the function, a Supabase project, or network access.
 
-When the Supabase CLI is available, serve the function locally with:
+Use the pinned Supabase CLI through `npx` so local and CI commands do not depend
+on a globally installed or silently upgraded binary:
 
 ```bash
-supabase functions serve trusted-cloud --env-file supabase/.env.local
+npx --yes supabase@2.122.0 functions serve trusted-cloud --env-file supabase/.env.local
 ```
 
 The local environment file is not committed. It must contain only local values:
@@ -33,8 +34,8 @@ feature flag are explicitly configured.
 Apply the checked-in migrations in timestamp order before enabling synchronization:
 
 ```bash
-supabase db push
-supabase functions deploy trusted-cloud --no-verify-jwt
+npx --yes supabase@2.122.0 db push
+npx --yes supabase@2.122.0 functions deploy trusted-cloud --no-verify-jwt
 ```
 
 The function validates the bearer token itself so it can return stable domain
@@ -42,7 +43,7 @@ errors and preserve the current invited-account behavior. Configure the followin
 non-secret project values in the Supabase dashboard or CLI secrets manager:
 
 ```bash
-supabase secrets set \
+npx --yes supabase@2.122.0 secrets set \
   SUPABASE_URL="https://<project-ref>.supabase.co" \
   SUPABASE_ANON_KEY="<publishable-anon-key>" \
   ALLOWED_ORIGINS="https://mdeniz.github.io,http://localhost:5173"
