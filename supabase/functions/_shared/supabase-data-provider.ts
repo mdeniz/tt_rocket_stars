@@ -44,7 +44,17 @@ function providerError(error: any): DataAccessError {
 async function single<T>(query: Promise<{ data: T | null; error: any }>): Promise<T | null> {
   const result = await query;
   if (result.error) throw providerError(result.error);
+  // PostgREST serializes a zero-row SQL function returning a composite type
+  // as one object whose fields are all null. Treat that sentinel as no row so
+  // ownership-safe downloads return `not-found` instead of a provider error.
+  if (isEmptyCompositeRow(result.data)) return null;
   return result.data;
+}
+
+function isEmptyCompositeRow(value: unknown): value is Record<string, null> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const values = Object.values(value);
+  return values.length > 0 && values.every(entry => entry === null);
 }
 
 export function createSupabaseDataProvider(client: SupabaseClient, _context: AuthenticatedRequestContext): DataAccessProvider {
