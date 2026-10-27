@@ -39,6 +39,13 @@ Function MUST not block local gameplay or delete local progress.
   `504`
 - **AND** the browser preserves local progress and can retry the operation later
 
+#### Scenario: Bounded authentication lookup
+- **WHEN** the Edge Function cannot complete the authenticated user lookup within
+  the configured provider timeout
+- **THEN** the function returns a retryable `cloud_timeout` response with HTTP
+  `504`
+- **AND** the browser does not remain in an indefinite synchronization state
+
 ### Requirement: Cloud operations follow the authenticated session lifecycle
 
 The browser cloud boundary MUST cancel pending requests, queued uploads, and

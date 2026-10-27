@@ -59,12 +59,15 @@ function browserSnapshot(snapshot) {
   };
 }
 
-async function authenticatedClient(request) {
+async function authenticatedClient(request, signal) {
   requireConfiguration();
   const token = parseBearerToken(request.headers.get('Authorization'));
   const client = createClient(supabaseUrl, supabaseAnonKey, {
     auth: { persistSession: false, autoRefreshToken: false },
-    global: { headers: { Authorization: `Bearer ${token}` } },
+    global: {
+      headers: { Authorization: `Bearer ${token}` },
+      fetch: (input, init = {}) => fetch(input, { ...init, signal: signal || init.signal }),
+    },
   });
   const { data, error } = await client.auth.getUser(token);
   if (error || !data?.user?.id) throw Object.assign(new Error('Authentication required.'), { code: 'unauthorized' });
@@ -75,11 +78,11 @@ async function handle(request) {
   const origin = request.headers.get('Origin') || '';
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: headers(origin) });
   if (request.method !== 'POST') return response({ error: 'method_not_allowed' }, 405, origin);
-  const { token, user } = await authenticatedClient(request);
   const raw = await request.json();
   const operation = parseRequestBody(raw, JSON.stringify(raw).length);
-  const context: AuthenticatedRequestContext = { userId: user.id, accessToken: parseBearerToken(request.headers.get('Authorization')) };
   return await withTimeout(async signal => {
+    const { token, user } = await authenticatedClient(request, signal);
+    const context: AuthenticatedRequestContext = { userId: user.id, accessToken: token };
     const client = createClient(supabaseUrl, supabaseAnonKey, {
       auth: { persistSession: false, autoRefreshToken: false },
       global: {
