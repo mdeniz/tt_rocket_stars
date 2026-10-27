@@ -50,32 +50,31 @@ async function single<T>(query: Promise<{ data: T | null; error: any }>): Promis
 export function createSupabaseDataProvider(client: SupabaseClient, _context: AuthenticatedRequestContext): DataAccessProvider {
   return {
     async upsertOwnedPilot(userId: string, pilot: PilotWrite) {
-      const row = await single(client.from('pilots').upsert({
-        user_id: userId,
-        local_id: pilot.localId,
-        name: pilot.name,
-        avatar: pilot.avatar,
-        language: pilot.language,
-        payload: pilot.payload,
-        updated_at: pilot.updatedAt,
-      }, { onConflict: 'user_id,local_id' }).select('*').single());
+      const row = await single(client.rpc('upsert_my_pilot', {
+        p_local_id: pilot.localId,
+        p_name: pilot.name,
+        p_avatar: pilot.avatar,
+        p_language: pilot.language,
+        p_payload: pilot.payload,
+        p_updated_at: pilot.updatedAt,
+      }));
       if (!row) throw new DataAccessError('provider-failure', 'The pilot could not be stored.');
       return mapPilot(row);
     },
 
     async listOwnedPilots(userId: string) {
-      const result = await client.from('pilots').select('*').eq('user_id', userId).limit(50);
+      const result = await client.rpc('list_my_pilots', {});
       if (result.error) throw providerError(result.error);
       return (result.data || []).map(mapPilot);
     },
 
     async readOwnedPilot(userId: string, localId: string) {
-      const row = await single(client.from('pilots').select('*').eq('user_id', userId).eq('local_id', localId).maybeSingle());
+      const row = await single(client.rpc('read_my_pilot', { p_local_id: localId }));
       return row ? mapPilot(row) : null;
     },
 
     async readProgressSnapshot(userId: string, pilotId: string) {
-      const row = await single(client.from('progress_snapshots').select('*').eq('user_id', userId).eq('pilot_id', pilotId).maybeSingle());
+      const row = await single(client.rpc('read_my_progress_snapshot', { p_pilot_id: pilotId }));
       return row ? mapSnapshot(row) : null;
     },
 
