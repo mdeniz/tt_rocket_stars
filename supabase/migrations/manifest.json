@@ -20,6 +20,11 @@
       "file": "20261023030000_crew_access_model.sql",
       "timestamp": "20261023030000",
       "sha256": "542d9ff33e281cc10b3341a78cae36742245c112562342b2ae13981bab093158"
+    },
+    {
+      "file": "20261027120000_restore_snapshot_rpc_privileges.sql",
+      "timestamp": "20261027120000",
+      "sha256": "6d4f9575a5cc6950c90764fba41d2c023264a56e8a64f96f5f0bd7ae44cc1c14"
     }
   ]
 }
