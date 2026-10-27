@@ -282,7 +282,7 @@
   const updateSessionUi = session => {
     syncAccountIdentity(session);
     const user = session?.user;form.classList.toggle('hidden', Boolean(user) || setupMode);setupForm.classList.toggle('hidden', !user || !setupMode);changeForm.classList.toggle('hidden', !user || setupMode);signOut.classList.toggle('hidden', !user);
-    if (user) { status.textContent = `${text('as')}. ${text('signedIn')}`;status.dataset.state = 'success';setCloudStatus('syncIdle', 'info'); }
+    if (user) { setStatus('signedIn', 'success'); status.textContent = `${text('as')}. ${status.textContent}`; setCloudStatus('syncIdle', 'info'); }
     updateCloudControls(session);
   };
   async function syncCloud(options = {}) {
@@ -367,7 +367,7 @@
     try {
       const response = await fetch(`${api('/token')}?grant_type=password`, { method: 'POST', headers: headers(), body: JSON.stringify({ email, password }) });
       if (!response.ok) throw await parseError(response);
-      const session = await response.json(); session.user = session.user || await (await fetch(api('/user'), { headers: headers(session.access_token) })).json(); cloudAdapter?.cancel?.(); saveSession(session); updateSessionUi(session); setStatus('signedIn', 'success'); passwordInput.value = ''; scheduleSync();
+      const session = await response.json(); session.user = session.user || await (await fetch(api('/user'), { headers: headers(session.access_token) })).json(); cloudAdapter?.cancel?.(); saveSession(session); updateSessionUi(session); passwordInput.value = ''; scheduleSync();
     } catch (error) { setStatus(classifyError(error), 'error'); } finally { button.disabled = false; }
   });
   setupForm.addEventListener('submit', async event => {

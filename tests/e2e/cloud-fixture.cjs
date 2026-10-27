@@ -36,7 +36,7 @@ async function installCloudFixture(page, options = {}) {
     conflictOnce: Boolean(options.conflictOnce),
     recoveryError: options.recoveryError || null,
     verifyError: options.verifyError || null,
-    session: options.session === false ? null : null,
+    session: options.session === false ? null : (options.session || null),
     pilots: new Map(),
     snapshots: new Map(),
   };
