@@ -58,6 +58,11 @@ calling the typed repository. It maps stale writes to a stable conflict result,
 provider failures to retryable errors, and malformed data to a safe validation
 error. It never accepts a client-supplied account id as authorization.
 
+The Supabase provider normalizes the all-null composite-row sentinel returned by
+PostgREST for zero-row ownership RPCs to `null`. This preserves the ownership-safe
+`not-found` contract for missing or non-owned pilots and prevents an empty row
+from being serialized as a cloud provider failure.
+
 ### Roll out behind a transport flag
 
 The browser selects the Edge Function transport only when the public function URL
