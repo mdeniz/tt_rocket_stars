@@ -755,7 +755,9 @@ export function ReactShell() {
     window.setTimeout(() => setEntered(true), 0);
   };
 
+  const cloudAccessEnabled = window.__TT_FEATURES__?.cloudAccess === true;
   const settingsLabels: Record<string, [string, string, string]> = {
+    ...(cloudAccessEnabled ? { cloud: ['🔐', 'Cloud access', 'Acceso en la nube'] } : {}),
     audio: ['🎵', 'Sound', 'Sonido'],
     profile: ['👩‍🚀', 'Pilot', 'Piloto'],
     language: ['🌐', 'Language', 'Idioma'],
@@ -764,6 +766,7 @@ export function ReactShell() {
     reset: ['🗑️', 'Reset', 'Borrar'],
   };
   const settingsPanelSelectors: Record<string, string> = {
+    ...(cloudAccessEnabled ? { cloud: '#ttAuthPanel' } : {}),
     audio: '#ttAudioSettings',
     profile: 'article:has(#settingsPilotName)',
     language: '.settingsLanguages',

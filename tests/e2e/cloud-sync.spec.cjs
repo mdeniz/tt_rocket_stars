@@ -1,6 +1,22 @@
 const { test, expect } = require('@playwright/test');
 const { installCloudFixture } = require('./cloud-fixture.cjs');
 
+test('cloud access is reachable through the enabled Settings navigation', async ({ page }) => {
+  const fixture = await installCloudFixture(page);
+  await fixture.openCloudSettings();
+  await expect(page.locator('#settings .ttSettingsTab').filter({ hasText: 'Cloud access' })).toBeVisible();
+  await expect(page.locator('#ttAuthPanel')).toHaveClass(/ttSettingsActive/);
+  expect(fixture.state.authRequests).toEqual([]);
+});
+
+test('cloud access navigation is translated in Spanish', async ({ page }) => {
+  const fixture = await installCloudFixture(page, { language: 'es' });
+  await fixture.openCloudSettings();
+  await expect(page.locator('#settings .ttSettingsTab').filter({ hasText: 'Acceso en la nube' })).toBeVisible();
+  await expect(page.locator('#ttAuthPanel')).toHaveClass(/ttSettingsActive/);
+  expect(fixture.state.authRequests).toEqual([]);
+});
+
 test('invited users can request password recovery with English feedback', async ({ page }) => {
   const fixture = await installCloudFixture(page);
   await fixture.openCloudSettings();
