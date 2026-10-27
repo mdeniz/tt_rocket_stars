@@ -44,6 +44,8 @@ test('trusted function source does not contain administrative credentials or arb
   assert.doesNotMatch(source, /body\.table|body\.query|body\.sql/);
   assert.match(source, /parseBearerToken/);
   assert.match(source, /user\.id/);
+  assert.match(source, /return await withTimeout\(async signal =>/);
+  assert.match(source, /authenticatedClient\(request, signal\)/);
 });
 
 test('maps conflicts and authentication failures to bounded responses', async () => {

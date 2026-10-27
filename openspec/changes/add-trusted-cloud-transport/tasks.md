@@ -15,6 +15,7 @@
 - [x] 2.4 Run the generated-artifact checks and `npm run check`; verify both stable `index.html` and development `index_next.html` remain self-contained and no privileged credential is present.
 - [x] 2.5 Cancel active trusted requests, queued uploads, and retry attempts when the authenticated session is signed out or replaced; verify cancelled work cannot publish stale failures or synchronization metadata.
 - [x] 2.6 Suppress repeated automatic synchronization after a bounded failure and resume it only after a manual request or new local save; verify the retry loop cannot keep the hosted UI in a perpetual synchronizing state.
+- [x] 2.7 Include authenticated user lookup in the trusted Edge Function timeout and propagate the abort signal to the Auth request; verify an Auth provider stall returns the same bounded timeout contract.
 
 ## 3. Hosted Supabase verification
 
