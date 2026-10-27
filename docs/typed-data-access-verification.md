@@ -42,3 +42,21 @@ The browser suites exercised local-only startup, offline gameplay, pilot-local p
 ## Manual verification follow-up
 
 Before closing the issue, review this evidence against the issue acceptance criteria, obtain CI results for the pull request, and decide whether the remaining legacy browser-provider boundary is in scope for this change or should be tracked as a separate migration.
+
+## Final audit
+
+Reviewed on 2026-10-27 against issue #170, the OpenSpec requirements, the merged CI
+matrix, repository security checks, and the documented rollback procedure.
+
+| Audit area | Result | Evidence or decision |
+| --- | --- | --- |
+| Data-access inventory and provider decision | Complete | `typed-data-access-inventory.md` and `typed-data-access-decision.md` identify every current path and select Drizzle for isolated trusted-runtime evaluation. |
+| Typed domain boundary | Complete for the current slice | Typed repositories bind operations to the authenticated user and are excluded from the Vite client; the browser remains on the reversible compatibility adapter during rollout. |
+| Migration reproducibility and security | Complete | Ordered SQL migrations and `manifest.json` are validated by CI; RLS, grants, security-definer functions, payload fields, and drift checks remain explicit. |
+| Browser and artifact security | Passed | Unit, build, artifact scans, and browser suites found no service-role credential exposure. Provider-specific browser calls are the documented compatibility exception tracked by #184. |
+| Rollback readiness | Ready | No production data migration or runtime cutover occurred. SQL remains authoritative, the compatibility adapter remains available, and recovery/forward-fix guidance is documented in `migrations.md`. |
+| Remaining dependency | Explicitly retained | Do not remove the browser compatibility path until #184 has a trusted transport and its browser scenarios are verified. This is a deliberate follow-up, not an undocumented acceptance failure. |
+
+Conclusion: the typed data-access and migration foundation is complete for its staged
+boundary, but issue #170 remains in `status:verification` until the project explicitly
+accepts the #184 compatibility exception or completes that follow-up migration.
