@@ -4,6 +4,8 @@ const { installCloudFixture } = require('./cloud-fixture.cjs');
 test('cloud access is reachable through the enabled Settings navigation', async ({ page }) => {
   const fixture = await installCloudFixture(page);
   await fixture.openCloudSettings();
+  await expect(page.locator('#reactAuthTranslationAnchor')).toHaveCount(0);
+  await expect(page.locator('#reactAuthTranslationSource')).toHaveCount(1);
   await expect(page.locator('#settings .ttSettingsTab').filter({ hasText: 'Cloud access' })).toBeVisible();
   await expect(page.locator('#ttAuthPanel')).toHaveClass(/ttSettingsActive/);
   expect(fixture.state.authRequests).toEqual([]);
@@ -73,6 +75,24 @@ test('password authentication exposes a safe error and supports password change 
   await expect(page.locator('#ttAuthChangePasswordForm')).toBeHidden();
   expect(await page.evaluate(() => localStorage.getItem('tt-rocket-profiles-v1'))).not.toBeNull();
   expect(fixture.state.authRequests.some(request => request.path === '/auth/v1/logout')).toBe(true);
+});
+
+test('restored sessions replace stale credential feedback', async ({ page }) => {
+  const session = {
+    access_token: 'restored-access-token',
+    refresh_token: 'restored-refresh-token',
+    user: { id: 'user-1', email: 'pilot@example.com' },
+  };
+  const fixture = await installCloudFixture(page, {
+    session,
+    initialStorage: {
+      'tt-rocket-stars-auth-session': JSON.stringify(session),
+      'tt-auth-status-before-reload': 'The email or password is incorrect.',
+    },
+  });
+  await fixture.openCloudSettings();
+  await expect(page.locator('#ttAuthStatus')).toContainText('Signed in. You are signed in.');
+  await expect(page.locator('body')).not.toContainText('The email or password is incorrect.');
 });
 
 test('password authentication localizes rejected credentials in Spanish', async ({ page }) => {
