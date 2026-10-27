@@ -13,8 +13,10 @@
 
 - [x] 2.1 Add credential-flow browser coverage for rejected-then-successful
   sign-in and restored authenticated sessions.
-- [ ] 2.2 Run focused tests, `npm run check`, and the applicable browser matrix.
-- [ ] 2.3 Verify the hosted `index_next.html` behavior with Chrome DevTools,
-  recording URL, actions, observed status, console output, and network evidence.
-- [ ] 2.4 Update issue #221 with implementation and verification evidence; keep
-  it in verification until CI and empirical checks pass.
+- [x] 2.2 Run focused tests, `npm run check`, and the applicable browser matrix
+  (Chromium, Firefox, WebKit, and WebKit Mobile).
+- [x] 2.3 Verify the hosted `index_next.html` behavior with Chrome DevTools,
+  recording the deployed URL, observed DOM/status, console output, and network
+  evidence.
+- [x] 2.4 Update issue #221 with implementation and verification evidence; keep
+  it in verification because real iOS Safari remains outside automation.
