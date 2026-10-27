@@ -25,6 +25,16 @@
       "file": "20261027120000_restore_snapshot_rpc_privileges.sql",
       "timestamp": "20261027120000",
       "sha256": "6d4f9575a5cc6950c90764fba41d2c023264a56e8a64f96f5f0bd7ae44cc1c14"
+    },
+    {
+      "file": "20261027150000_cloud_access_rpcs.sql",
+      "timestamp": "20261027150000",
+      "sha256": "48bf6770cf2cd59f73bcf571905cb35aa431cf5cea1437458dcf370b64c7a691"
+    },
+    {
+      "file": "20261027160000_bound_snapshot_lock_wait.sql",
+      "timestamp": "20261027160000",
+      "sha256": "6778fc5190620dd8287d2bb62bd0473ef0c131405e368ffba12ffdb1d1c8ab3b"
     }
   ]
 }

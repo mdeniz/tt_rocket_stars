@@ -8,6 +8,8 @@ const migration = fs.readFileSync(migrationPath, 'utf8');
 const concurrencyMigration = fs.readFileSync(path.join(__dirname, '../../supabase/migrations/20261023010000_optimistic_cloud_snapshots.sql'), 'utf8');
 const hardeningMigration = fs.readFileSync(path.join(__dirname, '../../supabase/migrations/20261023020000_harden_cloud_access.sql'), 'utf8');
 const crewMigration = fs.readFileSync(path.join(__dirname, '../../supabase/migrations/20261023030000_crew_access_model.sql'), 'utf8');
+const cloudRpcMigration = fs.readFileSync(path.join(__dirname, '../../supabase/migrations/20261027150000_cloud_access_rpcs.sql'), 'utf8');
+const snapshotLockMigration = fs.readFileSync(path.join(__dirname, '../../supabase/migrations/20261027160000_bound_snapshot_lock_wait.sql'), 'utf8');
 const schemaDocs = fs.readFileSync(path.join(__dirname, '../../docs/supabase-schema.md'), 'utf8');
 
 test('cloud schema defines user-owned pilot and versioned progress tables', () => {
@@ -50,6 +52,25 @@ test('hardening migration removes anonymous access and direct snapshot mutations
   assert.match(hardeningMigration, /grant execute on function public\.delete_my_cloud_data\(\) to authenticated/i);
   assert.match(hardeningMigration, /grant execute on function public\.upsert_my_progress_snapshot\(uuid, bigint, jsonb\) to authenticated/i);
   assert.doesNotMatch(hardeningMigration, /service[_ -]?role|supabase_service_role/i);
+});
+
+test('cloud access RPCs bind reads and writes to the authenticated account', () => {
+  assert.match(cloudRpcMigration, /create or replace function public\.upsert_my_pilot/i);
+  assert.match(cloudRpcMigration, /create or replace function public\.list_my_pilots/i);
+  assert.match(cloudRpcMigration, /create or replace function public\.read_my_pilot/i);
+  assert.match(cloudRpcMigration, /create or replace function public\.read_my_progress_snapshot/i);
+  assert.equal((cloudRpcMigration.match(/select auth\.uid\(\)/gi) || []).length >= 4, true);
+  assert.match(cloudRpcMigration, /grant execute on function public\.list_my_pilots\(\) to authenticated/i);
+  assert.match(cloudRpcMigration, /revoke all on function public\.upsert_my_pilot/i);
+  assert.doesNotMatch(cloudRpcMigration, /service[_ -]?role|supabase_service_role/i);
+});
+
+test('snapshot writes fail fast when another transaction owns the row lock', () => {
+  assert.match(snapshotLockMigration, /create or replace function public\.upsert_my_progress_snapshot/i);
+  assert.match(snapshotLockMigration, /for update nowait/i);
+  assert.match(snapshotLockMigration, /when lock_not_available/i);
+  assert.match(snapshotLockMigration, /cloud snapshot is busy/i);
+  assert.doesNotMatch(snapshotLockMigration, /service[_ -]?role|supabase_service_role/i);
 });
 
 test('crew access schema keeps pilot identity global and explicit', () => {
