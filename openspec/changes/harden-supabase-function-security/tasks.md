@@ -14,8 +14,8 @@
 
 ## 3. Verification and rollout
 
-- [ ] 3.1 Run migration, schema-security, type, unit, build, and relevant local E2E checks; verify no service-role marker or existing local-storage contract changes appear in generated artifacts.
-- [ ] 3.2 Apply the reviewed migration only in the approved Supabase environment, run security and performance advisors, and record the resulting findings without exposing credentials or user payloads.
+- [x] 3.1 Run migration, schema-security, type, unit, build, and relevant local E2E checks; verify no service-role marker or existing local-storage contract changes appear in generated artifacts.
+- [x] 3.2 Apply the reviewed migration only in the approved Supabase environment, run security and performance advisors, and record the resulting findings without exposing credentials or user payloads.
 - [ ] 3.3 Verify authenticated and anonymous function behavior, RLS ownership isolation, invited password setup/recovery, local offline continuation, and trusted cloud rollback in connected browser evidence; link the evidence from issue #226.
 
 ## Workflow follow-up
