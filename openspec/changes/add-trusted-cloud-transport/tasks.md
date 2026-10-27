@@ -5,7 +5,7 @@
 - [x] 1.1 Define the domain operation request, response, error, authentication, and CORS contracts for the Edge Function and verify malformed operations, oversized payloads, missing tokens, and invalid tokens are rejected by unit tests.
 - [x] 1.2 Implement the Supabase Edge Function with allowlisted upload, download, list, restore, and deletion operations and verify it uses the authenticated account context rather than client-supplied ownership identifiers.
 - [x] 1.3 Connect the function to the existing typed repository and RLS/security-definer contracts without renaming tables, payload fields, local storage keys, or backup envelopes; verify schema and repository tests remain green.
-- [ ] 1.4 Document local serving, Supabase deployment, required function secrets, CORS origins, migration order, secret rotation, and rollback in technical English; verify every command is reproducible without committing secrets.
+- [x] 1.4 Document local serving, Supabase deployment, required function secrets, CORS origins, migration order, secret rotation, and rollback in technical English; verify every command is reproducible without committing secrets.
 
 ## 2. Browser transport and reversible rollout
 
@@ -15,7 +15,7 @@
 - [x] 2.4 Run the generated-artifact checks and `npm run check`; verify both stable `index.html` and development `index_next.html` remain self-contained and no privileged credential is present.
 - [x] 2.5 Cancel active trusted requests, queued uploads, and retry attempts when the authenticated session is signed out or replaced; verify cancelled work cannot publish stale failures or synchronization metadata.
 - [x] 2.6 Suppress repeated automatic synchronization after a bounded failure and resume it only after a manual request or new local save; verify the retry loop cannot keep the hosted UI in a perpetual synchronizing state.
-- [x] 2.7 Include authenticated user lookup in the trusted Edge Function timeout and propagate the abort signal to the Auth request; verify an Auth provider stall returns the same bounded timeout contract.
+- [x] 2.7 Require Supabase platform JWT validation before trusted-function execution and derive ownership only from the validated token subject; verify the function does not depend on a second Auth request that can stall.
 
 ## 3. Hosted Supabase verification
 

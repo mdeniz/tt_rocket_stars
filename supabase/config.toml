@@ -1,0 +1,2 @@
+[functions.trusted-cloud]
+verify_jwt = true

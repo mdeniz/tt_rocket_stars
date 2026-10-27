@@ -44,11 +44,12 @@ Apply the checked-in migrations in timestamp order before enabling synchronizati
 
 ```bash
 npx --yes supabase@2.122.0 db push
-npx --yes supabase@2.122.0 functions deploy trusted-cloud --no-verify-jwt
+npx --yes supabase@2.122.0 functions deploy trusted-cloud
 ```
 
-The function validates the bearer token itself so it can return stable domain
-errors and preserve the current invited-account behavior. Configure the following
+Supabase validates the bearer token before invoking the function because
+`supabase/config.toml` enables `verify_jwt`. The function derives ownership from
+the validated token subject and does not perform a second Auth lookup. Configure the following
 non-secret project values in the Supabase dashboard or CLI secrets manager:
 
 ```bash

@@ -59,19 +59,27 @@ function browserSnapshot(snapshot) {
   };
 }
 
-async function authenticatedClient(request, signal) {
+function decodeBase64Url(value) {
+  const normalized = value.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=');
+  return Uint8Array.from(atob(padded), character => character.charCodeAt(0));
+}
+
+function validatedUser(request) {
   requireConfiguration();
   const token = parseBearerToken(request.headers.get('Authorization'));
-  const authResponse = await fetch(`${supabaseUrl}/auth/v1/user`, {
-    headers: {
-      apikey: supabaseAnonKey,
-      Authorization: `Bearer ${token}`,
-    },
-    signal,
-  });
-  if (!authResponse.ok) throw Object.assign(new Error('Authentication required.'), { code: 'unauthorized' });
-  const user = await authResponse.json();
-  if (!user?.id) throw Object.assign(new Error('Authentication required.'), { code: 'unauthorized' });
+  const parts = token.split('.');
+  if (parts.length !== 3) throw Object.assign(new Error('Authentication required.'), { code: 'unauthorized' });
+  let claims;
+  try {
+    claims = JSON.parse(new TextDecoder().decode(decodeBase64Url(parts[1])));
+  } catch {
+    throw Object.assign(new Error('Authentication required.'), { code: 'unauthorized' });
+  }
+  if (typeof claims?.sub !== 'string' || !claims.sub.trim()) {
+    throw Object.assign(new Error('Authentication required.'), { code: 'unauthorized' });
+  }
+  const user = { id: claims.sub, email: claims.email };
   return { token, user };
 }
 
@@ -82,7 +90,10 @@ async function handle(request) {
   const raw = await request.json();
   const operation = parseRequestBody(raw, JSON.stringify(raw).length);
   return await withTimeout(async signal => {
-    const { token, user } = await authenticatedClient(request, signal);
+    // Supabase validates this JWT before invoking the function (verify_jwt=true).
+    // Decode only the validated subject so the function does not depend on a
+    // second Auth request that can stall independently of the data operation.
+    const { token, user } = validatedUser(request);
     const context: AuthenticatedRequestContext = { userId: user.id, accessToken: token };
     const client = createClient(supabaseUrl, supabaseAnonKey, {
       auth: { persistSession: false, autoRefreshToken: false },
