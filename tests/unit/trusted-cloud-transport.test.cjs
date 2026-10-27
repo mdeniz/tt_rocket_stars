@@ -51,6 +51,20 @@ test('maps conflict responses and keeps signed-out calls local', async () => {
   await assert.rejects(() => provider.writeSnapshot(null, 'pilot-1', 2, { localId: 'pilot-1', payload: {} }), error => error.code === 'conflict');
 });
 
+test('bounds a trusted request that never resolves', async () => {
+  const { createTrustedCloudProvider } = await transport;
+  const provider = createTrustedCloudProvider({
+    functionUrl: 'https://example.com/function',
+    requestTimeoutMs: 10,
+    getSession: async () => ({ access_token: 'token', user: { id: 'user-1' } }),
+    fetchImpl: async (_url, options) => new Promise((_resolve, reject) => {
+      options.signal.addEventListener('abort', () => reject(Object.assign(new Error('aborted'), { name: 'AbortError' })), { once: true });
+    }),
+  });
+
+  await assert.rejects(() => provider.listPilots(), error => error.code === 'timeout');
+});
+
 test('runs the cloud-sync contract through the trusted provider', async () => {
   const [{ createTrustedCloudProvider }, { createCloudSync }] = await Promise.all([transport, cloudSync]);
   const calls = [];
