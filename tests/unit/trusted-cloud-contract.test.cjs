@@ -46,6 +46,8 @@ test('trusted function source does not contain administrative credentials or arb
   assert.match(source, /user\.id/);
   assert.match(source, /return await withTimeout\(async signal =>/);
   assert.match(source, /authenticatedClient\(request, signal\)/);
+  assert.match(source, /fetch\(`\$\{supabaseUrl\}\/auth\/v1\/user`/);
+  assert.match(source, /signal,\n  \}\);/);
 });
 
 test('maps conflicts and authentication failures to bounded responses', async () => {
