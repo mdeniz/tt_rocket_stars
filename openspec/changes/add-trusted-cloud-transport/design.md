@@ -73,6 +73,16 @@ Remote responses pass through the existing snapshot validation, version conflict
 recovery-backup, and local-versus-remote selection logic. The function cannot
 directly mutate browser storage, and a failed request cannot delete local data.
 
+### Cancel transport work at session boundaries
+
+The cloud-sync adapter owns a lifecycle generation. Signing out or replacing the
+session increments that generation, resolves queued uploads as cancelled, and
+asks the provider to abort its active `AbortController` instances. Every upload
+checks the generation before publishing status or synchronization metadata. The
+trusted provider exposes cancellation without changing its domain operation
+payload, so the browser still sends only the user's access token and the
+allowlisted operation.
+
 ## Risks / Trade-offs
 
 - [Risk] A service-role function could bypass RLS accidentally → prefer the

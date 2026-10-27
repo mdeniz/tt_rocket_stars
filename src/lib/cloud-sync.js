@@ -60,14 +60,21 @@ export function chooseSnapshot(localSnapshot, remoteSnapshot) {
     : { source: 'local', snapshot: clone(localSnapshot) };
 }
 
-async function retry(operation, retries, wait) {
+const cancelledError = () => Object.assign(new Error('Cloud synchronization was cancelled.'), { code: 'cancelled', noRetry: true });
+
+async function retry(operation, retries, wait, isCancelled = () => false) {
   let attempt = 0;
   while (true) {
-    try { return await operation(); } catch (error) {
+    try {
+      if (isCancelled()) throw cancelledError();
+      return await operation();
+    } catch (error) {
+      if (isCancelled() || error?.code === 'cancelled') throw cancelledError();
       if (error?.noRetry) throw error;
       if (attempt >= retries) throw error;
       attempt += 1;
       await wait(attempt, error);
+      if (isCancelled()) throw cancelledError();
     }
   }
 }
@@ -85,6 +92,8 @@ export function createCloudSync({ client, provider = client ? createSupabaseClou
   const report = (status, extra = {}) => { try { onStatus({ ...extra, status }); } catch { /* status reporting must never affect gameplay */ } };
   const session = async () => provider?.session?.() || null;
   const active = () => serializePilot(getLocalPilot?.(), now());
+  let lifecycleGeneration = 0;
+  const isCancelled = generation => generation !== lifecycleGeneration;
 
   const isConflictError = error => {
     const code = String(error?.code || error?.error?.code || '');
@@ -128,15 +137,19 @@ export function createCloudSync({ client, provider = client ? createSupabaseClou
     if (choice === 'local') return performUpload({ ...options, expectedVersion: Number(conflict.remote?.version || 0), skipConflictHandling: true });
     return conflict;
   }
-  async function performUpload(options = {}) {
+  async function performUpload(options = {}, generation = lifecycleGeneration) {
+    if (isCancelled(generation)) return result('cancelled');
     report('pending');
     if (!provider) { report('disabled'); return result('disabled'); }
     const authSession = await session();
+    if (isCancelled(generation)) return result('cancelled');
     if (!authSession?.user?.id) { report('signed-out'); return result('signed-out'); }
     const local = active();
     report('syncing', { localId: local.localId });
     return retry(async () => {
+      if (isCancelled(generation)) throw cancelledError();
       const pilot = await provider.upsertPilot(authSession, local);
+      if (isCancelled(generation)) throw cancelledError();
       const metadata = readMetadata(store);
       const expectedVersion = options.expectedVersion === undefined
         ? Number(metadata[local.localId]?.version || 0)
@@ -144,11 +157,13 @@ export function createCloudSync({ client, provider = client ? createSupabaseClou
       let version = expectedVersion + 1;
       try { version = await provider.writeSnapshot(authSession, pilot.id, expectedVersion, local); }
       catch (error) { if (isConflictError(error)) error.noRetry = true; throw error; }
+      if (isCancelled(generation)) return result('cancelled');
       writeMetadata(store, { ...metadata, [local.localId]: { version, updatedAt: local.updatedAt } });
       const uploaded = result('uploaded', { version, updatedAt: local.updatedAt });
       report('synced', uploaded);
       return uploaded;
-    }, retries, wait).catch(async error => {
+    }, retries, wait, () => isCancelled(generation)).catch(async error => {
+      if (isCancelled(generation) || error?.code === 'cancelled') return result('cancelled');
       if (!options.skipConflictHandling && isConflictError(error)) {
         try {
           const remote = await readRemoteSnapshot(error.pilotId || await provider.findPilotId(local.localId));
@@ -164,21 +179,43 @@ export function createCloudSync({ client, provider = client ? createSupabaseClou
   }
 
   let activeUpload = null;
+  let activeUploadToken = null;
   let uploadQueued = false;
   async function upload(options = {}) {
     if (activeUpload) {
       uploadQueued = true;
       return activeUpload;
     }
-    activeUpload = (async () => {
+    const generation = lifecycleGeneration;
+    const token = {};
+    activeUploadToken = token;
+    const pendingUpload = (async () => {
       let result;
       do {
         uploadQueued = false;
-        result = await performUpload(options);
-      } while (uploadQueued);
+        result = await performUpload(options, generation);
+      } while (uploadQueued && !isCancelled(generation));
       return result;
-    })().finally(() => { activeUpload = null; });
+    })().finally(() => {
+      if (activeUploadToken === token) {
+        activeUpload = null;
+        activeUploadToken = null;
+      }
+    });
+    activeUpload = pendingUpload;
     return activeUpload;
+  }
+
+  function cancel() {
+    lifecycleGeneration += 1;
+    uploadQueued = false;
+    if (queueTimer) clearTimeout(queueTimer);
+    queueTimer = null;
+    if (queuedResolve) queuedResolve(result('cancelled'));
+    queuedResolve = null;
+    provider?.cancelPending?.();
+    activeUpload = null;
+    activeUploadToken = null;
   }
 
   async function download() {
@@ -270,6 +307,7 @@ export function createCloudSync({ client, provider = client ? createSupabaseClou
     }, Math.max(0, Number(delay) || 0));
   });
   return {
+    cancel,
     upload,
     download,
     listPilots: listRemotePilots,

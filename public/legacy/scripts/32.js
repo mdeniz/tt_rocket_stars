@@ -356,7 +356,7 @@
     try {
       const response = await fetch(`${api('/token')}?grant_type=password`, { method: 'POST', headers: headers(), body: JSON.stringify({ email, password }) });
       if (!response.ok) throw await parseError(response);
-      const session = await response.json(); session.user = session.user || await (await fetch(api('/user'), { headers: headers(session.access_token) })).json(); saveSession(session); updateSessionUi(session); setStatus('signedIn', 'success'); passwordInput.value = ''; scheduleSync();
+      const session = await response.json(); session.user = session.user || await (await fetch(api('/user'), { headers: headers(session.access_token) })).json(); cloudAdapter?.cancel?.(); saveSession(session); updateSessionUi(session); setStatus('signedIn', 'success'); passwordInput.value = ''; scheduleSync();
     } catch (error) { setStatus(classifyError(error), 'error'); } finally { button.disabled = false; }
   });
   setupForm.addEventListener('submit', async event => {
@@ -383,7 +383,7 @@
     try { const redirectTo = String(config.siteUrl || `${location.origin}${location.pathname}`).trim(); const response = await fetch(api('/recover'), { method: 'POST', headers: headers(), body: JSON.stringify({ email, redirect_to: redirectTo }) }); if (!response.ok) throw await parseError(response); setStatus('sent', 'success'); }
     catch (error) { setStatus(classifyError(error), 'error'); } finally { recovery.disabled = false; }
   });
-  signOut.addEventListener('click', async () => { const session = readSession();clearSession();updateSessionUi(null);if (session?.access_token) { try { await fetch(api('/logout'), { method: 'POST', headers: headers(session.access_token) }); } catch (_) {} }setStatus('signedOut', 'success'); });
+  signOut.addEventListener('click', async () => { const session = readSession(); if (syncTimer) clearTimeout(syncTimer); syncTimer = null; cloudAdapter?.cancel?.(); clearSession();updateSessionUi(null);if (session?.access_token) { try { await fetch(api('/logout'), { method: 'POST', headers: headers(session.access_token) }); } catch (_) {} }setStatus('signedOut', 'success'); });
   syncNow.addEventListener('click', syncCloud);restoreCloud.addEventListener('click', restoreCloudData);listCloud.addEventListener('click', listCloudPilots);deleteCloud.addEventListener('click', deleteCloudData);
   async function restoreSession() {
     if (!config.url || !config.anonKey) { form.classList.add('hidden');setStatus('missing', 'info');updateCloudControls(null);return; }
