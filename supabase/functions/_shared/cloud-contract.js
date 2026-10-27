@@ -89,16 +89,30 @@ export function errorResponse(error) {
   return { status, body: { error: code, message: code === 'unauthorized' ? 'Authentication required.' : code === 'conflict' ? 'The cloud snapshot has changed.' : code === 'cloud_timeout' ? 'Cloud operation timed out.' : 'Cloud operation failed.' } };
 }
 
-export function withTimeout(promise, timeoutMs = CLOUD_OPERATION_TIMEOUT_MS) {
+export function withTimeout(operation, timeoutMs = CLOUD_OPERATION_TIMEOUT_MS) {
+  const controller = typeof AbortController === 'function' ? new AbortController() : null;
   let timer;
+  let timedOut = false;
   const timeout = new Promise((_, reject) => {
     timer = setTimeout(() => {
+      timedOut = true;
+      controller?.abort();
       const error = new Error('Cloud operation timed out.');
       error.code = 'cloud_timeout';
       reject(error);
     }, timeoutMs);
   });
-  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+  const promise = typeof operation === 'function'
+    ? Promise.resolve().then(() => operation(controller?.signal))
+    : Promise.resolve(operation);
+  return Promise.race([promise, timeout]).catch(error => {
+    if (timedOut) {
+      const timeoutError = new Error('Cloud operation timed out.');
+      timeoutError.code = 'cloud_timeout';
+      throw timeoutError;
+    }
+    throw error;
+  }).finally(() => clearTimeout(timer));
 }
 
 export { CLOUD_OPERATION_TIMEOUT_MS, MAX_BODY_BYTES, OPERATIONS };

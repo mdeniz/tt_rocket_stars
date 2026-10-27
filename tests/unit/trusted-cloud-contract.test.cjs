@@ -63,3 +63,15 @@ test('bounds pending trusted cloud operations and maps timeout failures', async 
     body: { error: 'cloud_timeout', message: 'Cloud operation timed out.' },
   });
 });
+
+test('aborts the underlying trusted cloud operation when the timeout expires', async () => {
+  const { withTimeout } = await contract;
+  let aborted = false;
+  await assert.rejects(
+    () => withTimeout(signal => new Promise(resolve => {
+      signal.addEventListener('abort', () => { aborted = true; resolve(); }, { once: true });
+    }), 10),
+    error => error.code === 'cloud_timeout',
+  );
+  assert.equal(aborted, true);
+});

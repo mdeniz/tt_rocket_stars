@@ -68,19 +68,26 @@ async function authenticatedClient(request) {
   });
   const { data, error } = await client.auth.getUser(token);
   if (error || !data?.user?.id) throw Object.assign(new Error('Authentication required.'), { code: 'unauthorized' });
-  return { client, user: data.user };
+  return { token, user: data.user };
 }
 
 async function handle(request) {
   const origin = request.headers.get('Origin') || '';
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: headers(origin) });
   if (request.method !== 'POST') return response({ error: 'method_not_allowed' }, 405, origin);
-  const { client, user } = await authenticatedClient(request);
+  const { token, user } = await authenticatedClient(request);
   const raw = await request.json();
   const operation = parseRequestBody(raw, JSON.stringify(raw).length);
   const context: AuthenticatedRequestContext = { userId: user.id, accessToken: parseBearerToken(request.headers.get('Authorization')) };
-  const access = createTypedDataAccess(() => createSupabaseDataProvider(client, context));
-  return await withTimeout((async () => {
+  return await withTimeout(async signal => {
+    const client = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+      global: {
+        headers: { Authorization: `Bearer ${token}` },
+        fetch: (input, init = {}) => fetch(input, { ...init, signal: init.signal || signal }),
+      },
+    });
+    const access = createTypedDataAccess(() => createSupabaseDataProvider(client, context));
     if (operation.operation === 'upload') {
       const pilot = await access.upsertOwnedPilot(context, operation.pilot);
       const snapshot = await access.writeProgressSnapshot(context, { pilotId: pilot.id, expectedVersion: operation.expectedVersion, payload: operation.pilot });
@@ -97,7 +104,7 @@ async function handle(request) {
     }
     await access.deleteOwnedCloudData(context);
     return response({ status: 'deleted' }, 200, origin);
-  })());
+  });
 }
 
 Deno.serve(async request => {

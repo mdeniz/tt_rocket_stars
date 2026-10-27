@@ -168,6 +168,10 @@
         : `Another device has different changes (${remoteDate}). Choose OK to restore the cloud copy after a local backup, or Cancel to keep this device and upload it as the new version.`);
       return restoreRemote ? 'remote' : 'local';
     },
+    wait: async attempt => new Promise(resolve => {
+      const delay = Math.min(4000, 500 * (2 ** Math.max(0, attempt - 1))) + Math.floor(Math.random() * 250);
+      setTimeout(resolve, delay);
+    }),
     onStatus: event => {
       if (event.status === 'pending' || event.status === 'syncing') setCloudStatus('syncPending', 'pending');
       if (event.status === 'synced') setCloudStatus('syncSuccess', 'success');

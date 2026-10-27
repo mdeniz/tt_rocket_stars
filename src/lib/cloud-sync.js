@@ -125,10 +125,10 @@ export function createCloudSync({ client, provider = client ? createSupabaseClou
       report('synced', resolved);
       return resolved;
     }
-    if (choice === 'local') return upload({ ...options, expectedVersion: Number(conflict.remote?.version || 0), skipConflictHandling: true });
+    if (choice === 'local') return performUpload({ ...options, expectedVersion: Number(conflict.remote?.version || 0), skipConflictHandling: true });
     return conflict;
   }
-  async function upload(options = {}) {
+  async function performUpload(options = {}) {
     report('pending');
     if (!provider) { report('disabled'); return result('disabled'); }
     const authSession = await session();
@@ -161,6 +161,24 @@ export function createCloudSync({ client, provider = client ? createSupabaseClou
       }
       const failed = result('failed', { error }); report('failed', failed); return failed;
     });
+  }
+
+  let activeUpload = null;
+  let uploadQueued = false;
+  async function upload(options = {}) {
+    if (activeUpload) {
+      uploadQueued = true;
+      return activeUpload;
+    }
+    activeUpload = (async () => {
+      let result;
+      do {
+        uploadQueued = false;
+        result = await performUpload(options);
+      } while (uploadQueued);
+      return result;
+    })().finally(() => { activeUpload = null; });
+    return activeUpload;
   }
 
   async function download() {

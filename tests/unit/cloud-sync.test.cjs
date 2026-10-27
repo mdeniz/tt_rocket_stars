@@ -263,6 +263,31 @@ test('coalesces queued uploads and reports bounded lifecycle states', async () =
   assert.deepEqual(statuses, ['pending', 'pending', 'pending', 'syncing', 'synced']);
 });
 
+test('serializes direct and queued uploads while preserving the latest pending write', async () => {
+  const { createCloudSync } = await cloudSync;
+  let uploads = 0;
+  let release;
+  const blocked = new Promise(resolve => { release = resolve; });
+  const provider = {
+    session: async () => ({ user: { id: 'user-1' } }),
+    upsertPilot: async (_session, local) => ({ id: `pilot-${local.payload.score}` }),
+    writeSnapshot: async () => {
+      uploads += 1;
+      if (uploads === 1) await blocked;
+      return uploads;
+    },
+  };
+  let local = { id: 'pilot-1', name: 'Ada', language: 'en', payload: { score: 1 }, updatedAt: '2026-01-01T00:00:00.000Z' };
+  const adapter = createCloudSync({ provider, getLocalPilot: () => local });
+  const first = adapter.upload();
+  await new Promise(resolve => setImmediate(resolve));
+  local = { ...local, payload: { score: 2 }, updatedAt: '2026-01-02T00:00:00.000Z' };
+  const second = adapter.queueUpload(0);
+  release();
+  await Promise.all([first, second]);
+  assert.equal(uploads, 2);
+});
+
 test('surfaces a stale write with the current remote snapshot instead of overwriting it', async () => {
   const { createCloudSync } = await cloudSync;
   let rpcCalls = 0;
