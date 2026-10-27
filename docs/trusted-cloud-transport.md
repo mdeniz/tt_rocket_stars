@@ -73,6 +73,12 @@ conflicts, bounded retry failures, cloud deletion, and local preservation. Recor
 the URL, action, result, console output, and network evidence in the PR and issues
 #184 and #170.
 
+Hosted Chrome DevTools evidence for authenticated synchronization, signed-out
+no-request behavior, offline continuation, and the absence of browser-side
+administrative credentials is recorded in
+`docs/trusted-cloud-chrome-devtools-verification.md`. The two-account provider
+matrix remains a separate release gate.
+
 Rollback is performed by disabling the trusted transport feature flag. This leaves
 local pilots, progress, backups, and the stable `index.html` release unchanged.
 If a hosted secret is exposed, rotate or revoke it in Supabase and update the
