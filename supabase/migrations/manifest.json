@@ -35,6 +35,11 @@
       "file": "20261027150000_cloud_access_rpcs.sql",
       "timestamp": "20261027150000",
       "sha256": "48bf6770cf2cd59f73bcf571905cb35aa431cf5cea1437458dcf370b64c7a691"
+    },
+    {
+      "file": "20261027220642_harden_function_grants_and_indexes.sql",
+      "timestamp": "20261027220642",
+      "sha256": "67072249b0c2263817ac615d902f8acff43745161025f03b890a743bb2d0046b"
     }
   ]
 }
