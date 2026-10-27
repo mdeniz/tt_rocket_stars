@@ -27,6 +27,12 @@ administrative credentials were recorded.
   enabled (`verify_jwt = true`).
 - No application console errors or warnings were reported during the check.
 
+The current hosted function inspection on 2026-10-27 reports `trusted-cloud`
+version 11 as `ACTIVE` with platform JWT validation still enabled. This confirms
+the deployment boundary remains present after subsequent function updates; it
+does not replace the required two-account ownership, conflict, retry, and
+deletion verification below.
+
 This verifies the hosted authenticated transport path. Two-account ownership,
 conflict, retry, and deletion checks remain incomplete and are tracked as
 OpenSpec task 3.2.
