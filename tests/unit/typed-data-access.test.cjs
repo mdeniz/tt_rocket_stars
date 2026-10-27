@@ -36,8 +36,10 @@ async function loadRepository() {
 function provider(overrides = {}) {
   const calls = [];
   const base = {
+    upsertOwnedPilot: async (userId, value) => { calls.push(['upsertOwnedPilot', userId, value]); return pilot(); },
     listOwnedPilots: async userId => { calls.push(['listOwnedPilots', userId]); return [pilot()]; },
     readOwnedPilot: async (userId, localId) => { calls.push(['readOwnedPilot', userId, localId]); return pilot(); },
+    readProgressSnapshot: async (userId, pilotId) => { calls.push(['readProgressSnapshot', userId, pilotId]); return snapshot(); },
     readGrantedPilot: async (userId, pilotId) => { calls.push(['readGrantedPilot', userId, pilotId]); return pilot(pilotId); },
     listCrewMemberships: async userId => { calls.push(['listCrewMemberships', userId]); return []; },
     listPilotAccess: async (userId, pilotId) => { calls.push(['listPilotAccess', userId, pilotId]); return []; },

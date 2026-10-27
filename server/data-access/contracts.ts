@@ -72,13 +72,24 @@ export interface SnapshotWrite {
   readonly payload: Record<string, unknown>;
 }
 
+export interface PilotWrite {
+  readonly localId: string;
+  readonly name: string;
+  readonly avatar: string | null;
+  readonly language: Language;
+  readonly payload: Record<string, unknown>;
+  readonly updatedAt: string;
+}
+
 export interface PilotQuery {
   readonly localId: string;
 }
 
 export interface TypedDataAccess {
+  upsertOwnedPilot(context: AuthenticatedRequestContext, pilot: PilotWrite): Promise<PilotRecord>;
   listOwnedPilots(context: AuthenticatedRequestContext): Promise<readonly PilotRecord[]>;
   readOwnedPilot(context: AuthenticatedRequestContext, query: PilotQuery): Promise<PilotRecord | null>;
+  readProgressSnapshot(context: AuthenticatedRequestContext, pilotId: string): Promise<ProgressSnapshotRecord | null>;
   readGrantedPilot(context: AuthenticatedRequestContext, pilotId: string): Promise<PilotRecord | null>;
   listCrewMemberships(context: AuthenticatedRequestContext): Promise<readonly CrewMembershipRecord[]>;
   listPilotAccess(context: AuthenticatedRequestContext, pilotId: string): Promise<readonly PilotAccessGrant[]>;

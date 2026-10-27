@@ -1,6 +1,7 @@
 import {
   DataAccessError,
   type AuthenticatedRequestContext,
+  type PilotWrite,
   type PilotQuery,
   type SnapshotWrite,
   type TypedDataAccess,
@@ -34,6 +35,19 @@ function requireSnapshotWrite(write: SnapshotWrite): SnapshotWrite {
   return { pilotId, expectedVersion: write.expectedVersion, payload: requirePayload(write.payload) };
 }
 
+function requirePilotWrite(pilot: PilotWrite): PilotWrite {
+  const localId = requireIdentifier(pilot?.localId, 'localId');
+  const name = requireIdentifier(pilot?.name, 'name');
+  if (name.length > 80) throw new DataAccessError('invalid-request', 'name is too long.');
+  if (pilot?.language !== 'en' && pilot?.language !== 'es') {
+    throw new DataAccessError('invalid-request', 'language must be en or es.');
+  }
+  if (typeof pilot?.updatedAt !== 'string' || Number.isNaN(Date.parse(pilot.updatedAt))) {
+    throw new DataAccessError('invalid-request', 'updatedAt is invalid.');
+  }
+  return { localId, name, avatar: pilot.avatar == null ? null : String(pilot.avatar), language: pilot.language, payload: requirePayload(pilot.payload), updatedAt: pilot.updatedAt };
+}
+
 async function safely<T>(operation: () => Promise<T>): Promise<T> {
   try {
     return await operation();
@@ -56,10 +70,18 @@ export function createTypedDataAccess(providerFactory: ProviderFactory): TypedDa
   };
 
   const access: TypedDataAccess = {
+    upsertOwnedPilot: (context, pilot) => {
+      const validated = requirePilotWrite(pilot);
+      return safely(() => provider(context).upsertOwnedPilot(context.userId, validated));
+    },
     listOwnedPilots: (context) => safely(() => provider(context).listOwnedPilots(context.userId)),
     readOwnedPilot: (context, query: PilotQuery) => {
       const localId = requireIdentifier(query?.localId, 'localId');
       return safely(() => provider(context).readOwnedPilot(context.userId, localId));
+    },
+    readProgressSnapshot: (context, pilotId) => {
+      const id = requireIdentifier(pilotId, 'pilotId');
+      return safely(() => provider(context).readProgressSnapshot(context.userId, id));
     },
     readGrantedPilot: (context, pilotId) => {
       const id = requireIdentifier(pilotId, 'pilotId');

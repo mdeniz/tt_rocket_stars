@@ -14,3 +14,11 @@ test('the direct browser fallback is opt-in and disabled by default', () => {
   assert.match(viteConfig, /legacyCloudDirectFallback: legacyCloudDirectFallbackEnabled/);
   assert.match(viteConfig, /let legacyCloudDirectFallbackEnabled = false/);
 });
+
+test('the trusted cloud transport is configured and disabled by default', () => {
+  assert.match(pagesWorkflow, /VITE_TRUSTED_CLOUD_FUNCTION_URL/);
+  assert.match(pagesWorkflow, /VITE_ENABLE_TRUSTED_CLOUD_TRANSPORT/);
+  assert.match(viteConfig, /VITE_ENABLE_TRUSTED_CLOUD_TRANSPORT/);
+  assert.match(viteConfig, /trustedCloudTransport: trustedCloudTransportEnabled/);
+  assert.match(viteConfig, /let trustedCloudTransportEnabled = false/);
+});
