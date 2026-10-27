@@ -16,9 +16,10 @@ const escapeClosingTag = (contents, tagName) => contents.replace(
 function inlineReleaseAssets() {
   let isBuild = false;
   let outDir = '';
-  let publicSupabaseConfig = { url: '', anonKey: '', siteUrl: '' };
+  let publicSupabaseConfig = { url: '', anonKey: '', siteUrl: '', trustedFunctionUrl: '' };
   let cloudAccessEnabled = false;
   let legacyCloudDirectFallbackEnabled = false;
+  let trustedCloudTransportEnabled = false;
   let reactCoreScreensEnabled = false;
   let appVersion = '';
   const inlinedScripts = new Map();
@@ -33,9 +34,11 @@ function inlineReleaseAssets() {
         url: config.env.VITE_SUPABASE_URL || '',
         anonKey: config.env.VITE_SUPABASE_ANON_KEY || '',
         siteUrl: config.env.VITE_APP_SITE_URL || '',
+        trustedFunctionUrl: config.env.VITE_TRUSTED_CLOUD_FUNCTION_URL || '',
       };
       cloudAccessEnabled = config.env.VITE_ENABLE_CLOUD_ACCESS === 'true';
       legacyCloudDirectFallbackEnabled = config.env.VITE_ENABLE_LEGACY_CLOUD_DIRECT_FALLBACK === 'true';
+      trustedCloudTransportEnabled = config.env.VITE_ENABLE_TRUSTED_CLOUD_TRANSPORT === 'true';
       reactCoreScreensEnabled = config.env.VITE_REACT_CORE_SCREENS === 'true';
       appVersion = JSON.parse(fs.readFileSync(path.resolve('package.json'), 'utf8')).version;
     },
@@ -48,6 +51,10 @@ function inlineReleaseAssets() {
         const read = file => fs.readFileSync(path.resolve(file), 'utf8');
         const cloudProvider = read('src/lib/cloud-provider.js')
           .replace(/^export /gm, '');
+        const trustedCloudTransport = read('src/lib/trusted-cloud-transport.js')
+          .replace(/^export /gm, '')
+          .replace(/\nexport \{ normalizeFunctionUrl \};\s*$/, '')
+          + '\nwindow.TTTrustedCloud={createTrustedCloudProvider};';
         const cloudSync = `${cloudProvider}\n${read('src/lib/cloud-sync.js')}`
           .replace(/^import \{ createSupabaseCloudProvider \} from '\.\/cloud-provider\.js';\s*/m, '')
           .replace(/^export /gm, '')
@@ -64,7 +71,7 @@ function inlineReleaseAssets() {
         );
         output = output.replace(
           '<!-- TT_CLOUD_SYNC_RUNTIME -->',
-          `<script>${escapeInlineScriptMarkup(cloudSync)}</script>`,
+          `<script>${escapeInlineScriptMarkup(`${trustedCloudTransport}\n${cloudSync}`)}</script>`,
         );
         output = output.replace(
           '<!-- TT_TELEMETRY_RUNTIME -->',
@@ -76,7 +83,7 @@ function inlineReleaseAssets() {
         );
         output = output.replace(
           '<!-- TT_FEATURE_FLAGS -->',
-          `<script>window.__TT_FEATURES__=Object.assign(${JSON.stringify({ cloudAccess: cloudAccessEnabled, legacyCloudDirectFallback: legacyCloudDirectFallbackEnabled, reactCoreScreens: reactCoreScreensEnabled })},window.__TT_FEATURES__||{});window.__TTFeatureFlags=Object.assign({reactCoreScreens:${reactCoreScreensEnabled}},window.__TTFeatureFlags||{});</script>`,
+          `<script>window.__TT_FEATURES__=Object.assign(${JSON.stringify({ cloudAccess: cloudAccessEnabled, legacyCloudDirectFallback: legacyCloudDirectFallbackEnabled, trustedCloudTransport: trustedCloudTransportEnabled, reactCoreScreens: reactCoreScreensEnabled })},window.__TT_FEATURES__||{});window.__TTFeatureFlags=Object.assign({reactCoreScreens:${reactCoreScreensEnabled}},window.__TTFeatureFlags||{});</script>`,
         );
         if (!isBuild) return output;
 

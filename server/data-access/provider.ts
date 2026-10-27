@@ -3,6 +3,7 @@ import type {
   CrewMembershipRecord,
   PilotAccessGrant,
   PilotRecord,
+  PilotWrite,
   ProgressSnapshotRecord,
   SnapshotWrite,
 } from './contracts.ts';
@@ -13,8 +14,10 @@ import type {
  * must keep account and grant constraints in the provider transaction.
  */
 export interface DataAccessProvider {
+  upsertOwnedPilot(userId: string, pilot: PilotWrite): Promise<PilotRecord>;
   listOwnedPilots(userId: string): Promise<readonly PilotRecord[]>;
   readOwnedPilot(userId: string, localId: string): Promise<PilotRecord | null>;
+  readProgressSnapshot(userId: string, pilotId: string): Promise<ProgressSnapshotRecord | null>;
   readGrantedPilot(userId: string, pilotId: string): Promise<PilotRecord | null>;
   listCrewMemberships(userId: string): Promise<readonly CrewMembershipRecord[]>;
   listPilotAccess(userId: string, pilotId: string): Promise<readonly PilotAccessGrant[]>;

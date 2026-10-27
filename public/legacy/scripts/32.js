@@ -140,8 +140,17 @@
       return response.ok ? { data, error: null } : { data: null, error: data || Error('Cloud request failed') };
     },
   };
+  const trustedTransportEnabled = window.__TT_FEATURES__?.trustedCloudTransport === true;
+  const trustedProvider = trustedTransportEnabled
+    ? window.TTTrustedCloud?.createTrustedCloudProvider?.({
+      functionUrl: config.trustedFunctionUrl,
+      getSession: async () => readSession(),
+    })
+    : null;
+  const directFallbackEnabled = window.__TT_FEATURES__?.legacyCloudDirectFallback === true;
   const cloudAdapter = window.TTCloudSync?.createCloudSync?.({
-    client: cloudClient,
+    client: trustedProvider || (directFallbackEnabled ? cloudClient : undefined),
+    provider: trustedProvider || undefined,
     store: window.TTLocalStore,
     getLocalPilot: localPilot,
     applyRemotePilot: snapshot => {
