@@ -29,6 +29,10 @@ ALLOWED_ORIGINS=http://localhost:5173
 The browser transport remains disabled until the public function URL and its
 feature flag are explicitly configured.
 
+Trusted browser requests have an eight-second timeout, including response-body
+reading. A timeout is reported as a retryable cloud failure and must never
+replace local progress or leave the synchronization UI pending indefinitely.
+
 ## Hosted deployment
 
 Apply the checked-in migrations in timestamp order before enabling synchronization:

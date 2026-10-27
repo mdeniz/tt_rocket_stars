@@ -1,4 +1,5 @@
 const MAX_RESPONSE_BYTES = 512 * 1024;
+const DEFAULT_REQUEST_TIMEOUT_MS = 8000;
 
 function normalizeFunctionUrl(value) {
   const raw = String(value || '').trim();
@@ -18,19 +19,43 @@ async function readJson(response) {
   try { return text ? JSON.parse(text) : null; } catch { throw Object.assign(new Error('Cloud response is invalid.'), { code: 'invalid_response' }); }
 }
 
-export function createTrustedCloudProvider({ functionUrl, getSession = async () => null, fetchImpl = globalThis.fetch } = {}) {
+export function createTrustedCloudProvider({ functionUrl, getSession = async () => null, fetchImpl = globalThis.fetch, requestTimeoutMs = DEFAULT_REQUEST_TIMEOUT_MS } = {}) {
   const endpoint = normalizeFunctionUrl(functionUrl);
+  const timeoutMs = Number.isFinite(Number(requestTimeoutMs)) && Number(requestTimeoutMs) > 0
+    ? Number(requestTimeoutMs)
+    : DEFAULT_REQUEST_TIMEOUT_MS;
   const cache = new Map();
   const request = async (operation, payload = {}) => {
     if (!endpoint || typeof fetchImpl !== 'function') throw Object.assign(new Error('Trusted cloud transport is unavailable.'), { code: 'unavailable' });
     const session = await getSession();
     if (!session?.access_token || !session?.user?.id) return null;
-    const response = await fetchImpl(endpoint, {
+    const controller = typeof AbortController === 'function' ? new AbortController() : null;
+    let timedOut = false;
+    let timer;
+    const timeoutError = Object.assign(new Error('Cloud request timed out.'), { code: 'timeout' });
+    const requestPromise = fetchImpl(endpoint, {
       method: 'POST',
       headers: { Authorization: `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ operation, ...payload }),
+      ...(controller ? { signal: controller.signal } : {}),
+    }).then(async response => ({ response, body: await readJson(response) }));
+    const timeoutPromise = new Promise((_, reject) => {
+      timer = setTimeout(() => {
+        timedOut = true;
+        controller?.abort();
+        reject(timeoutError);
+      }, timeoutMs);
     });
-    const body = await readJson(response);
+    let result;
+    try {
+      result = await Promise.race([requestPromise, timeoutPromise]);
+    } catch (error) {
+      if (timedOut) throw timeoutError;
+      throw error;
+    } finally {
+      clearTimeout(timer);
+    }
+    const { response, body } = result;
     if (!response.ok) {
       const error = new Error(body?.message || 'Cloud operation failed.');
       error.code = body?.error || (response.status === 409 ? '40001' : 'cloud_unavailable');
