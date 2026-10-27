@@ -9,7 +9,7 @@ const concurrencyMigration = fs.readFileSync(path.join(__dirname, '../../supabas
 const hardeningMigration = fs.readFileSync(path.join(__dirname, '../../supabase/migrations/20261023020000_harden_cloud_access.sql'), 'utf8');
 const crewMigration = fs.readFileSync(path.join(__dirname, '../../supabase/migrations/20261023030000_crew_access_model.sql'), 'utf8');
 const cloudRpcMigration = fs.readFileSync(path.join(__dirname, '../../supabase/migrations/20261027150000_cloud_access_rpcs.sql'), 'utf8');
-const snapshotLockMigration = fs.readFileSync(path.join(__dirname, '../../supabase/migrations/20261027160000_bound_snapshot_lock_wait.sql'), 'utf8');
+const snapshotLockMigration = fs.readFileSync(path.join(__dirname, '../../supabase/migrations/20261027145301_bound_snapshot_lock_wait.sql'), 'utf8');
 const schemaDocs = fs.readFileSync(path.join(__dirname, '../../docs/supabase-schema.md'), 'utf8');
 
 test('cloud schema defines user-owned pilot and versioned progress tables', () => {
