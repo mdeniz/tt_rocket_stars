@@ -42,6 +42,11 @@ must be enabled for invited-account password creation, recovery, and change
 flows. Do not test it with a production password or record passwords in issue
 comments.
 
+The setting is available only on Supabase Pro and higher plans. The approved TT
+Rocket Stars organization is currently on the free plan, so this control remains
+an explicit deployment blocker until a maintainer approves a plan change. Do not
+start a paid plan or incur a charge as part of migration verification.
+
 Expected advisor state after the reviewed migration and Auth configuration:
 
 - no `anon_security_definer_function_executable` finding for `rls_auto_enable`;
