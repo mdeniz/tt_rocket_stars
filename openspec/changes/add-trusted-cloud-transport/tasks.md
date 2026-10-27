@@ -21,7 +21,7 @@
 
 - [x] 3.1 Configure the Edge Function, public URL, secrets, CORS, Auth redirects, and migrations in the Supabase project outside the repository; verify the values are documented without recording secrets.
 - [ ] 3.2 Verify two invited accounts against the hosted function: owned reads/writes succeed, cross-account access is denied, stale writes return conflicts, retries are bounded, and deletion removes only the requesting account's cloud data.
-- [ ] 3.3 Verify the hosted GitHub Pages flow with Chrome DevTools evidence, including authenticated synchronization, signed-out no-request behavior, offline continuation, console/network output, and absence of administrative credentials.
+- [x] 3.3 Verify the hosted GitHub Pages flow with Chrome DevTools evidence, including authenticated synchronization, signed-out no-request behavior, offline continuation, console/network output, and absence of administrative credentials. Evidence is recorded in `docs/trusted-cloud-chrome-devtools-verification.md`; the two-account provider checks remain tracked under 3.2.
 - [x] 3.4 Update #184 and #170 with CI links, hosted evidence, security findings, rollback readiness, and the remaining adapter-removal gate; keep both issues open until every acceptance criterion is complete.
 
 ## Workflow follow-up
