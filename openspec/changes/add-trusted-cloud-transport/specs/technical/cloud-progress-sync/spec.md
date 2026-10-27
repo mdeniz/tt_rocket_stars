@@ -31,3 +31,10 @@ Function MUST not block local gameplay or delete local progress.
 - **WHEN** the Edge Function returns a malformed or unauthorized synchronization response
 - **THEN** the application rejects it without replacing local progress
 - **AND** the failure remains recoverable through a later synchronization attempt
+
+#### Scenario: Bounded provider operation
+- **WHEN** an authenticated Edge Function data operation does not complete within
+  the configured provider timeout
+- **THEN** the function returns a retryable `cloud_timeout` response with HTTP
+  `504`
+- **AND** the browser preserves local progress and can retry the operation later

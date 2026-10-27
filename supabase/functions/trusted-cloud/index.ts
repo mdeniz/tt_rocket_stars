@@ -7,6 +7,7 @@ import {
   errorResponse,
   parseBearerToken,
   parseRequestBody,
+  withTimeout,
 } from '../_shared/cloud-contract.js';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
@@ -79,22 +80,24 @@ async function handle(request) {
   const operation = parseRequestBody(raw, JSON.stringify(raw).length);
   const context: AuthenticatedRequestContext = { userId: user.id, accessToken: parseBearerToken(request.headers.get('Authorization')) };
   const access = createTypedDataAccess(() => createSupabaseDataProvider(client, context));
-  if (operation.operation === 'upload') {
-    const pilot = await access.upsertOwnedPilot(context, operation.pilot);
-    const snapshot = await access.writeProgressSnapshot(context, { pilotId: pilot.id, expectedVersion: operation.expectedVersion, payload: operation.pilot });
-    return response({ status: 'uploaded', version: snapshot.version, updatedAt: snapshot.updatedAt }, 200, origin);
-  }
-  if (operation.operation === 'download' || operation.operation === 'restorePilot') {
-    const pilot = await access.readOwnedPilot(context, { localId: operation.localId });
-    if (!pilot) return response({ status: 'not-found' }, 200, origin);
-    return response({ status: 'downloaded', pilot: browserPilot(pilot), snapshot: browserSnapshot(await access.readProgressSnapshot(context, pilot.id)) }, 200, origin);
-  }
-  if (operation.operation === 'listPilots') {
-    const pilots = await access.listOwnedPilots(context);
-    return response({ status: 'listed', pilots: pilots.map(browserPilot) }, 200, origin);
-  }
-  await access.deleteOwnedCloudData(context);
-  return response({ status: 'deleted' }, 200, origin);
+  return await withTimeout((async () => {
+    if (operation.operation === 'upload') {
+      const pilot = await access.upsertOwnedPilot(context, operation.pilot);
+      const snapshot = await access.writeProgressSnapshot(context, { pilotId: pilot.id, expectedVersion: operation.expectedVersion, payload: operation.pilot });
+      return response({ status: 'uploaded', version: snapshot.version, updatedAt: snapshot.updatedAt }, 200, origin);
+    }
+    if (operation.operation === 'download' || operation.operation === 'restorePilot') {
+      const pilot = await access.readOwnedPilot(context, { localId: operation.localId });
+      if (!pilot) return response({ status: 'not-found' }, 200, origin);
+      return response({ status: 'downloaded', pilot: browserPilot(pilot), snapshot: browserSnapshot(await access.readProgressSnapshot(context, pilot.id)) }, 200, origin);
+    }
+    if (operation.operation === 'listPilots') {
+      const pilots = await access.listOwnedPilots(context);
+      return response({ status: 'listed', pilots: pilots.map(browserPilot) }, 200, origin);
+    }
+    await access.deleteOwnedCloudData(context);
+    return response({ status: 'deleted' }, 200, origin);
+  })());
 }
 
 Deno.serve(async request => {

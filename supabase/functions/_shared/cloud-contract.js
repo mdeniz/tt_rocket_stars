@@ -1,6 +1,7 @@
 const OPERATIONS = new Set(['upload', 'download', 'listPilots', 'restorePilot', 'deleteCloudData']);
 const MAX_BODY_BYTES = 256 * 1024;
 const MAX_LOCAL_ID_LENGTH = 120;
+const CLOUD_OPERATION_TIMEOUT_MS = 8000;
 
 function isRecord(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -79,13 +80,25 @@ export function allowedOrigin(origin, configuredOrigins = '') {
 }
 
 export function errorResponse(error) {
-  const code = ['invalid_operation', 'invalid_payload', 'payload_too_large', 'unauthorized'].includes(error?.code)
+  const code = ['invalid_operation', 'invalid_payload', 'payload_too_large', 'unauthorized', 'cloud_timeout'].includes(error?.code)
     ? error.code
     : String(error?.code || '') === '40001' || String(error?.message || '').toLowerCase().includes('snapshot version conflict')
       ? 'conflict'
       : 'cloud_unavailable';
-  const status = code === 'unauthorized' ? 401 : code === 'invalid_operation' || code === 'invalid_payload' || code === 'payload_too_large' ? 400 : code === 'conflict' ? 409 : 502;
-  return { status, body: { error: code, message: code === 'unauthorized' ? 'Authentication required.' : code === 'conflict' ? 'The cloud snapshot has changed.' : 'Cloud operation failed.' } };
+  const status = code === 'unauthorized' ? 401 : code === 'invalid_operation' || code === 'invalid_payload' || code === 'payload_too_large' ? 400 : code === 'conflict' ? 409 : code === 'cloud_timeout' ? 504 : 502;
+  return { status, body: { error: code, message: code === 'unauthorized' ? 'Authentication required.' : code === 'conflict' ? 'The cloud snapshot has changed.' : code === 'cloud_timeout' ? 'Cloud operation timed out.' : 'Cloud operation failed.' } };
 }
 
-export { MAX_BODY_BYTES, OPERATIONS };
+export function withTimeout(promise, timeoutMs = CLOUD_OPERATION_TIMEOUT_MS) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => {
+      const error = new Error('Cloud operation timed out.');
+      error.code = 'cloud_timeout';
+      reject(error);
+    }, timeoutMs);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
+export { CLOUD_OPERATION_TIMEOUT_MS, MAX_BODY_BYTES, OPERATIONS };

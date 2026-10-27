@@ -51,3 +51,15 @@ test('maps conflicts and authentication failures to bounded responses', async ()
   assert.deepEqual(errorResponse({ code: '40001' }).status, 409);
   assert.deepEqual(errorResponse({ code: 'unauthorized' }).body, { error: 'unauthorized', message: 'Authentication required.' });
 });
+
+test('bounds pending trusted cloud operations and maps timeout failures', async () => {
+  const { errorResponse, withTimeout } = await contract;
+  await assert.rejects(
+    () => withTimeout(new Promise(() => {}), 10),
+    error => error.code === 'cloud_timeout',
+  );
+  assert.deepEqual(errorResponse({ code: 'cloud_timeout' }), {
+    status: 504,
+    body: { error: 'cloud_timeout', message: 'Cloud operation timed out.' },
+  });
+});
