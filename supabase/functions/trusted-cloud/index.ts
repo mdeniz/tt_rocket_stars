@@ -62,16 +62,17 @@ function browserSnapshot(snapshot) {
 async function authenticatedClient(request, signal) {
   requireConfiguration();
   const token = parseBearerToken(request.headers.get('Authorization'));
-  const client = createClient(supabaseUrl, supabaseAnonKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-    global: {
-      headers: { Authorization: `Bearer ${token}` },
-      fetch: (input, init = {}) => fetch(input, { ...init, signal: signal || init.signal }),
+  const authResponse = await fetch(`${supabaseUrl}/auth/v1/user`, {
+    headers: {
+      apikey: supabaseAnonKey,
+      Authorization: `Bearer ${token}`,
     },
+    signal,
   });
-  const { data, error } = await client.auth.getUser(token);
-  if (error || !data?.user?.id) throw Object.assign(new Error('Authentication required.'), { code: 'unauthorized' });
-  return { token, user: data.user };
+  if (!authResponse.ok) throw Object.assign(new Error('Authentication required.'), { code: 'unauthorized' });
+  const user = await authResponse.json();
+  if (!user?.id) throw Object.assign(new Error('Authentication required.'), { code: 'unauthorized' });
+  return { token, user };
 }
 
 async function handle(request) {
