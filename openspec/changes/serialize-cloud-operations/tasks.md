@@ -12,6 +12,9 @@
 
 ## 3. Integration verification
 
+- [ ] 3.0 Replace the `FOR UPDATE NOWAIT` snapshot procedure with a bounded,
+  atomic version-qualified update; verify concurrent writes produce `40001`
+  conflicts and only prolonged locks produce `55P03`.
 - [x] 3.1 Run `npm run check`, strict OpenSpec validation, and the configured browser verification; record exact results and unavailable integrations.
 - [ ] 3.2 Repeat hosted verification with two disposable invited accounts, confirm no overlapping trusted-cloud requests during normal UI actions, and inspect PostgREST activity for pool timeouts; keep the related issue in `status:verification` until all evidence is recorded.
 

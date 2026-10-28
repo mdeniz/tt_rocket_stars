@@ -12,6 +12,7 @@ const cloudRpcMigration = fs.readFileSync(path.join(__dirname, '../../supabase/m
 const snapshotLockMigration = fs.readFileSync(path.join(__dirname, '../../supabase/migrations/20261027145301_bound_snapshot_lock_wait.sql'), 'utf8');
 const securityMigration = fs.readFileSync(path.join(__dirname, '../../supabase/migrations/20261027220642_harden_function_grants_and_indexes.sql'), 'utf8');
 const deletionRpcMigration = fs.readFileSync(path.join(__dirname, '../../supabase/migrations/20261028164815_secure_cloud_deletion_rpc.sql'), 'utf8');
+const atomicSnapshotMigration = fs.readFileSync(path.join(__dirname, '../../supabase/migrations/20261028230000_atomic_snapshot_conflicts.sql'), 'utf8');
 const schemaDocs = fs.readFileSync(path.join(__dirname, '../../docs/supabase-schema.md'), 'utf8');
 const securityDocs = fs.readFileSync(path.join(__dirname, '../../docs/supabase-security-hardening.md'), 'utf8');
 
@@ -74,6 +75,15 @@ test('snapshot writes fail fast when another transaction owns the row lock', () 
   assert.match(snapshotLockMigration, /when lock_not_available/i);
   assert.match(snapshotLockMigration, /cloud snapshot is busy/i);
   assert.doesNotMatch(snapshotLockMigration, /service[_ -]?role|supabase_service_role/i);
+});
+
+test('snapshot writes resolve ordinary races as optimistic conflicts', () => {
+  assert.match(atomicSnapshotMigration, /set_config\('lock_timeout', '2s', true\)/i);
+  assert.match(atomicSnapshotMigration, /update public\.progress_snapshots[\s\S]*where pilot_id = p_pilot_id[\s\S]*and version = coalesce\(p_expected_version, 0\)[\s\S]*returning \* into next_snapshot/i);
+  assert.match(atomicSnapshotMigration, /when unique_violation[\s\S]*snapshot version conflict[\s\S]*40001/i);
+  assert.match(atomicSnapshotMigration, /when lock_not_available[\s\S]*cloud snapshot is busy[\s\S]*55P03/i);
+  assert.doesNotMatch(atomicSnapshotMigration, /for update nowait/i);
+  assert.doesNotMatch(atomicSnapshotMigration, /service[_ -]?role|supabase_service_role/i);
 });
 
 test('crew access schema keeps pilot identity global and explicit', () => {
