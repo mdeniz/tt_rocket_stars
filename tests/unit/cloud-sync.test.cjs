@@ -288,6 +288,85 @@ test('serializes direct and queued uploads while preserving the latest pending w
   assert.equal(uploads, 2);
 });
 
+test('serializes uploads and reads through one provider operation queue', async () => {
+  const { createCloudSync } = await cloudSync;
+  const calls = [];
+  let release;
+  const blocked = new Promise(resolve => { release = resolve; });
+  const provider = {
+    session: async () => ({ user: { id: 'user-1' } }),
+    upsertPilot: async () => { calls.push('upload'); return { id: 'pilot-1' }; },
+    writeSnapshot: async () => { await blocked; return 1; },
+    listPilots: async () => { calls.push('list'); return []; },
+  };
+  const adapter = createCloudSync({
+    provider,
+    getLocalPilot: () => ({ id: 'pilot-1', name: 'Ada', language: 'en', payload: {} }),
+  });
+  const upload = adapter.upload();
+  await new Promise(resolve => setImmediate(resolve));
+  const listed = adapter.listPilots();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.deepEqual(calls, ['upload']);
+  release();
+  assert.equal((await upload).status, 'uploaded');
+  assert.equal((await listed).status, 'listed');
+  assert.deepEqual(calls, ['upload', 'list']);
+});
+
+test('cancels queued cloud operations when the session lifecycle ends', async () => {
+  const { createCloudSync } = await cloudSync;
+  const calls = [];
+  let release;
+  const blocked = new Promise(resolve => { release = resolve; });
+  const provider = {
+    session: async () => ({ user: { id: 'user-1' } }),
+    upsertPilot: async () => { calls.push('upload'); return { id: 'pilot-1' }; },
+    writeSnapshot: async () => { await blocked; return 1; },
+    listPilots: async () => { calls.push('list'); return []; },
+    cancelPending: () => release(),
+  };
+  const adapter = createCloudSync({
+    provider,
+    getLocalPilot: () => ({ id: 'pilot-1', name: 'Ada', language: 'en', payload: {} }),
+  });
+  const upload = adapter.upload();
+  await new Promise(resolve => setImmediate(resolve));
+  const listed = adapter.listPilots();
+  adapter.cancel();
+  assert.equal((await upload).status, 'cancelled');
+  assert.equal((await listed).status, 'cancelled');
+  assert.deepEqual(calls, ['upload']);
+});
+
+test('serializes cloud deletion behind an active upload', async () => {
+  const { createCloudSync } = await cloudSync;
+  const calls = [];
+  let release;
+  const blocked = new Promise(resolve => { release = resolve; });
+  const provider = {
+    session: async () => ({ user: { id: 'user-1' } }),
+    upsertPilot: async () => ({ id: 'pilot-1' }),
+    writeSnapshot: async () => { calls.push('upload'); await blocked; return 1; },
+    deleteCloudData: async () => { calls.push('delete'); },
+  };
+  const adapter = createCloudSync({
+    provider,
+    getLocalPilot: () => ({ id: 'pilot-1', name: 'Ada', language: 'en', payload: {} }),
+  });
+
+  const upload = adapter.upload();
+  await new Promise(resolve => setImmediate(resolve));
+  const deletion = adapter.deleteCloudData();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.deepEqual(calls, ['upload']);
+
+  release();
+  assert.equal((await upload).status, 'uploaded');
+  assert.equal((await deletion).status, 'deleted');
+  assert.deepEqual(calls, ['upload', 'delete']);
+});
+
 test('cancels an active upload without reporting a stale failure', async () => {
   const { createCloudSync } = await cloudSync;
   const statuses = [];

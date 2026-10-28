@@ -11,6 +11,7 @@ const crewMigration = fs.readFileSync(path.join(__dirname, '../../supabase/migra
 const cloudRpcMigration = fs.readFileSync(path.join(__dirname, '../../supabase/migrations/20261027150000_cloud_access_rpcs.sql'), 'utf8');
 const snapshotLockMigration = fs.readFileSync(path.join(__dirname, '../../supabase/migrations/20261027145301_bound_snapshot_lock_wait.sql'), 'utf8');
 const securityMigration = fs.readFileSync(path.join(__dirname, '../../supabase/migrations/20261027220642_harden_function_grants_and_indexes.sql'), 'utf8');
+const deletionRpcMigration = fs.readFileSync(path.join(__dirname, '../../supabase/migrations/20261028164815_secure_cloud_deletion_rpc.sql'), 'utf8');
 const schemaDocs = fs.readFileSync(path.join(__dirname, '../../docs/supabase-schema.md'), 'utf8');
 const securityDocs = fs.readFileSync(path.join(__dirname, '../../docs/supabase-security-hardening.md'), 'utf8');
 
@@ -125,4 +126,14 @@ test('security hardening migration fixes function boundaries and advisor indexes
   assert.doesNotMatch(securityMigration, /service[_ -]?role|supabase_service_role/i);
   assert.match(securityDocs, /Leaked-password protection/i);
   assert.match(securityDocs, /provider-managed exception/i);
+});
+
+test('cloud deletion RPC keeps direct table writes revoked and binds deletion to auth.uid()', () => {
+  assert.match(deletionRpcMigration, /security definer/i);
+  assert.match(deletionRpcMigration, /set search_path = public, pg_catalog/i);
+  assert.match(deletionRpcMigration, /delete from public\.progress_snapshots where user_id = \(select auth\.uid\(\)\)/i);
+  assert.match(deletionRpcMigration, /delete from public\.pilots where user_id = \(select auth\.uid\(\)\)/i);
+  assert.match(deletionRpcMigration, /revoke all on function public\.delete_my_cloud_data\(\) from public, anon/i);
+  assert.match(deletionRpcMigration, /grant execute on function public\.delete_my_cloud_data\(\) to authenticated/i);
+  assert.doesNotMatch(deletionRpcMigration, /service[_ -]?role|supabase_service_role/i);
 });
