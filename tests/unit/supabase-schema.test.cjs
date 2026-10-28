@@ -13,6 +13,7 @@ const snapshotLockMigration = fs.readFileSync(path.join(__dirname, '../../supaba
 const securityMigration = fs.readFileSync(path.join(__dirname, '../../supabase/migrations/20261027220642_harden_function_grants_and_indexes.sql'), 'utf8');
 const deletionRpcMigration = fs.readFileSync(path.join(__dirname, '../../supabase/migrations/20261028164815_secure_cloud_deletion_rpc.sql'), 'utf8');
 const atomicSnapshotMigration = fs.readFileSync(path.join(__dirname, '../../supabase/migrations/20261028230000_atomic_snapshot_conflicts.sql'), 'utf8');
+const pilotLockMigration = fs.readFileSync(path.join(__dirname, '../../supabase/migrations/20261028235000_bound_pilot_upsert_lock.sql'), 'utf8');
 const schemaDocs = fs.readFileSync(path.join(__dirname, '../../docs/supabase-schema.md'), 'utf8');
 const securityDocs = fs.readFileSync(path.join(__dirname, '../../docs/supabase-security-hardening.md'), 'utf8');
 
@@ -84,6 +85,14 @@ test('snapshot writes resolve ordinary races as optimistic conflicts', () => {
   assert.match(atomicSnapshotMigration, /when lock_not_available[\s\S]*cloud snapshot is busy[\s\S]*55P03/i);
   assert.doesNotMatch(atomicSnapshotMigration, /for update nowait/i);
   assert.doesNotMatch(atomicSnapshotMigration, /service[_ -]?role|supabase_service_role/i);
+});
+
+test('pilot upserts bound row contention before snapshot writes', () => {
+  assert.match(pilotLockMigration, /create or replace function public\.upsert_my_pilot/i);
+  assert.match(pilotLockMigration, /set_config\('lock_timeout', '2s', true\)/i);
+  assert.match(pilotLockMigration, /when lock_not_available[\s\S]*cloud snapshot is busy[\s\S]*55P03/i);
+  assert.match(pilotLockMigration, /grant execute on function public\.upsert_my_pilot\(text, text, text, text, jsonb, timestamptz\) to authenticated/i);
+  assert.doesNotMatch(pilotLockMigration, /service[_ -]?role|supabase_service_role/i);
 });
 
 test('crew access schema keeps pilot identity global and explicit', () => {

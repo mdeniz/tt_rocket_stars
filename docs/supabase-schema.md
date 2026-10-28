@@ -33,6 +33,12 @@ an atomic expected-version update so ordinary concurrent writes return the
 existing `40001` conflict contract; `55P03` is reserved for locks that remain
 held beyond the database wait limit.
 
+The forward migration `20261028235000_bound_pilot_upsert_lock.sql` applies the
+same two-second lock bound to the ownership-scoped pilot upsert that precedes a
+snapshot write. This prevents concurrent trusted-cloud uploads from waiting on
+the pilot row until the edge-function timeout. The operation reports `55P03`
+for prolonged pilot-row contention and does not modify local progress.
+
 The client adapter in `src/lib/cloud-sync.js` consumes a serialized pilot
 snapshot and writes synchronization metadata separately from the existing
 local game keys. It returns `disabled`, `signed-out`, `not-found`, `uploaded`,

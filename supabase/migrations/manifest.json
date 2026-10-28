@@ -50,6 +50,11 @@
       "file": "20261028230000_atomic_snapshot_conflicts.sql",
       "timestamp": "20261028230000",
       "sha256": "24f6a78853ddb0c305050bf118382d6efb934e2a87aa19c01d66bf2b8b364fa8"
+    },
+    {
+      "file": "20261028235000_bound_pilot_upsert_lock.sql",
+      "timestamp": "20261028235000",
+      "sha256": "a8b9d1df2265a4fb64001b5fa823476434752e13b3b3be2edd8207ff3b9afef0"
     }
   ]
 }
