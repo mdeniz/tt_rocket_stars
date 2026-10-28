@@ -37,6 +37,9 @@ function providerError(error: any): DataAccessError {
   if (code === '40001' || String(error?.message || '').toLowerCase().includes('snapshot version conflict')) {
     return new DataAccessError('conflict', 'The cloud snapshot has changed.');
   }
+  if (code === '55P03' || String(error?.message || '').toLowerCase().includes('cloud snapshot is busy')) {
+    return new DataAccessError('transient', 'The cloud snapshot is temporarily busy.');
+  }
   if (code === '42501' || code === 'PGRST116') return new DataAccessError('unauthorized', 'The cloud operation is not authorized.');
   return new DataAccessError('provider-failure', 'The data provider operation failed.');
 }
