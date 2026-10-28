@@ -39,6 +39,11 @@ snapshot write. This prevents concurrent trusted-cloud uploads from waiting on
 the pilot row until the edge-function timeout. The operation reports `55P03`
 for prolonged pilot-row contention and does not modify local progress.
 
+The forward migration `20261029000000_atomic_cloud_upload.sql` provides the
+trusted upload boundary as one authenticated transaction. It persists the
+ownership-scoped pilot and its expected-version snapshot through one RPC, which
+reduces PostgREST pool pressure and keeps pilot and snapshot writes atomic.
+
 The client adapter in `src/lib/cloud-sync.js` consumes a serialized pilot
 snapshot and writes synchronization metadata separately from the existing
 local game keys. It returns `disabled`, `signed-out`, `not-found`, `uploaded`,

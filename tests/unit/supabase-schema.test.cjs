@@ -14,6 +14,7 @@ const securityMigration = fs.readFileSync(path.join(__dirname, '../../supabase/m
 const deletionRpcMigration = fs.readFileSync(path.join(__dirname, '../../supabase/migrations/20261028164815_secure_cloud_deletion_rpc.sql'), 'utf8');
 const atomicSnapshotMigration = fs.readFileSync(path.join(__dirname, '../../supabase/migrations/20261028230000_atomic_snapshot_conflicts.sql'), 'utf8');
 const pilotLockMigration = fs.readFileSync(path.join(__dirname, '../../supabase/migrations/20261028235000_bound_pilot_upsert_lock.sql'), 'utf8');
+const atomicUploadMigration = fs.readFileSync(path.join(__dirname, '../../supabase/migrations/20261029000000_atomic_cloud_upload.sql'), 'utf8');
 const schemaDocs = fs.readFileSync(path.join(__dirname, '../../docs/supabase-schema.md'), 'utf8');
 const securityDocs = fs.readFileSync(path.join(__dirname, '../../docs/supabase-security-hardening.md'), 'utf8');
 
@@ -93,6 +94,14 @@ test('pilot upserts bound row contention before snapshot writes', () => {
   assert.match(pilotLockMigration, /when lock_not_available[\s\S]*cloud snapshot is busy[\s\S]*55P03/i);
   assert.match(pilotLockMigration, /grant execute on function public\.upsert_my_pilot\(text, text, text, text, jsonb, timestamptz\) to authenticated/i);
   assert.doesNotMatch(pilotLockMigration, /service[_ -]?role|supabase_service_role/i);
+});
+
+test('trusted uploads persist pilot and snapshot through one bounded RPC', () => {
+  assert.match(atomicUploadMigration, /create or replace function public\.upsert_my_pilot_and_progress_snapshot/i);
+  assert.match(atomicUploadMigration, /set_config\('lock_timeout', '2s', true\)/i);
+  assert.match(atomicUploadMigration, /update public\.progress_snapshots[\s\S]*returning \* into next_snapshot/i);
+  assert.match(atomicUploadMigration, /grant execute on function public\.upsert_my_pilot_and_progress_snapshot\(text, text, text, text, jsonb, timestamptz, bigint, jsonb\) to authenticated/i);
+  assert.doesNotMatch(atomicUploadMigration, /service[_ -]?role|supabase_service_role/i);
 });
 
 test('crew access schema keeps pilot identity global and explicit', () => {

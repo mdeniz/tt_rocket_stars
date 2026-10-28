@@ -104,8 +104,7 @@ async function handle(request) {
     });
     const access = createTypedDataAccess(() => createSupabaseDataProvider(client, context));
     if (operation.operation === 'upload') {
-      const pilot = await access.upsertOwnedPilot(context, operation.pilot);
-      const snapshot = await access.writeProgressSnapshot(context, { pilotId: pilot.id, expectedVersion: operation.expectedVersion, payload: operation.pilot });
+      const snapshot = await access.writeOwnedPilotSnapshot(context, operation.pilot, operation.expectedVersion);
       return response({ status: 'uploaded', version: snapshot.version, updatedAt: snapshot.updatedAt }, 200, origin);
     }
     if (operation.operation === 'download' || operation.operation === 'restorePilot') {

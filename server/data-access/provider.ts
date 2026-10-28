@@ -22,6 +22,7 @@ export interface DataAccessProvider {
   listCrewMemberships(userId: string): Promise<readonly CrewMembershipRecord[]>;
   listPilotAccess(userId: string, pilotId: string): Promise<readonly PilotAccessGrant[]>;
   writeProgressSnapshot(userId: string, write: SnapshotWrite): Promise<ProgressSnapshotRecord>;
+  writeOwnedPilotSnapshot(userId: string, pilot: PilotWrite, expectedVersion: number): Promise<ProgressSnapshotRecord>;
   deleteOwnedCloudData(userId: string): Promise<void>;
 }
 

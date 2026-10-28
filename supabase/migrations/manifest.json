@@ -55,6 +55,11 @@
       "file": "20261028235000_bound_pilot_upsert_lock.sql",
       "timestamp": "20261028235000",
       "sha256": "a8b9d1df2265a4fb64001b5fa823476434752e13b3b3be2edd8207ff3b9afef0"
+    },
+    {
+      "file": "20261029000000_atomic_cloud_upload.sql",
+      "timestamp": "20261029000000",
+      "sha256": "bd0ac1fe1d59b1bf5550602724fa4584caa3adc09266a652bbed96833d14e0d6"
     }
   ]
 }
