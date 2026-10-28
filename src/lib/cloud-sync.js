@@ -94,6 +94,18 @@ export function createCloudSync({ client, provider = client ? createSupabaseClou
   const active = () => serializePilot(getLocalPilot?.(), now());
   let lifecycleGeneration = 0;
   const isCancelled = generation => generation !== lifecycleGeneration;
+  let operationGeneration = 0;
+  let operationTail = Promise.resolve();
+  const enqueueOperation = operation => {
+    const generation = operationGeneration;
+    const run = operationTail.then(async () => {
+      if (generation !== operationGeneration) return result('cancelled');
+      const outcome = await operation();
+      return generation === operationGeneration ? outcome : result('cancelled');
+    });
+    operationTail = run.catch(() => {});
+    return run;
+  };
 
   const isConflictError = error => {
     const code = String(error?.code || error?.error?.code || '');
@@ -189,14 +201,14 @@ export function createCloudSync({ client, provider = client ? createSupabaseClou
     const generation = lifecycleGeneration;
     const token = {};
     activeUploadToken = token;
-    const pendingUpload = (async () => {
+    const pendingUpload = enqueueOperation(async () => {
       let result;
       do {
         uploadQueued = false;
         result = await performUpload(options, generation);
       } while (uploadQueued && !isCancelled(generation));
       return result;
-    })().finally(() => {
+    }).finally(() => {
       if (activeUploadToken === token) {
         activeUpload = null;
         activeUploadToken = null;
@@ -208,6 +220,7 @@ export function createCloudSync({ client, provider = client ? createSupabaseClou
 
   function cancel() {
     lifecycleGeneration += 1;
+    operationGeneration += 1;
     uploadQueued = false;
     if (queueTimer) clearTimeout(queueTimer);
     queueTimer = null;
@@ -218,7 +231,7 @@ export function createCloudSync({ client, provider = client ? createSupabaseClou
     activeUploadToken = null;
   }
 
-  async function download() {
+  async function performDownload() {
     report('pending');
     if (!provider) { report('disabled'); return result('disabled'); }
     const authSession = await session();
@@ -253,7 +266,11 @@ export function createCloudSync({ client, provider = client ? createSupabaseClou
     }, retries, wait).catch(error => { const failed = result('failed', { error }); report('failed', failed); return failed; });
   }
 
-  async function listRemotePilots() {
+  function download() {
+    return enqueueOperation(performDownload);
+  }
+
+  async function performListRemotePilots() {
     if (!provider) return result('disabled', { pilots: [] });
     const authSession = await session();
     if (!authSession?.user?.id) return result('signed-out', { pilots: [] });
@@ -265,7 +282,11 @@ export function createCloudSync({ client, provider = client ? createSupabaseClou
     }
   }
 
-  async function downloadPilot(localId) {
+  function listRemotePilots() {
+    return enqueueOperation(performListRemotePilots);
+  }
+
+  async function performDownloadPilot(localId) {
     if (!provider) return result('disabled');
     const authSession = await session();
     if (!authSession?.user?.id) return result('signed-out');
@@ -280,7 +301,11 @@ export function createCloudSync({ client, provider = client ? createSupabaseClou
     }
   }
 
-  async function deleteCloudData() {
+  function downloadPilot(localId) {
+    return enqueueOperation(() => performDownloadPilot(localId));
+  }
+
+  async function performDeleteCloudData() {
     if (!provider) return result('disabled');
     const authSession = await session();
     if (!authSession?.user?.id) return result('signed-out');
@@ -290,6 +315,10 @@ export function createCloudSync({ client, provider = client ? createSupabaseClou
     } catch (error) {
       return result('failed', { error });
     }
+  }
+
+  function deleteCloudData() {
+    return enqueueOperation(performDeleteCloudData);
   }
 
   let queueTimer = null;

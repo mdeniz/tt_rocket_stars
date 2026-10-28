@@ -40,6 +40,11 @@
       "file": "20261027220642_harden_function_grants_and_indexes.sql",
       "timestamp": "20261027220642",
       "sha256": "67072249b0c2263817ac615d902f8acff43745161025f03b890a743bb2d0046b"
+    },
+    {
+      "file": "20261028164815_secure_cloud_deletion_rpc.sql",
+      "timestamp": "20261028164815",
+      "sha256": "b93fe717b0c71210c0e6431763ed57b96986498993be3121d475b74b7e5c1a73"
     }
   ]
 }

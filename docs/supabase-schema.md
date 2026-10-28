@@ -18,7 +18,11 @@ Both tables have RLS enabled. The anonymous role has no policies, and the
 authenticated policies compare `user_id` with `auth.uid()`. Snapshot writes
 also require ownership of the referenced pilot. Account deletion uses the
 authenticated `delete_my_cloud_data()` function and cascades from pilots to
-snapshots; it does not delete local browser storage.
+snapshots; it does not delete local browser storage. The forward migration
+`20261028164815_secure_cloud_deletion_rpc.sql` implements this function as a
+narrow `SECURITY DEFINER` boundary with a fixed search path and explicit
+`auth.uid()` ownership predicates because direct authenticated table deletes
+are revoked.
 
 The browser must never use a service-role key. This schema is intended to be
 applied through Supabase migrations or the SQL editor by a project maintainer.

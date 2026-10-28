@@ -17,6 +17,13 @@ Migration `20261027220642_harden_function_grants_and_indexes.sql`:
 - retains the `SECURITY DEFINER` crew helpers only for authenticated RLS policy
   evaluation, with fixed search paths and explicit grants.
 
+Migration `20261028164815_secure_cloud_deletion_rpc.sql` keeps direct table
+deletes revoked and changes `delete_my_cloud_data()` to a narrowly scoped
+`SECURITY DEFINER` function. Its fixed `search_path`, authenticated-only
+execution grant, and explicit `auth.uid()` predicates are required because the
+authenticated role intentionally has no direct `DELETE` privilege on cloud
+tables. Apply this migration before hosted deletion verification.
+
 The event-trigger function is a provider-managed exception in the connected project. Its
 definition and binding are therefore verified through the PostgreSQL catalog;
 the migration does not recreate or remove the provider-managed trigger.
@@ -53,6 +60,12 @@ Expected advisor state after the reviewed migration and Auth configuration:
 - no `function_search_path_mutable` finding for `set_updated_at`;
 - the two crew helper warnings may remain because authenticated execution is
   required by their RLS policy call sites; record that intentional exception;
+- `delete_my_cloud_data()` may also appear as an authenticated
+  `SECURITY DEFINER` warning after the pending deletion migration is applied.
+  This is an intentional, narrowly scoped privilege boundary: direct table
+  deletes remain revoked, the function is executable only by `authenticated`,
+  and every delete is restricted to `auth.uid()`. Review this finding after
+  deployment rather than suppressing it silently;
 - `auth_leaked_password_protection` is absent after the Auth setting is enabled;
 - the three unindexed foreign-key findings are absent;
 - unused-index notices remain documented until query evidence justifies removal.
