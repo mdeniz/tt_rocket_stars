@@ -367,6 +367,73 @@ test('serializes cloud deletion behind an active upload', async () => {
   assert.deepEqual(calls, ['upload', 'delete']);
 });
 
+test('continues to cloud deletion after an upload rejection', async () => {
+  const { createCloudSync } = await cloudSync;
+  const calls = [];
+  const provider = {
+    session: async () => ({ user: { id: 'user-1' } }),
+    upsertPilot: async () => ({ id: 'pilot-1' }),
+    writeSnapshot: async () => {
+      calls.push('upload');
+      throw Object.assign(new Error('timed out'), { noRetry: true });
+    },
+    deleteCloudData: async () => { calls.push('delete'); },
+  };
+  const adapter = createCloudSync({
+    provider,
+    getLocalPilot: () => ({ id: 'pilot-1', name: 'Ada', language: 'en', payload: {} }),
+  });
+
+  const upload = adapter.upload();
+  await new Promise(resolve => setImmediate(resolve));
+  const deletion = adapter.deleteCloudData();
+
+  assert.equal((await upload).status, 'failed');
+  assert.equal((await deletion).status, 'deleted');
+  assert.deepEqual(calls, ['upload', 'delete']);
+});
+
+test('continues to cloud deletion after a queued upload rejection', async () => {
+  const { createCloudSync } = await cloudSync;
+  const calls = [];
+  const provider = {
+    session: async () => ({ user: { id: 'user-1' } }),
+    upsertPilot: async () => ({ id: 'pilot-1' }),
+    writeSnapshot: async () => {
+      calls.push('upload');
+      throw Object.assign(new Error('timed out'), { noRetry: true });
+    },
+    deleteCloudData: async () => { calls.push('delete'); },
+  };
+  const adapter = createCloudSync({
+    provider,
+    getLocalPilot: () => ({ id: 'pilot-1', name: 'Ada', language: 'en', payload: {} }),
+  });
+
+  const queuedUpload = adapter.queueUpload(0);
+  await new Promise(resolve => setTimeout(resolve, 0));
+  const deletion = adapter.deleteCloudData();
+
+  assert.equal((await queuedUpload).status, 'failed');
+  assert.equal((await deletion).status, 'deleted');
+  assert.deepEqual(calls, ['upload', 'delete']);
+});
+
+test('keeps local progress unchanged when cloud deletion fails', async () => {
+  const { createCloudSync } = await cloudSync;
+  const localPilot = { id: 'pilot-1', name: 'Ada', language: 'en', payload: { score: 7 } };
+  const provider = {
+    session: async () => ({ user: { id: 'user-1' } }),
+    deleteCloudData: async () => { throw Object.assign(new Error('delete failed'), { noRetry: true }); },
+  };
+  const adapter = createCloudSync({ provider, getLocalPilot: () => localPilot });
+
+  const result = await adapter.deleteCloudData();
+
+  assert.equal(result.status, 'failed');
+  assert.deepEqual(localPilot, { id: 'pilot-1', name: 'Ada', language: 'en', payload: { score: 7 } });
+});
+
 test('cancels an active upload without reporting a stale failure', async () => {
   const { createCloudSync } = await cloudSync;
   const statuses = [];
