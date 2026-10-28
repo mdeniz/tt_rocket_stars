@@ -28,7 +28,7 @@ ctx=new C();master=ctx.createGain();master.gain.value=.72;master.connect(ctx.des
 for(const kind of ['music','sfx','ambient']){const g=ctx.createGain();g.connect(master);if(kind==='music')musicBus=g;else if(kind==='sfx')sfxBus=g;else ambientBus=g;}
 updateVolumes();return true;}catch(e){return false}}
 function updateVolumes(){if(!ctx)return;const t=ctx.currentTime;musicBus.gain.setTargetAtTime(cfg.enabled?cfg.music/100*.22:0,t,.09);sfxBus.gain.setTargetAtTime(cfg.enabled?cfg.sfx/100*.35:0,t,.07);ambientBus.gain.setTargetAtTime(cfg.enabled?cfg.ambient/100*.2:0,t,.12)}
-function startAudio(){if(!ensure())return false;if(!session){sceneT0=performance.now();lastScene=visibleScene();lastCueCycle=-1;emittedCues.clear();}session=true;if(ctx.state==='suspended')ctx.resume().catch(()=>{});if(!tickTimer){nextBeat=ctx.currentTime+.07;tickTimer=setInterval(schedule,70)}return true}
+function startAudio(){if(!cfg.enabled)return false;if(!ensure())return false;if(!session){sceneT0=performance.now();lastScene=visibleScene();lastCueCycle=-1;emittedCues.clear();}session=true;if(ctx.state==='suspended')ctx.resume().catch(()=>{});if(!tickTimer){nextBeat=ctx.currentTime+.07;tickTimer=setInterval(schedule,70)}return true}
 function note(midi,time,len,opt={}){if(!ctx||!Number.isFinite(time)||time<ctx.currentTime-.12)return;
 const osc=ctx.createOscillator(),gain=ctx.createGain(),filter=ctx.createBiquadFilter();const bus=opt.bus||musicBus;
 osc.type=opt.type||'sine';osc.frequency.setValueAtTime(440*Math.pow(2,(midi-69)/12),Math.max(ctx.currentTime,time));filter.type='lowpass';filter.frequency.value=opt.cut||2100;
@@ -167,4 +167,3 @@ const launchSplash=document.getElementById('launchSplash');
 window.TTAudio={sfx:fx,start:startAudio,restartLaunch:()=>{sceneT0=performance.now();lastScene='splash';lastCueCycle=-1;emittedCues.clear();},set,config:()=>({...cfg}),next:chooseNext};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
-
