@@ -328,11 +328,23 @@ export function createCloudSync({ client, provider = client ? createSupabaseClou
     if (queuedResolve) queuedResolve(result('coalesced'));
     queuedResolve = resolve;
     report('pending');
-    queueTimer = setTimeout(async () => {
+    queueTimer = setTimeout(() => {
       queueTimer = null;
       const currentResolve = queuedResolve;
       queuedResolve = null;
-      currentResolve?.(await upload());
+      let uploadPromise;
+      try {
+        // Enqueue synchronously so a deletion requested while this timer fires
+        // remains ordered after the automatic upload.
+        uploadPromise = upload();
+      } catch (error) {
+        currentResolve?.(result('failed', { error }));
+        return;
+      }
+      Promise.resolve(uploadPromise).then(
+        outcome => currentResolve?.(outcome),
+        error => currentResolve?.(result('failed', { error })),
+      );
     }, Math.max(0, Number(delay) || 0));
   });
   return {
