@@ -53,6 +53,10 @@ test('trusted function source does not contain administrative credentials or arb
 test('maps conflicts and authentication failures to bounded responses', async () => {
   const { errorResponse } = await contract;
   assert.deepEqual(errorResponse({ code: '40001' }).status, 409);
+  assert.deepEqual(errorResponse({ code: '55P03' }), {
+    status: 503,
+    body: { error: 'cloud_busy', message: 'Cloud operation is busy. Try again shortly.' },
+  });
   assert.deepEqual(errorResponse({ code: 'unauthorized' }).body, { error: 'unauthorized', message: 'Authentication required.' });
 });
 

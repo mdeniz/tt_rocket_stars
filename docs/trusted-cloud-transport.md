@@ -38,6 +38,13 @@ not complete in time. This bounds both sides of the request and does not alter
 the normal `not-found` response used for a pilot that is not owned by the
 authenticated account.
 
+Postgres lock contention during a snapshot write (`SQLSTATE 55P03`, reported by
+the RPC as `cloud snapshot is busy`) is mapped to the explicit `cloud_busy`
+response with HTTP `503`. The browser treats this as retryable and preserves the
+local snapshot. A stale optimistic version remains a separate `409` conflict;
+it must never be converted into a remote overwrite or a generic availability
+failure.
+
 ## Hosted deployment
 
 Apply the checked-in migrations in timestamp order before enabling synchronization:

@@ -51,6 +51,20 @@ test('maps conflict responses and keeps signed-out calls local', async () => {
   await assert.rejects(() => provider.writeSnapshot(null, 'pilot-1', 2, { localId: 'pilot-1', payload: {} }), error => error.code === 'conflict');
 });
 
+test('maps a busy cloud response to a retryable transport error', async () => {
+  const { createTrustedCloudProvider } = await transport;
+  const provider = createTrustedCloudProvider({
+    functionUrl: 'https://example.com/function',
+    getSession: async () => ({ access_token: 'token', user: { id: 'user-1' } }),
+    fetchImpl: async () => new Response(JSON.stringify({ error: 'cloud_busy', message: 'Cloud operation is busy. Try again shortly.' }), { status: 503 }),
+  });
+
+  await assert.rejects(
+    () => provider.writeSnapshot(null, 'pilot-1', 2, { localId: 'pilot-1', payload: {} }),
+    error => error.code === 'cloud_busy',
+  );
+});
+
 test('bounds a trusted request that never resolves', async () => {
   const { createTrustedCloudProvider } = await transport;
   const provider = createTrustedCloudProvider({

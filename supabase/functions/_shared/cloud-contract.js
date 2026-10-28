@@ -84,9 +84,11 @@ export function errorResponse(error) {
     ? error.code
     : String(error?.code || '') === '40001' || String(error?.message || '').toLowerCase().includes('snapshot version conflict')
       ? 'conflict'
+      : error?.code === '55P03' || error?.code === 'transient' || String(error?.message || '').toLowerCase().includes('snapshot is temporarily busy')
+        ? 'cloud_busy'
       : 'cloud_unavailable';
-  const status = code === 'unauthorized' ? 401 : code === 'invalid_operation' || code === 'invalid_payload' || code === 'payload_too_large' ? 400 : code === 'conflict' ? 409 : code === 'cloud_timeout' ? 504 : 502;
-  return { status, body: { error: code, message: code === 'unauthorized' ? 'Authentication required.' : code === 'conflict' ? 'The cloud snapshot has changed.' : code === 'cloud_timeout' ? 'Cloud operation timed out.' : 'Cloud operation failed.' } };
+  const status = code === 'unauthorized' ? 401 : code === 'invalid_operation' || code === 'invalid_payload' || code === 'payload_too_large' ? 400 : code === 'conflict' ? 409 : code === 'cloud_timeout' ? 504 : code === 'cloud_busy' ? 503 : 502;
+  return { status, body: { error: code, message: code === 'unauthorized' ? 'Authentication required.' : code === 'conflict' ? 'The cloud snapshot has changed.' : code === 'cloud_timeout' ? 'Cloud operation timed out.' : code === 'cloud_busy' ? 'Cloud operation is busy. Try again shortly.' : 'Cloud operation failed.' } };
 }
 
 export function withTimeout(operation, timeoutMs = CLOUD_OPERATION_TIMEOUT_MS) {

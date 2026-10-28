@@ -98,7 +98,7 @@ export interface TypedDataAccess {
 }
 
 export class DataAccessError extends Error {
-  readonly code: 'invalid-request' | 'unauthorized' | 'not-found' | 'conflict' | 'provider-failure';
+  readonly code: 'invalid-request' | 'unauthorized' | 'not-found' | 'conflict' | 'transient' | 'provider-failure';
 
   constructor(code: DataAccessError['code'], message: string) {
     super(message);
