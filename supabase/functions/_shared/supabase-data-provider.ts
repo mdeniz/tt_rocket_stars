@@ -115,6 +115,22 @@ export function createSupabaseDataProvider(client: SupabaseClient, _context: Aut
       return mapSnapshot(result.data);
     },
 
+    async writeOwnedPilotSnapshot(userId: string, pilot: PilotWrite, expectedVersion: number) {
+      const result = await client.rpc('upsert_my_pilot_and_progress_snapshot', {
+        p_local_id: pilot.localId,
+        p_name: pilot.name,
+        p_avatar: pilot.avatar,
+        p_language: pilot.language,
+        p_pilot_payload: pilot.payload,
+        p_updated_at: pilot.updatedAt,
+        p_expected_version: expectedVersion,
+        p_snapshot_payload: pilot,
+      });
+      if (result.error) throw providerError(result.error);
+      if (!result.data) throw new DataAccessError('provider-failure', 'The pilot snapshot could not be stored.');
+      return mapSnapshot(result.data);
+    },
+
     async deleteOwnedCloudData(_userId: string) {
       const result = await client.rpc('delete_my_cloud_data', {});
       if (result.error) throw providerError(result.error);

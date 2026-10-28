@@ -44,6 +44,7 @@ function provider(overrides = {}) {
     listCrewMemberships: async userId => { calls.push(['listCrewMemberships', userId]); return []; },
     listPilotAccess: async (userId, pilotId) => { calls.push(['listPilotAccess', userId, pilotId]); return []; },
     writeProgressSnapshot: async (userId, write) => { calls.push(['writeProgressSnapshot', userId, write]); return snapshot(); },
+    writeOwnedPilotSnapshot: async (userId, pilotValue, expectedVersion) => { calls.push(['writeOwnedPilotSnapshot', userId, pilotValue, expectedVersion]); return snapshot(); },
     deleteOwnedCloudData: async userId => { calls.push(['deleteOwnedCloudData', userId]); },
   };
   return { calls, value: { ...base, ...overrides } };
@@ -60,11 +61,16 @@ test('typed repository binds every operation to the authenticated user', async (
   await access.listCrewMemberships(context);
   await access.listPilotAccess(context, 'pilot-1');
   await access.writeProgressSnapshot(context, { pilotId: 'pilot-1', expectedVersion: 1, payload: {} });
+  await access.writeOwnedPilotSnapshot(context, {
+    localId: 'local-1', name: 'Pilot', avatar: null, language: 'en', payload: {}, updatedAt: '2026-01-01T00:00:00.000Z',
+  }, 2);
   await access.deleteOwnedCloudData(context);
 
   assert.deepEqual(recorded.calls.map(call => call[1]), [
-    'user-1', 'user-1', 'user-1', 'user-1', 'user-1', 'user-1', 'user-1',
+    'user-1', 'user-1', 'user-1', 'user-1', 'user-1', 'user-1', 'user-1', 'user-1',
   ]);
+  assert.equal(recorded.calls.at(-2)[0], 'writeOwnedPilotSnapshot');
+  assert.equal(recorded.calls.at(-2)[3], 2);
 });
 
 test('typed repository rejects missing authentication and malformed writes', async () => {

@@ -96,6 +96,13 @@ export function createTypedDataAccess(providerFactory: ProviderFactory): TypedDa
       const validated = requireSnapshotWrite(write);
       return safely(() => provider(context).writeProgressSnapshot(context.userId, validated));
     },
+    writeOwnedPilotSnapshot: (context, pilot, expectedVersion) => {
+      const validated = requirePilotWrite(pilot);
+      if (!Number.isSafeInteger(expectedVersion) || expectedVersion < 0) {
+        throw new DataAccessError('invalid-request', 'expectedVersion must be a non-negative integer.');
+      }
+      return safely(() => provider(context).writeOwnedPilotSnapshot(context.userId, validated, expectedVersion));
+    },
     deleteOwnedCloudData: (context) => safely(() => provider(context).deleteOwnedCloudData(context.userId)),
   };
   return Object.freeze(access);

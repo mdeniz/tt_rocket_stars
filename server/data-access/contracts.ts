@@ -94,6 +94,7 @@ export interface TypedDataAccess {
   listCrewMemberships(context: AuthenticatedRequestContext): Promise<readonly CrewMembershipRecord[]>;
   listPilotAccess(context: AuthenticatedRequestContext, pilotId: string): Promise<readonly PilotAccessGrant[]>;
   writeProgressSnapshot(context: AuthenticatedRequestContext, write: SnapshotWrite): Promise<ProgressSnapshotRecord>;
+  writeOwnedPilotSnapshot(context: AuthenticatedRequestContext, pilot: PilotWrite, expectedVersion: number): Promise<ProgressSnapshotRecord>;
   deleteOwnedCloudData(context: AuthenticatedRequestContext): Promise<void>;
 }
 

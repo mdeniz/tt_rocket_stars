@@ -42,6 +42,10 @@ this change adds one operation boundary around all provider calls.
   with the same database lock timeout. This prevents contention in the pilot
   row from consuming the entire edge-function timeout before the snapshot RPC
   can classify the write.
+- Route trusted uploads through one authenticated transaction that persists the
+  pilot and expected-version snapshot together. This reduces one upload from
+  two PostgREST connection acquisitions to one and prevents partial pilot-only
+  updates when the snapshot cannot be committed.
 
 ## Risks / Trade-offs
 
