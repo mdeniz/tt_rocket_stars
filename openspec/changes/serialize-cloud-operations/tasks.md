@@ -15,6 +15,9 @@
 - [ ] 3.0 Replace the `FOR UPDATE NOWAIT` snapshot procedure with a bounded,
   atomic version-qualified update; verify concurrent writes produce `40001`
   conflicts and only prolonged locks produce `55P03`.
+- [ ] 3.0a Bound the ownership-scoped pilot upsert that precedes snapshot
+  writes; verify concurrent uploads cannot wait past the edge-function timeout
+  and prolonged pilot-row contention is classified as `55P03`.
 - [x] 3.1 Run `npm run check`, strict OpenSpec validation, and the configured browser verification; record exact results and unavailable integrations.
 - [ ] 3.2 Repeat hosted verification with two disposable invited accounts, confirm no overlapping trusted-cloud requests during normal UI actions, and inspect PostgREST activity for pool timeouts; keep the related issue in `status:verification` until all evidence is recorded.
 

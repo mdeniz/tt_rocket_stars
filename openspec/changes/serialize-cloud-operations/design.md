@@ -38,6 +38,10 @@ this change adds one operation boundary around all provider calls.
 - Use an atomic version-qualified snapshot update in PostgreSQL. Ordinary
   concurrent writes must resolve to the existing `40001` conflict contract;
   `55P03` remains reserved for a lock held beyond the bounded database wait.
+- Bound the ownership-scoped pilot upsert that precedes each snapshot write
+  with the same database lock timeout. This prevents contention in the pilot
+  row from consuming the entire edge-function timeout before the snapshot RPC
+  can classify the write.
 
 ## Risks / Trade-offs
 
