@@ -46,6 +46,10 @@ this change adds one operation boundary around all provider calls.
   pilot and expected-version snapshot together. This reduces one upload from
   two PostgREST connection acquisitions to one and prevents partial pilot-only
   updates when the snapshot cannot be committed.
+- Apply a shorter upload deadline than read operations. If a trusted upload
+  cannot acquire a provider connection or complete within 2.5 seconds, return
+  the existing retryable busy response instead of holding an aborted request
+  until the general 8-second operation timeout.
 
 ## Risks / Trade-offs
 

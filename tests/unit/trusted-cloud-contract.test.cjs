@@ -61,7 +61,8 @@ test('maps conflicts and authentication failures to bounded responses', async ()
 });
 
 test('bounds pending trusted cloud operations and maps timeout failures', async () => {
-  const { errorResponse, withTimeout } = await contract;
+  const { CLOUD_UPLOAD_TIMEOUT_MS, errorResponse, withTimeout } = await contract;
+  assert.equal(CLOUD_UPLOAD_TIMEOUT_MS, 2500);
   await assert.rejects(
     () => withTimeout(new Promise(() => {}), 10),
     error => error.code === 'cloud_timeout',
