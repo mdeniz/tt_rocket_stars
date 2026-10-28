@@ -2,6 +2,7 @@ const OPERATIONS = new Set(['upload', 'download', 'listPilots', 'restorePilot', 
 const MAX_BODY_BYTES = 256 * 1024;
 const MAX_LOCAL_ID_LENGTH = 120;
 const CLOUD_OPERATION_TIMEOUT_MS = 8000;
+const CLOUD_UPLOAD_TIMEOUT_MS = 2500;
 
 function isRecord(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -117,4 +118,4 @@ export function withTimeout(operation, timeoutMs = CLOUD_OPERATION_TIMEOUT_MS) {
   }).finally(() => clearTimeout(timer));
 }
 
-export { CLOUD_OPERATION_TIMEOUT_MS, MAX_BODY_BYTES, OPERATIONS };
+export { CLOUD_OPERATION_TIMEOUT_MS, CLOUD_UPLOAD_TIMEOUT_MS, MAX_BODY_BYTES, OPERATIONS };

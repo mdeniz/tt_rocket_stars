@@ -21,6 +21,9 @@
 - [ ] 3.0b Route trusted uploads through one atomic pilot-and-snapshot RPC;
   verify concurrent uploads use one database operation boundary and preserve
   the existing `40001`/`55P03` contracts.
+- [ ] 3.0c Bound trusted upload acquisition to 2.5 seconds and classify the
+  timeout as retryable busy; verify concurrent uploads do not wait for the
+  general 8-second edge timeout.
 - [x] 3.1 Run `npm run check`, strict OpenSpec validation, and the configured browser verification; record exact results and unavailable integrations.
 - [ ] 3.2 Repeat hosted verification with two disposable invited accounts, confirm no overlapping trusted-cloud requests during normal UI actions, and inspect PostgREST activity for pool timeouts; keep the related issue in `status:verification` until all evidence is recorded.
 

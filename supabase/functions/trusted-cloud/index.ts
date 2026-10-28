@@ -4,6 +4,8 @@ import { createSupabaseDataProvider } from '../_shared/supabase-data-provider.ts
 import type { AuthenticatedRequestContext } from '../../../server/data-access/contracts.ts';
 import {
   allowedOrigin,
+  CLOUD_OPERATION_TIMEOUT_MS,
+  CLOUD_UPLOAD_TIMEOUT_MS,
   errorResponse,
   parseBearerToken,
   parseRequestBody,
@@ -89,7 +91,9 @@ async function handle(request) {
   if (request.method !== 'POST') return response({ error: 'method_not_allowed' }, 405, origin);
   const raw = await request.json();
   const operation = parseRequestBody(raw, JSON.stringify(raw).length);
-  return await withTimeout(async signal => {
+  const timeoutMs = operation.operation === 'upload' ? CLOUD_UPLOAD_TIMEOUT_MS : CLOUD_OPERATION_TIMEOUT_MS;
+  try {
+    return await withTimeout(async signal => {
     // Supabase validates this JWT before invoking the function (verify_jwt=true).
     // Decode only the validated subject so the function does not depend on a
     // second Auth request that can stall independently of the data operation.
@@ -118,7 +122,15 @@ async function handle(request) {
     }
     await access.deleteOwnedCloudData(context);
     return response({ status: 'deleted' }, 200, origin);
-  });
+    }, timeoutMs);
+  } catch (error) {
+    if (operation.operation === 'upload' && error?.code === 'cloud_timeout') {
+      const busy = new Error('Cloud upload is busy.');
+      busy.code = 'transient';
+      throw busy;
+    }
+    throw error;
+  }
 }
 
 Deno.serve(async request => {
