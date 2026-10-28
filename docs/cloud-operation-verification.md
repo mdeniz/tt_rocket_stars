@@ -24,11 +24,14 @@ Chrome DevTools MCP verification was unavailable: `mcp__chrome_devtools__list_pa
 
 ## Hosted verification status
 
-Hosted verification remains pending. The queue change has not been deployed, and the secure cloud-deletion migration has not yet been applied to the hosted Supabase project. The related issue must remain in `status:verification` until both changes are deployed and the two-account concurrency and pool checks are repeated.
+The secure cloud-deletion migration is applied and the queue change is deployed
+to `index_next.html` through PR #238 and Pages deployment `40748313929`. The
+related issue remains in `status:verification` until connected browser network
+evidence confirms the hosted no-overlap behavior.
 
 A read-only Supabase unified-log query for 2026-10-28 found 0 `PGRST003`
 entries in `postgrest_logs`. This is a health observation only; it does not
-prove the new queue behavior because the queue has not been deployed.
+replace request-level evidence of the deployed queue.
 
 ## Hosted deletion migration verification
 
@@ -50,5 +53,18 @@ browser sessions:
 
 The Chrome DevTools MCP was unavailable during this run, so this evidence was
 collected with the `agent-browser` fallback and does not claim DevTools network
-or console evidence. The hosted queue/concurrency requirement remains open
-until the browser queue is deployed and the overlap check is repeated.
+or console evidence.
+
+## Hosted queue deployment verification
+
+After PR #238 was merged and Pages deployment `40748313929` completed,
+`index_next.html` was checked for the queue markers `operationGeneration` and
+`operationTail`; stable `index.html` does not contain them. The first invited
+account authenticated in the deployed artifact, and Sync now followed
+immediately by Find cloud pilots completed without a visible error. The
+account-owned pilot list remained available.
+
+The fallback browser did not expose request-level timing, and the Chrome
+DevTools MCP still returned `Transport closed`. The hosted queue is therefore
+deployed and behaviorally smoke-tested, but the direct no-overlap evidence
+remains unavailable.
