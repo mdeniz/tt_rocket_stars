@@ -5,6 +5,9 @@ const fs = require('node:fs');
 const index = fs.readFileSync('index.html', 'utf8');
 const navigation = fs.readFileSync('public/legacy/scripts/26.js', 'utf8');
 const cloud = fs.readFileSync('public/legacy/scripts/32.js', 'utf8');
+const pagesWorkflow = fs.readFileSync('.github/workflows/pages.yml', 'utf8');
+const smtpSetup = fs.readFileSync('docs/supabase-brevo-setup.md', 'utf8');
+const vite = fs.readFileSync('vite.config.mjs', 'utf8');
 
 test('settings panels expose stable identities including cloud access', () => {
   assert.match(navigation, /cloud:[\s\S]*audio:[\s\S]*profile:[\s\S]*language:[\s\S]*theme:[\s\S]*backups:[\s\S]*reset:/);
@@ -42,6 +45,22 @@ test('cloud access consumes token-hash callbacks from the static app URL', () =>
   assert.match(cloud, /api\('\/verify'\)/);
   assert.match(cloud, /redirect_to/);
   assert.match(cloud, /window\.history\.replaceState/);
+});
+
+test('cloud callback URLs always preserve the active application entrypoint', () => {
+  assert.match(cloud, /new URL\(location\.pathname, location\.origin\)\.toString\(\)/);
+  assert.doesNotMatch(cloud, /config\.siteUrl \|\| `\$\{location\.origin\}\$\{location\.pathname\}`/);
+});
+
+test('development builds expose cloud access while Pages restores the stable release', () => {
+  assert.match(vite, /VITE_ENABLE_CLOUD_ACCESS !== 'false'/);
+  assert.match(pagesWorkflow, /Restore stable release entrypoint/);
+});
+
+test('Supabase email templates use explicit supported callback types', () => {
+  assert.match(smtpSetup, /type=recovery/);
+  assert.match(smtpSetup, /type=invite/);
+  assert.doesNotMatch(smtpSetup, /href="[^"]*type=\{\{ \.EmailType \}\}/);
 });
 
 test('cloud access uses password sign-in and keeps invitation links for setup', () => {

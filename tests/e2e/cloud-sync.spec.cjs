@@ -28,6 +28,18 @@ test('invited users can request password recovery with English feedback', async 
   expect(fixture.state.authRequests.some(request => request.path === '/auth/v1/recover')).toBe(true);
 });
 
+test('password recovery returns to the current development entrypoint', async ({ page }) => {
+  const fixture = await installCloudFixture(page, {
+    config: { siteUrl: 'https://stable.example.test/tt_rocket_stars/' },
+  });
+  await fixture.openCloudSettings('/index_next.html');
+  await page.locator('#ttAuthEmail').fill('pilot@example.com');
+  await page.locator('#ttAuthRecovery').click();
+
+  const request = fixture.state.authRequests.find(item => item.path === '/auth/v1/recover');
+  expect(request?.body.redirect_to).toBe(new URL('/index_next.html', page.url()).toString());
+});
+
 test('invited users can request password recovery with Spanish feedback', async ({ page }) => {
   const fixture = await installCloudFixture(page, { language: 'es' });
   await fixture.openCloudSettings();
@@ -211,7 +223,8 @@ test('local-only startup does not require a cloud request', async ({ page }) => 
   if (await skip.isVisible().catch(() => false)) await skip.click();
   await page.locator('#menuBtn').click();
   await page.locator('#sideDrawer [data-section="settings"]').click();
-  await expect(page.locator('#ttAuthPanel')).toBeHidden();
-  await expect(page.locator('#settings .ttSettingsTab').filter({ hasText: 'Cloud access' })).toHaveCount(0);
+  await expect(page.locator('#ttAuthPanel')).toBeVisible();
+  await expect(page.locator('#ttAuthStatus')).toContainText('Cloud access is unavailable. You can keep playing offline.');
+  await expect(page.locator('#settings .ttSettingsTab').filter({ hasText: 'Cloud access' })).toHaveCount(1);
   expect(requests).toEqual([]);
 });

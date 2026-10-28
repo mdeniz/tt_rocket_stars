@@ -87,7 +87,7 @@ async function installCloudFixture(page, options = {}) {
     window.__TT_SUPABASE_CONFIG__ = config;
     for (const [key, value] of Object.entries(initialStorage || {})) window.localStorage.setItem(key, value);
   }, {
-    config: publicConfig,
+    config: { ...publicConfig, ...(options.config || {}) },
     initialStorage,
   });
 
@@ -97,7 +97,7 @@ async function installCloudFixture(page, options = {}) {
     const path = url.pathname;
     const method = request.method();
     const body = request.postDataJSON?.() || {};
-    if (path.startsWith('/auth/v1/')) state.authRequests.push({ method, path });
+    if (path.startsWith('/auth/v1/')) state.authRequests.push({ method, path, body });
     else state.cloudRequests.push({ method, path, url: request.url() });
 
     if (path === '/auth/v1/token') {
@@ -177,8 +177,8 @@ async function installCloudFixture(page, options = {}) {
 
   return {
     state,
-    async openCloudSettings() {
-      await page.goto('/');
+    async openCloudSettings(pathname = '/') {
+      await page.goto(pathname);
       await page.locator('#launchSplash').click();
       await expect(page.locator('#launchSplash')).toBeHidden();
       await page.locator('#ttTourShade').waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});

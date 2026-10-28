@@ -75,13 +75,28 @@ provider:
 - Do not commit or paste the app password into the repository, issue tracker,
   logs, or browser bundle.
 
-The invitation and recovery templates must send a token hash to the app callback instead of
-using `{{ .ConfirmationURL }}`. This avoids relying on a stale Site URL when
-the app supplies a path-specific redirect:
+The invitation and recovery templates must send a token hash to the app callback
+instead of using `{{ .ConfirmationURL }}`. This avoids relying on a stale Site
+URL when the application supplies a path-specific redirect. `{{ .EmailType }}`
+is not a supported Supabase email-template variable and must not be used.
+
+Use these separate templates with explicit supported types:
+
+Password recovery:
 
 ```html
-<p><a href="{{ if .RedirectTo }}{{ .RedirectTo }}{{ else }}{{ .SiteURL }}{{ end }}?token_hash={{ .TokenHash }}&type={{ .EmailType }}">Continue</a></p>
+<p><a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=recovery">Reset password</a></p>
 ```
+
+Invitation:
+
+```html
+<p><a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=invite">Accept invitation</a></p>
+```
+
+The app always supplies `redirect_to` for password recovery. When issuing an
+invitation from a trusted administrative surface, use an allowed callback URL
+for the target application entrypoint.
 
 The static app verifies `token_hash` through Supabase Auth and removes it from
 the browser URL after verification. Keep email-provider link tracking disabled;

@@ -15,7 +15,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 - Credential-free Playwright coverage for invited authentication, local-first cloud synchronization, restore, conflict recovery, retries, deletion, and offline gameplay.
 - A consent-aware, provider-independent telemetry boundary with allowlisted aggregate events and no default network activity.
 - Sampled aggregate mission and sanitized runtime-error hooks with bounded in-memory retention.
-- Cloud access is hidden by default behind an explicit development flag. GitHub Pages now keeps the latest release at `index.html` and publishes the current build separately at `index_next.html`.
+- GitHub Pages keeps the latest release at `index.html` and publishes the current build separately at `index_next.html`.
 - Added the initial typed shell contract for the incremental React migration.
 - Mounted an isolated React shell boundary while preserving the legacy startup order and self-contained release output.
 - Added a typed fullscreen adapter that keeps splash entry safe when the browser API is unavailable or rejects the request.
@@ -39,6 +39,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 - Prevented self-contained release HTML from exposing inline JavaScript as visible content during startup.
 - Ensured themed backgrounds cover the full viewport on short pages without restricting long-page scrolling.
 - Prevented stale authentication errors and translation metadata from appearing in the rendered application after session restoration.
+- Password recovery callbacks now return to the active application entrypoint instead of the configured stable URL.
+- Supabase email-template guidance uses supported explicit invitation and recovery callback types.
 
 ## [0.1.1] - 2026-10-22
 ### Changed

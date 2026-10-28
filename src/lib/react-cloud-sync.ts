@@ -37,7 +37,7 @@ export function createReactCloudSyncBoundary(resolve: () => LegacyCloudSyncAdapt
     try { return resolve(); } catch { return undefined; }
   };
   return Object.freeze({
-    isAvailable: () => Boolean(adapter()),
+    isAvailable: () => Boolean(adapter()?.isAvailable?.()),
     cancel: () => { adapter()?.cancel?.(); },
     upload: () => {
       const cloud = adapter();

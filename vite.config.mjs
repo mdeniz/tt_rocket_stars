@@ -36,7 +36,7 @@ function inlineReleaseAssets() {
         siteUrl: config.env.VITE_APP_SITE_URL || '',
         trustedFunctionUrl: config.env.VITE_TRUSTED_CLOUD_FUNCTION_URL || '',
       };
-      cloudAccessEnabled = config.env.VITE_ENABLE_CLOUD_ACCESS === 'true';
+      cloudAccessEnabled = config.env.VITE_ENABLE_CLOUD_ACCESS !== 'false';
       legacyCloudDirectFallbackEnabled = config.env.VITE_ENABLE_LEGACY_CLOUD_DIRECT_FALLBACK === 'true';
       trustedCloudTransportEnabled = config.env.VITE_ENABLE_TRUSTED_CLOUD_TRANSPORT === 'true';
       reactCoreScreensEnabled = config.env.VITE_REACT_CORE_SCREENS === 'true';

@@ -307,6 +307,7 @@ export function createCloudSync({ client, provider = client ? createSupabaseClou
     }, Math.max(0, Number(delay) || 0));
   });
   return {
+    isAvailable: () => Boolean(provider),
     cancel,
     upload,
     download,
