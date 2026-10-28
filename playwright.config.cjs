@@ -61,7 +61,7 @@ module.exports = defineConfig({
   workers: process.env.PLAYWRIGHT_WORKERS ? Number(process.env.PLAYWRIGHT_WORKERS) : 2,
   reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
   use: {
-    baseURL: 'http://127.0.0.1:4173',
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://127.0.0.1:4173',
     reducedMotion: 'reduce',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',

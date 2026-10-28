@@ -108,7 +108,7 @@ test('About displays the canonical version in English and Spanish', async ({ pag
  await expect(page.locator('#about [data-i18n="ui.088"]')).toHaveText('Versión');
  await expect(page.locator('#ttAppVersion')).toHaveText(packageJson.version);
 });
-test('settings hides unfinished cloud access without replacing local gameplay',async({page})=>{
+test('settings exposes optional cloud access without replacing local gameplay',async({page})=>{
  await page.goto('/');await page.locator('#launchSplash').click();
  await expect(page.locator('#launchSplash')).toBeHidden();
  const skip=page.locator('#ttTourSkip');
@@ -117,8 +117,9 @@ test('settings hides unfinished cloud access without replacing local gameplay',a
  await page.locator('#menuBtn').click();
  await page.locator('#sideDrawer [data-section="settings"]').click();
  await expect(page.locator('#settings')).toBeVisible();
- await expect(page.locator('#ttAuthPanel')).toBeHidden();
- await expect(page.locator('#settings .ttSettingsTab').filter({hasText:'Cloud access'})).toHaveCount(0);
+ await expect(page.locator('#ttAuthPanel')).toBeVisible();
+ await expect(page.locator('#ttAuthStatus')).toContainText('Cloud access is unavailable. You can keep playing offline.');
+ await expect(page.locator('#settings .ttSettingsTab').filter({hasText:'Cloud access'})).toHaveCount(1);
 });
 
 test('settings navigation isolates local categories', async ({ page }) => {
@@ -130,7 +131,7 @@ test('settings navigation isolates local categories', async ({ page }) => {
  if(await skip.isVisible().catch(()=>false))await skip.click();
  await page.locator('#menuBtn').click();await page.locator('#sideDrawer [data-section="settings"]').click();
  const tabs=page.locator('#settings .ttSettingsBottomNav .ttSettingsTab');
- await expect(tabs).toHaveCount(6);
+ await expect(tabs).toHaveCount(7);
  await expect.poll(()=>page.evaluate(()=>typeof window.TTSettingsAdapter?.showSettingsPanel)).toBe('function');
  await page.evaluate(()=>window.TTSettingsAdapter.showSettingsPanel('theme'));
  await expect(page.locator('#settings [data-settings-panel="theme"]')).toHaveClass(/ttSettingsActive/);
@@ -138,7 +139,7 @@ test('settings navigation isolates local categories', async ({ page }) => {
   await tabs.filter({hasText:label}).click();
   await expect(page.locator('#ttAuthPanel')).not.toHaveClass(/ttSettingsActive/);
  }
- await expect(page.locator('#ttAuthPanel')).toBeHidden();
+ await expect(page.locator('#ttAuthPanel')).not.toHaveClass(/ttSettingsActive/);
 });
 
 test('theme background covers a tall viewport on short settings pages', async ({ page }) => {

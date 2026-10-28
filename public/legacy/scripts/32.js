@@ -257,7 +257,7 @@
     const type = params.get('type') || 'email';
     setupMode = type === 'invite' || type === 'recovery';
     try {
-      const redirectTo = String(config.siteUrl || `${location.origin}${location.pathname}`).trim();
+      const redirectTo = new URL(location.pathname, location.origin).toString();
       const verificationUrl = `${api('/verify')}?${new URLSearchParams({ redirect_to: redirectTo })}`;
       const response = await fetch(verificationUrl, {
         method: 'POST',
@@ -391,7 +391,7 @@
   recovery.addEventListener('click', async () => {
     const email = emailInput.value.trim(); if (!email || !emailInput.validity.valid) { setStatus('invalidEmail', 'error'); return; }
     recovery.disabled = true; setStatus('sent', 'pending');
-    try { const redirectTo = String(config.siteUrl || `${location.origin}${location.pathname}`).trim(); const response = await fetch(api('/recover'), { method: 'POST', headers: headers(), body: JSON.stringify({ email, redirect_to: redirectTo }) }); if (!response.ok) throw await parseError(response); setStatus('sent', 'success'); }
+    try { const redirectTo = new URL(location.pathname, location.origin).toString(); const response = await fetch(api('/recover'), { method: 'POST', headers: headers(), body: JSON.stringify({ email, redirect_to: redirectTo }) }); if (!response.ok) throw await parseError(response); setStatus('sent', 'success'); }
     catch (error) { setStatus(classifyError(error), 'error'); } finally { recovery.disabled = false; }
   });
   signOut.addEventListener('click', async () => { const session = readSession(); if (syncTimer) clearTimeout(syncTimer); syncTimer = null; cloudAdapter?.cancel?.(); clearSession();updateSessionUi(null);if (session?.access_token) { try { await fetch(api('/logout'), { method: 'POST', headers: headers(session.access_token) }); } catch (_) {} }setStatus('signedOut', 'success'); });
