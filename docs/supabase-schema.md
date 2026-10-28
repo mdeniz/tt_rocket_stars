@@ -27,6 +27,12 @@ are revoked.
 The browser must never use a service-role key. This schema is intended to be
 applied through Supabase migrations or the SQL editor by a project maintainer.
 
+The forward migration `20261028230000_atomic_snapshot_conflicts.sql` keeps
+snapshot writes optimistic under concurrency. It uses a bounded lock wait and
+an atomic expected-version update so ordinary concurrent writes return the
+existing `40001` conflict contract; `55P03` is reserved for locks that remain
+held beyond the database wait limit.
+
 The client adapter in `src/lib/cloud-sync.js` consumes a serialized pilot
 snapshot and writes synchronization metadata separately from the existing
 local game keys. It returns `disabled`, `signed-out`, `not-found`, `uploaded`,

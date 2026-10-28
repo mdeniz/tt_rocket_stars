@@ -35,6 +35,9 @@ this change adds one operation boundary around all provider calls.
 - Keep the existing Edge Function timeout as a second safety boundary. A queue
   prevents concurrency spikes but cannot repair a provider that is already
   unhealthy.
+- Use an atomic version-qualified snapshot update in PostgreSQL. Ordinary
+  concurrent writes must resolve to the existing `40001` conflict contract;
+  `55P03` remains reserved for a lock held beyond the bounded database wait.
 
 ## Risks / Trade-offs
 
