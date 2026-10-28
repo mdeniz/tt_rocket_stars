@@ -36,6 +36,7 @@ export interface CloudBoundaryResult {
  * builders deliberately do not appear in this contract.
  */
 export interface BrowserCloudBoundary {
+  isAvailable?(): boolean;
   cancel?(): void;
   upload(): Promise<CloudBoundaryResult>;
   download(): Promise<CloudBoundaryResult>;
