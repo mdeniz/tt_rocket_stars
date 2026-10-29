@@ -1,0 +1,4 @@
+name: add-local-bootstrap-and-deployment-contracts
+description: Add reproducible local bootstrap, bounded API load contracts, and environment deployment contracts.
+status: proposed
+issue: 269

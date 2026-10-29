@@ -1,0 +1,5 @@
+- [x] Add one-command local bootstrap wrapper.
+- [x] Add environment contracts and fail-closed tests.
+- [x] Add bounded representative API load/quota test.
+- [x] Document hosted limitations and OpenSpec scenarios.
+- [ ] Run hosted Cloudflare, Neon, dashboard, quota, and traffic checks after approval/provisioning.
