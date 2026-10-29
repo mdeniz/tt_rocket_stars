@@ -1,0 +1,6 @@
+- [x] Define and validate the synthetic source allowlist.
+- [x] Add deterministic ID mapping and manifest checksums/counts.
+- [x] Add local transactional importer, dry-run, and replay ledger.
+- [x] Add focused unit coverage and OpenSpec documentation.
+- [ ] Add reconciliation and rollback rehearsal against migration scenarios in #264.
+- [ ] Perform hosted/provider cutover validation under an explicit approval gate.

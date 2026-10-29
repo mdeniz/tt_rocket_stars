@@ -230,6 +230,12 @@ export const pilotAccess = pgTable(
   ],
 );
 
+export const migrationImports = pgTable("migration_imports", {
+  packageSha256: text("package_sha256").primaryKey(),
+  manifest: jsonb("manifest").$type<Record<string, unknown>>().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 export const schema = {
   user,
   session,
@@ -242,4 +248,5 @@ export const schema = {
   crews,
   crewMemberships,
   pilotAccess,
+  migrationImports,
 };

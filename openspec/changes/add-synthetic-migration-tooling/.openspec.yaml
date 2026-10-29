@@ -1,0 +1,4 @@
+name: add-synthetic-migration-tooling
+status: proposed
+summary: Add deterministic local-only Supabase-shaped export and PostgreSQL import tooling.
+issue: 263
