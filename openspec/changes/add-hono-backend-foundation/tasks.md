@@ -18,5 +18,6 @@
 
 ## Workflow follow-up
 
-- Continue with the Neon/Drizzle schema change after this foundation is reviewed.
-- Keep this change open until the CI task and review evidence are complete.
+- [x] Complete CI and review evidence for the local foundation; verification is recorded in `docs/backend-foundation-verification.md`.
+- Continue with the Neon/Drizzle schema change in #251 and authentication boundary in #252; those changes own persistence and identity behavior.
+- Hosted Cloudflare deployment and production traffic validation remain outside this local foundation.
