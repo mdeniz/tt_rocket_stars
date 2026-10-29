@@ -5,7 +5,7 @@ export default defineConfig({
   out: "./apps/api/drizzle",
   dialect: "postgresql",
   dbCredentials: {
-    url: process.env.DATABASE_URL ?? "postgres://tt_app:tt_app_local_only@localhost:54329/tt_rocket_stars",
+    url: process.env.DATABASE_MIGRATION_URL ?? process.env.DATABASE_URL ?? "postgres://tt_migrator:tt_migrator_local_only@localhost:54329/tt_rocket_stars",
   },
   migrations: {
     table: "__drizzle_migrations",

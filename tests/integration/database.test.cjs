@@ -7,6 +7,10 @@ const sql = postgres(process.env.DATABASE_URL ?? "postgres://tt_app:tt_app_local
   max: 1,
   prepare: false,
 });
+const admin = postgres(process.env.DATABASE_ADMIN_URL ?? "postgres://tt_admin:tt_admin_local_only@localhost:54329/tt_rocket_stars", {
+  max: 1,
+  prepare: false,
+});
 
 const accountId = `integration-${randomUUID()}`;
 const otherAccountId = `integration-${randomUUID()}`;
@@ -14,6 +18,7 @@ const otherAccountId = `integration-${randomUUID()}`;
 test.after(async () => {
   await sql`delete from accounts where id in (${accountId}, ${otherAccountId})`;
   await sql.end({ timeout: 5 });
+  await admin.end({ timeout: 5 });
 });
 
 test("clean-room migration creates the tenant and future crew tables", async () => {
@@ -96,4 +101,15 @@ test("a failed transaction rolls back all writes", async () => {
 
   const rows = await sql`select id from accounts where id = ${rollbackAccountId}`;
   assert.equal(rows.length, 0);
+});
+
+test("the application role is not privileged", async () => {
+  const rows = await admin`
+    select rolsuper, rolcreatedb, rolcreaterole
+    from pg_roles
+    where rolname = 'tt_app'
+  `;
+
+  assert.equal(rows.length, 1);
+  assert.deepEqual({ ...rows[0] }, { rolsuper: false, rolcreatedb: false, rolcreaterole: false });
 });
