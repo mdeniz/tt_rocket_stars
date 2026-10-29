@@ -24,6 +24,8 @@
     "check:cutover": "node scripts/check-cutover.cjs",
     "check:retirement": "node scripts/check-legacy-retirement.cjs",
     "check:migrations": "node scripts/check-migrations.cjs",
+    "security:secrets": "node scripts/check-secrets.cjs",
+    "security:dependencies": "node scripts/check-dependencies.cjs",
     "db:migrations:reset": "node scripts/check-migrations.cjs --apply-clean",
     "typecheck": "tsc --noEmit",
     "preview": "vite preview --host 0.0.0.0",

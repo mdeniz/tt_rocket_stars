@@ -1,0 +1,5 @@
+- [x] Add local locked dependency audit command.
+- [x] Add tracked-file secret scanner with explicit allowlist and redacted findings.
+- [x] Add required GitHub Actions security-gates job.
+- [x] Add local test and OpenSpec documentation.
+- [ ] Add optional hosted security provider integration after approval.
