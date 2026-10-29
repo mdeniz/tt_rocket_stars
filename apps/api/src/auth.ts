@@ -1,6 +1,5 @@
 import { drizzleAdapter } from '@better-auth/drizzle-adapter';
 import { betterAuth } from 'better-auth/minimal';
-import { memoryAdapter } from 'better-auth/adapters/memory';
 import type { BetterAuthOptions, Auth } from 'better-auth';
 import type { ApiEnv } from './config.ts';
 import { schema } from './db/schema.ts';
@@ -23,7 +22,7 @@ export function createAuthService(env: ApiEnv, database?: AuthDatabase): AuthSer
   const authSecret = env.authSecret ?? crypto.randomUUID() + crypto.randomUUID();
   const localInvitationCode = env.localInvitationCode ?? 'local-test-invitation';
   const options: BetterAuthOptions = {
-    database: database ? drizzleAdapter(database as any, { provider: 'pg', schema }) : memoryAdapter({ user: [], account: [], session: [], verification: [] }),
+    ...(database ? { database: drizzleAdapter(database as any, { provider: 'pg', schema }) } : {}),
     baseURL: authBaseUrl,
     basePath: '/api/v1/auth',
     secret: authSecret,
