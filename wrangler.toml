@@ -1,6 +1,7 @@
 name = "tt-rocket-stars-api-local"
 main = "apps/api/src/index.ts"
 compatibility_date = "2026-10-29"
+compatibility_flags = ["nodejs_compat"]
 workers_dev = true
 
 [vars]
