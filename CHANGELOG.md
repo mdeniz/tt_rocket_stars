@@ -7,6 +7,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 ## [Unreleased]
 
 ### Added
+- Added local-only deterministic synthetic Supabase-to-Neon migration export/import
+  tooling for #263, with an explicit privacy allowlist, checksums, dry-run mode,
+  transactional imports, and replay detection.
 - Added the local-first backend crew-domain audit and dependency map for #256,
   preserving the existing crew-access contract and separating hosted gates from
   follow-up runtime slices.

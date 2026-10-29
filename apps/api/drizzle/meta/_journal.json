@@ -15,6 +15,13 @@
       "when": 1793235009424,
       "tag": "0001_curvy_umar",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793239024736,
+      "tag": "0002_synthetic_migration_ledger",
+      "breakpoints": true
     }
   ]
 }

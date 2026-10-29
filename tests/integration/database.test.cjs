@@ -14,11 +14,40 @@ const admin = postgres(process.env.DATABASE_ADMIN_URL ?? "postgres://tt_admin:tt
 
 const accountId = `integration-${randomUUID()}`;
 const otherAccountId = `integration-${randomUUID()}`;
+const importedPackages = [];
 
 test.after(async () => {
   await sql`delete from accounts where id in (${accountId}, ${otherAccountId})`;
+  for (const packageSha256 of importedPackages) await sql`delete from migration_imports where package_sha256 = ${packageSha256}`;
   await sql.end({ timeout: 5 });
   await admin.end({ timeout: 5 });
+});
+
+test("synthetic migration imports atomically and replays by package checksum", async () => {
+  const { exportSyntheticBundle, importMigrationPackage } = await import("../../apps/api/src/migration/synthetic.ts");
+  const sourceAccountId = `synthetic-${randomUUID()}`;
+  const sourcePilotId = `synthetic-pilot-${randomUUID()}`;
+  const migration = await exportSyntheticBundle({
+    source: "supabase-synthetic-v1",
+    accounts: [{ id: sourceAccountId, email: `${sourceAccountId}@example.test` }],
+    pilots: [{ id: sourcePilotId, accountId: sourceAccountId, localId: "synthetic-pilot", name: "Synthetic Pilot", avatar: "rocket" }],
+    progressSnapshots: [],
+    crews: [],
+    crewMemberships: [],
+    pilotAccess: [],
+  });
+  const imported = await importMigrationPackage(sql, migration);
+  importedPackages.push(imported.packageSha256);
+  assert.equal(imported.status, "imported");
+  assert.equal((await sql`select count(*)::int as count from accounts where id = ${migration.idMap.accounts[sourceAccountId]}`)[0].count, 1);
+  assert.equal((await importMigrationPackage(sql, migration)).status, "replayed");
+  const failedMigration = await exportSyntheticBundle({
+    source: "supabase-synthetic-v1",
+    accounts: [{ id: `${sourceAccountId}-rollback`, email: "rollback@example.test" }],
+    pilots: [], progressSnapshots: [], crews: [], crewMemberships: [], pilotAccess: [],
+  });
+  await assert.rejects(importMigrationPackage(sql, failedMigration, { failAfterTable: "accounts" }), /failure after accounts/i);
+  assert.equal((await sql`select count(*)::int as count from accounts where id = ${failedMigration.idMap.accounts[`${sourceAccountId}-rollback`]}`)[0].count, 0);
 });
 
 test("clean-room migration creates the tenant and future crew tables", async () => {
