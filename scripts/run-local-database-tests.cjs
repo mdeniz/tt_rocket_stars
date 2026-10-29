@@ -2,11 +2,13 @@ const { spawnSync } = require("node:child_process");
 
 const composeFile = "docker-compose.local.yml";
 const databaseUrl = process.env.DATABASE_URL ?? "postgres://tt_app:tt_app_local_only@localhost:54329/tt_rocket_stars";
+const migrationUrl = process.env.DATABASE_MIGRATION_URL ?? "postgres://tt_migrator:tt_migrator_local_only@localhost:54329/tt_rocket_stars";
+const adminUrl = process.env.DATABASE_ADMIN_URL ?? "postgres://tt_admin:tt_admin_local_only@localhost:54329/tt_rocket_stars";
 
-function run(command, args, options = {}) {
+function run(command, args, options = {}, environment = {}) {
   const result = spawnSync(command, args, {
     stdio: "inherit",
-    env: { ...process.env, DATABASE_URL: databaseUrl },
+    env: { ...process.env, DATABASE_URL: databaseUrl, ...environment },
     ...options,
   });
 
@@ -45,5 +47,9 @@ if (!ready) {
   process.exit(1);
 }
 
-run("npx", ["drizzle-kit", "migrate"]);
-run(process.execPath, ["--test", "tests/integration/database.test.cjs"]);
+run("npx", ["drizzle-kit", "migrate"], {}, { DATABASE_URL: migrationUrl, DATABASE_MIGRATION_URL: migrationUrl });
+run(process.execPath, ["scripts/grant-local-database-privileges.cjs"], {}, { DATABASE_ADMIN_URL: adminUrl });
+run(process.execPath, ["--test", "tests/integration/database.test.cjs"], {}, {
+  DATABASE_URL: databaseUrl,
+  DATABASE_ADMIN_URL: adminUrl,
+});

@@ -4,12 +4,13 @@ services:
     container_name: tt-rocket-stars-postgres-local
     environment:
       POSTGRES_DB: tt_rocket_stars
-      POSTGRES_USER: tt_app
-      POSTGRES_PASSWORD: tt_app_local_only
+      POSTGRES_USER: tt_admin
+      POSTGRES_PASSWORD: tt_admin_local_only
     ports:
       - "54329:5432"
     volumes:
       - tt-rocket-stars-postgres:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U tt_app -d tt_rocket_stars"]
       interval: 2s
