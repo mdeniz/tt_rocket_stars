@@ -10,6 +10,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 - Added the local-first backend crew-domain audit and dependency map for #256,
   preserving the existing crew-access contract and separating hosted gates from
   follow-up runtime slices.
+- Added the local-first progress synchronization integrity audit and OpenSpec
+  decomposition for #253, covering atomic uploads, idempotency, concurrency,
+  typed failures, recovery, and hosted validation gates.
 - Added a local-first backend operations and security readiness audit with
   provider-neutral boundaries, explicit hosted limitations, and follow-up
   implementation slices for issue #255.
