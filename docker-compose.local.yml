@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: tt-rocket-stars-postgres-local
+    environment:
+      POSTGRES_DB: tt_rocket_stars
+      POSTGRES_USER: tt_app
+      POSTGRES_PASSWORD: tt_app_local_only
+    ports:
+      - "54329:5432"
+    volumes:
+      - tt-rocket-stars-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tt_app -d tt_rocket_stars"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+volumes:
+  tt-rocket-stars-postgres:
