@@ -1,0 +1,9 @@
+name = "tt-rocket-stars-api-local"
+main = "apps/api/src/index.ts"
+compatibility_date = "2026-10-29"
+workers_dev = true
+
+[vars]
+API_ENV = "development"
+API_CORS_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:8787"
+API_LOG_LEVEL = "info"
