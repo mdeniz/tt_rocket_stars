@@ -1,5 +1,9 @@
 # Database Migration Workflow
 
+The Supabase-to-Neon migration is governed by the local audit in
+`docs/supabase-neon-migration-audit.md`. The migration is staged: inventory and
+synthetic dry-runs come before any hosted account or traffic operation.
+
 The ordered SQL files in `supabase/migrations/` are the authoritative migration
 source. `manifest.json` records the reviewed filename, timestamp, and SHA-256 hash for
 each migration; it is a drift guard, not a second schema source.
@@ -44,3 +48,14 @@ is never performed automatically by a pull request.
   procedure when a forward fix is not safe.
 - Never put service-role credentials in Vite environment variables, repository files,
   browser artifacts, or issue comments.
+
+## Supabase-to-Neon runbook gates
+
+- [ ] Freeze and fingerprint the reviewed source schema, RLS/grants, and migration history.
+- [ ] Provision an isolated target branch or disposable local equivalent with separate migration/runtime roles.
+- [ ] Execute a synthetic export/import dry-run with deterministic ID mapping, counts, checksums, and privacy review.
+- [ ] Reconcile accounts, pilots, progress snapshots, crews, memberships, and ownership boundaries.
+- [ ] Apply the explicit Supabase identity transition: no password-hash or active-session migration; invite, re-authenticate, and link accounts.
+- [ ] Rehearse rollback and record the recovery point, decision owner, and expected restoration evidence.
+- [ ] Enable the frontend API adapter only behind a migration flag after staging checks pass; retain a read-only Supabase fallback.
+- [ ] Approve production cutover separately. This repository does not perform it automatically.
