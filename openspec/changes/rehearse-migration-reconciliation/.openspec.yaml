@@ -1,0 +1,4 @@
+name: rehearse-migration-reconciliation
+description: Reconcile synthetic migration packages and rehearse local rollback and recovery.
+status: proposed
+issue: 264
