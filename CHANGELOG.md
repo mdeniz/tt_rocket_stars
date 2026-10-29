@@ -7,6 +7,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 ## [Unreleased]
 
 ### Added
+- Added a local-first backend operations and security readiness audit with
+  provider-neutral boundaries, explicit hosted limitations, and follow-up
+  implementation slices for issue #255.
 - Added a provider-neutral Better Auth boundary behind Hono with local invitation-only users, session lifecycle controls, account-scoped authorization, and local PostgreSQL persistence.
 - Added the React ownership matrix and stable/development entrypoint contract
   for the incremental release-compatibility audit.
