@@ -61,7 +61,7 @@ export function createApi(env: ApiEnv, options: ApiOptions = {}): Hono<{ Binding
   app.get('/api/v1/health', context => context.json({ ok: true, service: 'tt-rocket-stars-api', requestId: context.get('requestId') }));
   app.get('/api/v1/ready', context => context.json({ ok: true, environment: context.env.environment, dependencies: { database: options.authDatabase ? 'configured' : 'not_configured', auth: 'configured' }, requestId: context.get('requestId') }));
   app.post('/api/v1/auth/local/invite', async context => {
-    if (context.env.environment === 'production') throw new ApiError(404, 'not_found', 'Route not found.');
+    if (context.env.environment !== 'development' && context.env.environment !== 'test') throw new ApiError(404, 'not_found', 'Route not found.');
     const body = await context.req.json().catch(() => null) as Record<string, unknown> | null;
     if (!body || typeof body.email !== 'string' || typeof body.name !== 'string' || typeof body.password !== 'string' || typeof body.invitationCode !== 'string') {
       throw new ApiError(400, 'bad_request', 'A valid local invitation payload is required.');

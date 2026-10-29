@@ -91,3 +91,13 @@ test('protected resources use the authenticated account and isolate pilots', asy
   assert.equal((await ownedApp.request('http://localhost/api/v1/pilots/pilot-1', { headers: { Cookie: firstCookie } })).status, 200);
   assert.equal((await ownedApp.request('http://localhost/api/v1/pilots/pilot-1', { headers: { Cookie: secondCookie } })).status, 404);
 });
+
+test('local invitation provisioning is unavailable outside local environments', async () => {
+  const { createApi } = await load();
+  const response = await createApi({ ...env, environment: 'staging' }).request('http://localhost/api/v1/auth/local/invite', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: 'staging@example.test', name: 'Staging', password: 'correct-horse-battery-staple', invitationCode: env.localInvitationCode }),
+  });
+  assert.equal(response.status, 404);
+});

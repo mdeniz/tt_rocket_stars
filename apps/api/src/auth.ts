@@ -36,7 +36,7 @@ export function createAuthService(env: ApiEnv, database?: AuthDatabase): AuthSer
       sendResetPassword: async ({ url }) => { resetUrls.push(url); },
     },
     rateLimit: { enabled: true, window: 60, max: 20, storage: 'memory' },
-    advanced: { useSecureCookies: false, ipAddress: { ipAddressHeaders: ['x-forwarded-for', 'cf-connecting-ip'] } },
+    advanced: { useSecureCookies: env.environment !== 'development' && env.environment !== 'test', ipAddress: { ipAddressHeaders: ['x-forwarded-for', 'cf-connecting-ip'] } },
   };
   const auth = betterAuth(options);
 
