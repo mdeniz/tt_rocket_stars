@@ -1,4 +1,5 @@
 const { spawnSync } = require("node:child_process");
+const { readdirSync } = require("node:fs");
 
 const composeFile = "docker-compose.local.yml";
 const databaseUrl = process.env.DATABASE_URL ?? "postgres://tt_app:tt_app_local_only@localhost:54329/tt_rocket_stars";
@@ -49,7 +50,10 @@ if (!ready) {
 
 run("npx", ["drizzle-kit", "migrate"], {}, { DATABASE_URL: migrationUrl, DATABASE_MIGRATION_URL: migrationUrl });
 run(process.execPath, ["scripts/grant-local-database-privileges.cjs"], {}, { DATABASE_ADMIN_URL: adminUrl });
-run(process.execPath, ["--test", "tests/integration/database.test.cjs"], {}, {
+const integrationTests = readdirSync("tests/integration")
+  .filter(file => file.endsWith(".test.cjs"))
+  .map(file => `tests/integration/${file}`);
+run(process.execPath, ["--experimental-strip-types", "--test", ...integrationTests], {}, {
   DATABASE_URL: databaseUrl,
   DATABASE_ADMIN_URL: adminUrl,
 });

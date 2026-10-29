@@ -1,0 +1,5 @@
+schema: spec-driven
+id: migrate-authentication-authorization
+title: Migrate authentication and authorization behind the Hono API
+status: proposed
+issue: 252

@@ -7,6 +7,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 ## [Unreleased]
 
 ### Added
+- Added a provider-neutral Better Auth boundary behind Hono with local invitation-only users, session lifecycle controls, account-scoped authorization, and local PostgreSQL persistence.
 - Added the React ownership matrix and stable/development entrypoint contract
   for the incremental release-compatibility audit.
 - A flag-gated React mission player with shared multiplication/division rules, timed and exam progression, local-first answer persistence, audio hooks, and legacy rollback.

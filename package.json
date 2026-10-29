@@ -12,7 +12,7 @@
     "build": "vite build && node scripts/check-dist.cjs",
     "api:dev": "wrangler dev --local",
     "api:typecheck": "tsc --noEmit -p tsconfig.api.json",
-    "api:test": "node --experimental-strip-types --test tests/unit/api-foundation.test.cjs",
+    "api:test": "node --experimental-strip-types --test tests/unit/api-*.test.cjs",
     "db:local:up": "docker compose -f docker-compose.local.yml up -d postgres",
     "db:local:down": "docker compose -f docker-compose.local.yml down",
     "db:local:reset": "docker compose -f docker-compose.local.yml down -v && docker compose -f docker-compose.local.yml up -d postgres",
@@ -45,6 +45,8 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.118.0",
+    "@better-auth/drizzle-adapter": "1.7.14",
+    "better-auth": "1.7.14",
     "drizzle-orm": "^0.45.4",
     "hono": "^4.13.14",
     "postgres": "^3.4.9",

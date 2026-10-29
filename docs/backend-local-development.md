@@ -18,7 +18,7 @@ curl -i http://localhost:8787/api/v1/health
 curl -i http://localhost:8787/api/v1/ready
 ```
 
-The `wrangler.toml` file contains only non-secret local variables. Hosted Cloudflare configuration belongs in environment-specific deployment configuration and must not be copied into this file.
+The `wrangler.toml` file contains only non-secret local variables. Hosted Cloudflare configuration belongs in environment-specific deployment configuration and must not be copied into this file. Better Auth local users are provisioned through the invitation fixture; no email provider or hosted credential is required.
 
 ## Run checks
 
@@ -27,7 +27,7 @@ npm run api:typecheck
 npm run api:test
 ```
 
-The repository check also runs the API typecheck. Database containers, Better Auth test users, and Drizzle migrations will be added by the following backend migration slices; no hosted account is required for this foundation.
+The repository check also runs the API typecheck. Database containers, Better Auth test users, and Drizzle migrations run locally; no hosted account is required.
 
 ## Contract boundary
 
