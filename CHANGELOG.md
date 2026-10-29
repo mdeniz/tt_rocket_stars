@@ -1,5 +1,7 @@
 # Changelog
 
+- Added the local account-scoped atomic progress upload service for sync issue #280.
+
 - Reconciled completed cloud-sync implementation and operational documentation tasks with their repository test evidence; external provider and production redirect checks remain explicitly pending.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
