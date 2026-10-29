@@ -7,6 +7,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 ## [Unreleased]
 
 ### Added
+- Added an identity-transition readiness runbook and contract checks covering invitation/re-authentication/linking, non-portable Supabase identities, read-only fallback, staged gates, recovery evidence, and approval-gated cutover.
 - Added local synthetic migration reconciliation with account ownership checks, checksums, transactional rollback rehearsal, and deterministic recovery/replay evidence for the Supabase-to-Neon transition.
 - Added local-only deterministic synthetic Supabase-to-Neon migration export/import
   tooling for #263, with an explicit privacy allowlist, checksums, dry-run mode,
