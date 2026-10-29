@@ -1,0 +1,5 @@
+- [x] Define invitation, re-authentication, explicit linking, and session/hash transition rules.
+- [x] Define the disabled Better Auth flag and read-only legacy fallback.
+- [x] Define local, staging, canary, cutover, rollback, recovery, and approval gates.
+- [x] Add automated contract checks and document the local-only boundary.
+- [ ] Execute hosted staging or production cutover after explicit approval and credentials.

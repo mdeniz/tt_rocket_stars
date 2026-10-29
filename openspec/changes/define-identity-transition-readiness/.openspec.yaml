@@ -1,0 +1,4 @@
+name: define-identity-transition-readiness
+description: Define invitation-based identity transition and approval-gated staged cutover readiness.
+status: proposed
+issue: 265
