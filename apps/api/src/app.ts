@@ -3,7 +3,7 @@ import type { Context } from 'hono';
 import { logger as honoLogger } from 'hono/logger';
 import type { ApiEnv } from './config.ts';
 import { ApiError, errorResponse } from './errors.ts';
-import { createLogger } from './logging.ts';
+import { createErrorEvent, createLogger } from './logging.ts';
 import { createAuthService, type AuthService, type AuthDatabase } from './auth.ts';
 import { createInMemoryPilotRepository, type PilotRepository } from './authorization.ts';
 import type { AuthIdentity } from './contracts.ts';
@@ -47,7 +47,7 @@ export function createApi(env: ApiEnv, options: ApiOptions = {}): Hono<{ Binding
     try {
       await next();
     } finally {
-      log('request.completed', { requestId, method: context.req.method, path: context.req.path, status: context.res.status, durationMs: Date.now() - started });
+      log('request.completed', { requestId, method: context.req.method, status: context.res.status, durationMs: Date.now() - started });
     }
   });
   app.use('*', async (context, next) => {
@@ -56,7 +56,11 @@ export function createApi(env: ApiEnv, options: ApiOptions = {}): Hono<{ Binding
   });
   app.use('*', honoLogger());
   cors(app);
-  app.onError((error, context) => errorResponse(context, error, context.get('requestId') || 'unknown'));
+  app.onError((error, context) => {
+    const requestId = context.get('requestId') || 'unknown';
+    log('api.error', createErrorEvent({ requestId, status: error instanceof ApiError ? error.status : 500, code: error instanceof ApiError ? error.code : 'internal_error' }));
+    return errorResponse(context, error, requestId);
+  });
   app.notFound(context => errorResponse(context, new ApiError(404, 'not_found', 'Route not found.'), context.get('requestId') || 'unknown'));
   app.get('/api/v1/health', context => context.json({ ok: true, service: 'tt-rocket-stars-api', requestId: context.get('requestId') }));
   app.get('/api/v1/ready', context => context.json({ ok: true, environment: context.env.environment, dependencies: { database: options.authDatabase ? 'configured' : 'not_configured', auth: 'configured' }, requestId: context.get('requestId') }));

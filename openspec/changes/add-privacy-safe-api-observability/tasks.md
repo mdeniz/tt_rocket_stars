@@ -1,0 +1,4 @@
+- [x] Preserve and test request correlation.
+- [x] Add bounded privacy-safe error events and omit identifying route payloads.
+- [x] Add local incident response/runbook contract and tests.
+- [ ] Configure hosted monitoring ingestion after explicit provider and operations approval.

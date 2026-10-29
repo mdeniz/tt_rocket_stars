@@ -16,5 +16,5 @@ export class ApiError extends Error {
 
 export function errorResponse(context: Context, error: unknown, requestId: string): Response {
   const apiError = error instanceof ApiError ? error : new ApiError(500, 'internal_error', 'An unexpected error occurred.');
-  return context.json({ ok: false, error: { code: apiError.code, message: apiError.message }, requestId }, apiError.status);
+  return context.json({ ok: false, error: { code: apiError.code, message: apiError instanceof ApiError ? apiError.message : 'An unexpected error occurred.' }, requestId }, apiError.status);
 }
