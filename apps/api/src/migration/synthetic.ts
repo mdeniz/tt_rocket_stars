@@ -34,6 +34,13 @@ export interface MigrationPackage {
   manifest: { counts: Record<string, number>; checksums: Record<string, string>; packageSha256: string };
 }
 
+export interface MigrationReconciliation {
+  passed: boolean;
+  packageSha256: string;
+  mismatches: Array<{ table: string; expectedCount: number; actualCount: number; checksumMatches: boolean }>;
+  ownershipValidated: boolean;
+}
+
 const allowedFields: Record<keyof SyntheticBundle, readonly string[]> = {
   source: ['source'],
   accounts: ['id', 'email', 'displayName', 'status'],
@@ -157,6 +164,59 @@ export async function validateMigrationPackage(value: unknown): Promise<void> {
   assertRecord(value, 'migration package');
   if (value.format !== 'tt-rocket-stars.synthetic-migration.v1' || !value.tables || !value.manifest) fail('package format is invalid.');
   if (await packageSha256(value as unknown as MigrationPackage) !== (value.manifest as JsonRecord).packageSha256) fail('package checksum does not match.');
+}
+
+function normalizeDatabaseDate(value: unknown): string | null {
+  if (value === null || value === undefined) return null;
+  return new Date(value as string | Date).toISOString();
+}
+
+function normalizeDatabaseRow(table: string, row: JsonRecord): JsonRecord {
+  const payload = typeof row.payload === 'string' ? JSON.parse(row.payload) : row.payload ?? {};
+  switch (table) {
+    case 'accounts':
+      return { id: row.id, email: row.email, displayName: row.display_name, status: row.status };
+    case 'pilots':
+      return { id: row.id, accountId: row.account_id, localId: row.local_id, name: row.name, avatar: row.avatar, language: row.language, managementMode: row.management_mode, payload, createdAt: normalizeDatabaseDate(row.created_at), updatedAt: normalizeDatabaseDate(row.updated_at) };
+    case 'progressSnapshots':
+      return { id: row.id, accountId: row.account_id, pilotId: row.pilot_id, version: Number(row.version), payload, createdAt: normalizeDatabaseDate(row.created_at), updatedAt: normalizeDatabaseDate(row.updated_at) };
+    case 'crews':
+      return { id: row.id, ownerAccountId: row.owner_account_id, name: row.name, createdAt: normalizeDatabaseDate(row.created_at), updatedAt: normalizeDatabaseDate(row.updated_at) };
+    case 'crewMemberships':
+      return { crewId: row.crew_id, accountId: row.account_id, role: row.role, createdAt: normalizeDatabaseDate(row.created_at), updatedAt: normalizeDatabaseDate(row.updated_at) };
+    case 'pilotAccess':
+      return { pilotId: row.pilot_id, accountId: row.account_id, grantedByAccountId: row.granted_by_account_id, createdAt: normalizeDatabaseDate(row.created_at), updatedAt: normalizeDatabaseDate(row.updated_at) };
+    default:
+      fail(`unsupported reconciliation table ${table}.`);
+  }
+}
+
+async function rowsForReconciliation(sql: any, table: string, ids: string[]): Promise<JsonRecord[]> {
+  if (ids.length === 0) return [];
+  switch (table) {
+    case 'accounts': return (await sql`select id, email, display_name, status from accounts where id = any(${sql.array(ids)}) order by id`) as JsonRecord[];
+    case 'pilots': return (await sql`select id, account_id, local_id, name, avatar, language, management_mode, payload, created_at, updated_at from pilots where id = any(${sql.array(ids)}::uuid[]) order by id`) as JsonRecord[];
+    case 'progressSnapshots': return (await sql`select id, account_id, pilot_id, version, payload, created_at, updated_at from progress_snapshots where id = any(${sql.array(ids)}::uuid[]) order by id`) as JsonRecord[];
+    case 'crews': return (await sql`select id, owner_account_id, name, created_at, updated_at from crews where id = any(${sql.array(ids)}::uuid[]) order by id`) as JsonRecord[];
+    case 'crewMemberships': return (await sql`select crew_id, account_id, role, created_at, updated_at from crew_memberships where crew_id = any(${sql.array(ids)}::uuid[]) order by crew_id, account_id`) as JsonRecord[];
+    case 'pilotAccess': return (await sql`select pilot_id, account_id, granted_by_account_id, created_at, updated_at from pilot_access where pilot_id = any(${sql.array(ids)}::uuid[]) order by pilot_id, account_id`) as JsonRecord[];
+    default: fail(`unsupported reconciliation table ${table}.`);
+  }
+}
+
+export async function reconcileMigrationPackage(sql: any, migration: MigrationPackage): Promise<MigrationReconciliation> {
+  await validateMigrationPackage(migration);
+  const mismatches: MigrationReconciliation['mismatches'] = [];
+  for (const [table, expectedRows] of Object.entries(migration.tables)) {
+    const key = table === 'accounts' ? 'id' : table === 'pilots' || table === 'progressSnapshots' || table === 'crews' ? 'id' : table === 'crewMemberships' ? 'crewId' : 'pilotId';
+    const ids = expectedRows.map(row => String(row[key]));
+    const actualRows = (await rowsForReconciliation(sql, table, ids)).map(row => normalizeDatabaseRow(table, row));
+    const checksumMatches = await sha256(canonical(actualRows)) === migration.manifest.checksums[table];
+    if (actualRows.length !== expectedRows.length || !checksumMatches) mismatches.push({ table, expectedCount: expectedRows.length, actualCount: actualRows.length, checksumMatches });
+  }
+  const ownershipValidated = migration.tables.progressSnapshots.every(row => migration.tables.pilots.some(pilot => pilot.id === row.pilotId && pilot.accountId === row.accountId))
+    && migration.tables.crews.every(crew => migration.tables.accounts.some(account => account.id === crew.ownerAccountId));
+  return { passed: mismatches.length === 0 && ownershipValidated, packageSha256: migration.manifest.packageSha256, mismatches, ownershipValidated };
 }
 
 export async function importMigrationPackage(sql: any, migration: MigrationPackage, options: { dryRun?: boolean; failAfterTable?: string } = {}): Promise<{ status: 'imported' | 'replayed' | 'dry-run'; packageSha256: string }> {

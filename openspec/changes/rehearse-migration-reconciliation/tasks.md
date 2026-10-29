@@ -1,0 +1,5 @@
+- [x] Add deterministic local reconciliation for all synthetic migration tables.
+- [x] Verify account/pilot/crew ownership and progress snapshot version evidence.
+- [x] Add checksum tampering, transactional rollback, and recovery/replay tests.
+- [x] Document local-only scope and hosted validation limitations.
+- [ ] Perform hosted database rehearsal under an explicit approval gate.

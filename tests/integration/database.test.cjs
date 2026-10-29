@@ -50,6 +50,66 @@ test("synthetic migration imports atomically and replays by package checksum", a
   assert.equal((await sql`select count(*)::int as count from accounts where id = ${failedMigration.idMap.accounts[`${sourceAccountId}-rollback`]}`)[0].count, 0);
 });
 
+test("migration reconciliation verifies ownership, checksums, rollback, and recovery", async () => {
+  const { exportSyntheticBundle, importMigrationPackage, reconcileMigrationPackage } = await import("../../apps/api/src/migration/synthetic.ts");
+  const suffix = randomUUID();
+  const source = {
+    accountA: `reconcile-a-${suffix}`,
+    accountB: `reconcile-b-${suffix}`,
+    pilot: `reconcile-pilot-${suffix}`,
+    snapshot: `reconcile-snapshot-${suffix}`,
+    crew: `reconcile-crew-${suffix}`,
+  };
+  const timestamp = "2024-01-02T03:04:05.000Z";
+  const migration = await exportSyntheticBundle({
+    source: "supabase-synthetic-v1",
+    accounts: [
+      { id: source.accountA, email: `${source.accountA}@example.test` },
+      { id: source.accountB, email: `${source.accountB}@example.test` },
+    ],
+    pilots: [{ id: source.pilot, accountId: source.accountA, localId: "reconcile-pilot", name: "Reconcile Pilot", avatar: "rocket", createdAt: timestamp, updatedAt: timestamp }],
+    progressSnapshots: [{ id: source.snapshot, accountId: source.accountA, pilotId: source.pilot, version: 3, payload: { coins: 7 }, createdAt: timestamp, updatedAt: timestamp }],
+    crews: [{ id: source.crew, ownerAccountId: source.accountA, name: "Reconcile Crew", createdAt: timestamp, updatedAt: timestamp }],
+    crewMemberships: [{ crewId: source.crew, accountId: source.accountB, role: "member", createdAt: timestamp, updatedAt: timestamp }],
+    pilotAccess: [{ pilotId: source.pilot, accountId: source.accountB, grantedByAccountId: source.accountA, createdAt: timestamp, updatedAt: timestamp }],
+  });
+
+  await assert.rejects(
+    exportSyntheticBundle({
+      source: "supabase-synthetic-v1",
+      accounts: [{ id: "owner" }],
+      pilots: [{ id: "pilot", accountId: "owner", localId: "pilot", name: "Pilot", avatar: "rocket" }],
+      progressSnapshots: [{ id: "snapshot", accountId: "owner", pilotId: "pilot", version: 1, payload: {} }],
+      crews: [{ id: "crew", ownerAccountId: "missing", name: "Crew" }],
+      crewMemberships: [], pilotAccess: [],
+    }),
+    /unknown owner/i,
+  );
+
+  await importMigrationPackage(sql, migration);
+  importedPackages.push(migration.manifest.packageSha256);
+  const reconciled = await reconcileMigrationPackage(sql, migration);
+  assert.equal(reconciled.passed, true);
+  assert.equal(reconciled.ownershipValidated, true);
+  assert.deepEqual(reconciled.mismatches, []);
+
+  const corrupted = structuredClone(migration);
+  corrupted.tables.progressSnapshots[0].version = 4;
+  await assert.rejects(importMigrationPackage(sql, corrupted), /checksum does not match/i);
+
+  const rollback = await exportSyntheticBundle({
+    source: "supabase-synthetic-v1",
+    accounts: [{ id: `${source.accountA}-rollback` }],
+    pilots: [], progressSnapshots: [], crews: [], crewMemberships: [], pilotAccess: [],
+  });
+  await assert.rejects(importMigrationPackage(sql, rollback, { failAfterTable: "accounts" }), /failure after accounts/i);
+  assert.equal((await sql`select count(*)::int as count from accounts where id = ${rollback.idMap.accounts[`${source.accountA}-rollback`]}`)[0].count, 0);
+  assert.equal((await sql`select count(*)::int as count from migration_imports where package_sha256 = ${rollback.manifest.packageSha256}`)[0].count, 0);
+  assert.equal((await importMigrationPackage(sql, rollback)).status, "imported");
+  importedPackages.push(rollback.manifest.packageSha256);
+  assert.equal((await importMigrationPackage(sql, rollback)).status, "replayed");
+});
+
 test("clean-room migration creates the tenant and future crew tables", async () => {
   const rows = await sql`
     select table_name
