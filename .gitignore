@@ -7,5 +7,6 @@ releases/
 playwright-report/
 test-results/
 .vite/
+.wrangler/
 .DS_Store
 *.log
