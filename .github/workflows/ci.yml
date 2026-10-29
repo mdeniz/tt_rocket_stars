@@ -88,6 +88,26 @@ jobs:
         if: needs.changes.outputs.full_suite == 'true'
         run: npm run check
 
+  security-gates:
+    name: Security gates
+    needs: changes
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Scan tracked files for high-confidence secrets
+        run: npm run security:secrets
+      - name: Audit locked dependencies
+        run: npm run security:dependencies
+
   browser-tests:
     name: Browser tests (${{ matrix.project }})
     needs: changes

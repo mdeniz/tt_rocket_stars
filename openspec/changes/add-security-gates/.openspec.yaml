@@ -1,0 +1,4 @@
+name: add-security-gates
+description: Add reproducible dependency audit and tracked-file secret scanning gates.
+status: proposed
+issue: 267
