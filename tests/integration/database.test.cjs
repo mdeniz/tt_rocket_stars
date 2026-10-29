@@ -7,6 +7,22 @@ const sql = postgres(process.env.DATABASE_URL ?? "postgres://tt_app:tt_app_local
   max: 1,
   prepare: false,
 });
+
+test("application database role has only least-privilege application table grants", async () => {
+  const rows = await sql`
+    select table_name, privilege_type
+    from information_schema.role_table_grants
+    where grantee = 'tt_app'
+    order by table_name, privilege_type
+  `;
+  const allowedTables = new Set(["accounts", "pilots", "progress_snapshots", "sync_operations", "crews", "crew_memberships", "pilot_access", "user", "account", "session", "verification", "migration_imports"]);
+  const allowedPrivileges = new Set(["SELECT", "INSERT", "UPDATE", "DELETE"]);
+  assert.ok(rows.length > 0);
+  for (const row of rows) {
+    assert.equal(allowedTables.has(row.table_name), true, `unexpected application grant on ${row.table_name}`);
+    assert.equal(allowedPrivileges.has(row.privilege_type), true, `unexpected application privilege ${row.privilege_type}`);
+  }
+});
 const admin = postgres(process.env.DATABASE_ADMIN_URL ?? "postgres://tt_admin:tt_admin_local_only@localhost:54329/tt_rocket_stars", {
   max: 1,
   prepare: false,

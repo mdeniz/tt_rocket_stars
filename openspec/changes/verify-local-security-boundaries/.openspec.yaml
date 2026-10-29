@@ -1,0 +1,4 @@
+name: verify-local-security-boundaries
+description: Verify least-privilege local roles, deterministic API rate limits, and account isolation.
+status: proposed
+issue: 268

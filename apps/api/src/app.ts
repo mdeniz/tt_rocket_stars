@@ -7,6 +7,7 @@ import { createErrorEvent, createLogger } from './logging.ts';
 import { createAuthService, type AuthService, type AuthDatabase } from './auth.ts';
 import { createInMemoryPilotRepository, type PilotRepository } from './authorization.ts';
 import type { AuthIdentity } from './contracts.ts';
+import { createInMemoryRateLimiter, type RequestRateLimiter } from './rate-limit.ts';
 
 export interface ApiBindings extends ApiEnv {}
 export interface ApiVariables { requestId: string }
@@ -15,6 +16,7 @@ export interface ApiOptions {
   readonly auth?: AuthService;
   readonly authDatabase?: AuthDatabase;
   readonly pilots?: PilotRepository;
+  readonly rateLimiter?: RequestRateLimiter;
 }
 
 function cors(app: Hono<{ Bindings: ApiBindings; Variables: ApiVariables }>): void {
@@ -35,6 +37,7 @@ export function createApi(env: ApiEnv, options: ApiOptions = {}): Hono<{ Binding
   const app = new Hono<{ Bindings: ApiBindings; Variables: ApiVariables }>();
   const authService = options.auth ?? createAuthService(env, options.authDatabase);
   const pilots = options.pilots ?? createInMemoryPilotRepository([]);
+  const rateLimiter = options.rateLimiter ?? createInMemoryRateLimiter();
   const log = createLogger();
   app.use('*', async (context, next) => {
     const candidate = context.req.header('X-Request-ID');
@@ -56,6 +59,15 @@ export function createApi(env: ApiEnv, options: ApiOptions = {}): Hono<{ Binding
   });
   app.use('*', honoLogger());
   cors(app);
+  app.use('*', async (context, next) => {
+    const key = context.req.header('CF-Connecting-IP') ?? 'local';
+    const decision = rateLimiter.check(`${key}:${context.req.path}`);
+    if (!decision.allowed) {
+      context.header('Retry-After', String(decision.retryAfterSeconds));
+      throw new ApiError(429, 'rate_limited', 'Too many requests.');
+    }
+    await next();
+  });
   app.onError((error, context) => {
     const requestId = context.get('requestId') || 'unknown';
     log('api.error', createErrorEvent({ requestId, status: error instanceof ApiError ? error.status : 500, code: error instanceof ApiError ? error.code : 'internal_error' }));

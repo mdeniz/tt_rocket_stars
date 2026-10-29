@@ -26,6 +26,7 @@
     "check:migrations": "node scripts/check-migrations.cjs",
     "security:secrets": "node scripts/check-secrets.cjs",
     "security:dependencies": "node scripts/check-dependencies.cjs",
+    "security:database": "node scripts/check-local-database-privileges.cjs",
     "db:migrations:reset": "node scripts/check-migrations.cjs --apply-clean",
     "typecheck": "tsc --noEmit",
     "preview": "vite preview --host 0.0.0.0",

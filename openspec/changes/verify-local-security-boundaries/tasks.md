@@ -1,0 +1,5 @@
+- [x] Add deterministic local request rate limiting and focused tests.
+- [x] Add least-privilege grant contract and tests.
+- [x] Add cross-account repository isolation regression coverage.
+- [x] Document hosted proxy/shared-store configuration and local limitations.
+- [ ] Validate hosted shared-store rate limiting after infrastructure approval.
