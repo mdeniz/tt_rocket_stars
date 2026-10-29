@@ -1,0 +1,4 @@
+name: add-privacy-safe-api-observability
+description: Add correlated, bounded API error events and a local incident response contract.
+status: proposed
+issue: 266
