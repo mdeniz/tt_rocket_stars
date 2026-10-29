@@ -9,6 +9,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 ### Added
 - Added additive dependency-audit and tracked-file secret-scanning gates for local development and GitHub Actions, with redacted findings and explicit false-positive handling.
 - Added local least-privilege grant contracts, deterministic API rate limiting, and cross-account authorization regression coverage.
+- Added reproducible local backend bootstrap, bounded API quota evidence, and fail-closed deployment environment contracts.
 - Added privacy-safe correlated API error events, route-identifier-safe request logs, and a provider-neutral incident response contract for local Hono development.
 - Added an identity-transition readiness runbook and contract checks covering invitation/re-authentication/linking, non-portable Supabase identities, read-only fallback, staged gates, recovery evidence, and approval-gated cutover.
 - Added local synthetic migration reconciliation with account ownership checks, checksums, transactional rollback rehearsal, and deterministic recovery/replay evidence for the Supabase-to-Neon transition.

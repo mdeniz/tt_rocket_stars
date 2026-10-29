@@ -18,6 +18,8 @@
     "db:local:reset": "docker compose -f docker-compose.local.yml down -v && docker compose -f docker-compose.local.yml up -d postgres",
     "db:migrate": "drizzle-kit migrate",
     "test:integration": "node scripts/run-local-database-tests.cjs",
+    "bootstrap:local": "node scripts/bootstrap-local.cjs",
+    "check:environment": "node scripts/check-environment-contract.cjs",
     "db:backup:restore:test": "node scripts/run-local-database-backup-restore.cjs",
     "migration:synthetic": "node scripts/synthetic-migration.mjs",
     "release": "node scripts/release.mjs",
