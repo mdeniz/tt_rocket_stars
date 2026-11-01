@@ -8,6 +8,7 @@ import { createAuthService, type AuthService, type AuthDatabase } from './auth.t
 import { createInMemoryPilotRepository, type PilotRepository } from './authorization.ts';
 import type { AuthIdentity } from './contracts.ts';
 import { createInMemoryRateLimiter, type RequestRateLimiter } from './rate-limit.ts';
+import { createSyncService, type SyncDatabase } from './sync.ts';
 
 export interface ApiBindings extends ApiEnv {}
 export interface ApiVariables { requestId: string }
@@ -17,6 +18,7 @@ export interface ApiOptions {
   readonly authDatabase?: AuthDatabase;
   readonly pilots?: PilotRepository;
   readonly rateLimiter?: RequestRateLimiter;
+  readonly database?: SyncDatabase;
 }
 
 function cors(app: Hono<{ Bindings: ApiBindings; Variables: ApiVariables }>): void {
@@ -38,6 +40,7 @@ export function createApi(env: ApiEnv, options: ApiOptions = {}): Hono<{ Binding
   const authService = options.auth ?? createAuthService(env, options.authDatabase);
   const pilots = options.pilots ?? createInMemoryPilotRepository([]);
   const rateLimiter = options.rateLimiter ?? createInMemoryRateLimiter();
+  const sync = options.database ? createSyncService(options.database) : null;
   const log = createLogger();
   app.use('*', async (context, next) => {
     const candidate = context.req.header('X-Request-ID');
@@ -95,6 +98,10 @@ export function createApi(env: ApiEnv, options: ApiOptions = {}): Hono<{ Binding
     return { userId: session.user.id, accountId: session.user.id, email: session.user.email };
   };
   app.get('/api/v1/me', async context => context.json({ ok: true, identity: await getIdentity(context) }));
+  app.post('/api/v1/sync/uploads', async context => {
+    if (!sync) throw new ApiError(500, 'configuration_error', 'Sync storage is not configured.');
+    return context.json({ ok: true, result: await sync.upload(await getIdentity(context), await context.req.json().catch(() => null)) }, 201);
+  });
   app.get('/api/v1/pilots/:pilotId', async context => {
     const identity = await getIdentity(context);
     const pilot = await pilots.findOwnedPilot(identity, context.req.param('pilotId'));

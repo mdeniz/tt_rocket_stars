@@ -218,3 +218,30 @@ test("the application role is not privileged", async () => {
   assert.equal(rows.length, 1);
   assert.deepEqual({ ...rows[0] }, { rolsuper: false, rolcreatedb: false, rolcreaterole: false });
 });
+
+test("atomic progress uploads are account-scoped, versioned, and idempotent", async () => {
+  const { createSyncService } = await import("../../apps/api/src/sync.ts");
+  const sync = createSyncService({ client: sql });
+  const syncAccountId = `sync-${randomUUID()}`;
+  const otherSyncAccountId = `sync-other-${randomUUID()}`;
+  const pilotId = randomUUID();
+  await sql`
+    insert into accounts (id, email) values
+      (${syncAccountId}, ${`${syncAccountId}@example.test`}),
+      (${otherSyncAccountId}, ${`${otherSyncAccountId}@example.test`})
+  `;
+  await sql`
+    insert into pilots (id, account_id, local_id, name, avatar)
+    values (${pilotId}, ${syncAccountId}, 'sync-pilot', 'Sync Pilot', 'rocket')
+  `;
+  const identity = { userId: 'server-user', accountId: syncAccountId, email: `${syncAccountId}@example.test` };
+  const first = await sync.upload(identity, { version: 1, operationId: 'sync-op-1', pilotId, expectedVersion: 0, accountId: 'attacker-controlled', payload: { coins: 7 } });
+  assert.deepEqual(first, { operationId: 'sync-op-1', pilotId, version: 1, replayed: false });
+  assert.deepEqual(await sync.upload(identity, { version: 1, operationId: 'sync-op-1', pilotId, expectedVersion: 0, payload: { coins: 7 } }), { ...first, replayed: true });
+  assert.equal(Number((await sql`select version, payload from progress_snapshots where pilot_id = ${pilotId}`)[0].version), 1);
+  await assert.rejects(sync.upload(identity, { version: 1, operationId: 'sync-op-1', pilotId, expectedVersion: 0, payload: { coins: 8 } }), error => error.code === 'conflict');
+  await assert.rejects(sync.upload(identity, { version: 1, operationId: 'sync-op-2', pilotId, expectedVersion: 0, payload: { coins: 9 } }), error => error.code === 'conflict');
+  assert.equal(Number((await sql`select count(*)::int as count from sync_operations where account_id = ${syncAccountId}`)[0].count), 1);
+  await assert.rejects(sync.upload({ userId: 'other-user', accountId: otherSyncAccountId, email: `${otherSyncAccountId}@example.test` }, { version: 1, operationId: 'other-op', pilotId, expectedVersion: 1, payload: {} }), error => error.code === 'not_found');
+  await sql`delete from accounts where id in (${syncAccountId}, ${otherSyncAccountId})`;
+});
