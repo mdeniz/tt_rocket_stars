@@ -2,6 +2,16 @@ import { createSupabaseCloudProvider } from './cloud-provider.js';
 
 const SYNC_METADATA_KEY = 'tt-rocket-cloud-sync-v1';
 
+export const CLOUD_OUTCOMES = Object.freeze({ conflict: 'conflict', retryable: 'retryable', permanent: 'permanent' });
+
+export function classifyCloudError(error) {
+  const code = String(error?.code || error?.error?.code || (typeof error?.error === 'string' ? error.error : '') || '').toLowerCase();
+  const message = `${error?.message || ''} ${error?.error?.message || (typeof error?.error === 'object' ? JSON.stringify(error.error) : '')}`.toLowerCase();
+  if (code === '40001' || message.includes('snapshot version conflict')) return CLOUD_OUTCOMES.conflict;
+  if (['cloud_busy', 'timeout', 'transient'].includes(code) || message.includes('temporarily busy') || message.includes('timed out')) return CLOUD_OUTCOMES.retryable;
+  return CLOUD_OUTCOMES.permanent;
+}
+
 const clone = value => JSON.parse(JSON.stringify(value ?? null));
 
 function validateSnapshot(snapshot) {
@@ -139,7 +149,7 @@ export function createCloudSync({ client, provider = client ? createSupabaseClou
     const choice = await onConflict(conflict);
     if (choice === 'remote') {
       const backedUp = typeof createRecoveryBackup !== 'function' || await createRecoveryBackup('Before cloud conflict restore');
-      if (!backedUp) return result('failed', { error: new Error('Recovery backup failed.'), conflict });
+      if (!backedUp) return result('failed', { outcome: CLOUD_OUTCOMES.permanent, error: new Error('Recovery backup failed.'), conflict });
       applyRemotePilot?.(conflict.remote);
       writeVersion(conflict.local.localId, conflict.remote);
       const resolved = result('resolved-remote', { conflict, snapshot: conflict.remote });
@@ -179,14 +189,14 @@ export function createCloudSync({ client, provider = client ? createSupabaseClou
       if (!options.skipConflictHandling && isConflictError(error)) {
         try {
           const remote = await readRemoteSnapshot(error.pilotId || await provider.findPilotId(local.localId));
-          if (remote) return resolveConflict(result('conflict', { local, remote, error }), options);
+          if (remote) return resolveConflict(result('conflict', { outcome: CLOUD_OUTCOMES.conflict, local, remote, error }), options);
         } catch (remoteError) {
-          const failed = result('failed', { error: remoteError });
+          const failed = result('failed', { outcome: CLOUD_OUTCOMES.permanent, error: remoteError });
           report('failed', failed);
           return failed;
         }
       }
-      const failed = result('failed', { error }); report('failed', failed); return failed;
+      const failed = result('failed', { outcome: classifyCloudError(error), error }); report('failed', failed); return failed;
     });
   }
 

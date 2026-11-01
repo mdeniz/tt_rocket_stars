@@ -197,6 +197,7 @@
   "ui.achievement.hardTables.title": "Hard tables",
   "ui.achievement.hardTables.description": "Master tables 7, 9, 11 and 12",
   "ui.achievement.hardDivisions.title": "Hard divisions",
+  "ui.109": "Cloud sync is temporarily unavailable. Your local progress is safe; try again.",
   "ui.achievement.hardDivisions.description": "Master division facts for tables 7, 9, 11 and 12",
   "ui.achievement.multiplicationMaster.title": "Multiplication master",
   "ui.achievement.multiplicationMaster.description": "Master all 12 multiplication tables",

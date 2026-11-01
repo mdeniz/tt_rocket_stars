@@ -33,6 +33,7 @@ async function installCloudFixture(page, options = {}) {
     cloudRequests: [],
     deleteCount: 0,
     failPilotUploads: Number(options.failPilotUploads || 0),
+    busyUploads: Number(options.busyUploads || 0),
     conflictOnce: Boolean(options.conflictOnce),
     recoveryError: options.recoveryError || null,
     verifyError: options.verifyError || null,
@@ -132,6 +133,10 @@ async function installCloudFixture(page, options = {}) {
     }
 
     if (path === '/rest/v1/rpc/upsert_my_progress_snapshot') {
+      if (state.busyUploads > 0) {
+        state.busyUploads -= 1;
+        return jsonResponse(route, { error: 'cloud_busy', message: 'Cloud operation is busy. Try again shortly.' }, 503);
+      }
       const pilotId = String(body.p_pilot_id || '').replace('remote-', '');
       const current = state.snapshots.get(pilotId);
       if (state.conflictOnce && current && Number(body.p_expected_version || 0) < Number(current.version || 0)) {

@@ -510,3 +510,24 @@ test('restores a conflict choice only after creating a recovery backup', async (
   assert.deepEqual(backups, ['Before cloud conflict restore']);
   assert.equal(applied[0].payload.score, 9);
 });
+
+test('classifies retryable cloud failures without changing local progress', async () => {
+  const { classifyCloudError, createCloudSync } = await cloudSync;
+  assert.equal(classifyCloudError({ code: 'cloud_busy' }), 'retryable');
+  assert.equal(classifyCloudError({ code: 'timeout' }), 'retryable');
+  assert.equal(classifyCloudError({ code: '40001' }), 'conflict');
+  assert.equal(classifyCloudError({ code: 'permission_denied' }), 'permanent');
+  const local = { id: 'pilot-1', name: 'Ada', payload: { score: 12 } };
+  const adapter = createCloudSync({
+    provider: {
+      session: async () => ({ user: { id: 'user-1' } }),
+      upsertPilot: async () => ({ id: 'pilot-1' }),
+      writeSnapshot: async () => { throw Object.assign(new Error('Cloud operation is busy.'), { code: 'cloud_busy' }); },
+    },
+    getLocalPilot: () => local,
+    retries: 0,
+  });
+  const result = await adapter.upload();
+  assert.deepEqual({ status: result.status, outcome: result.outcome }, { status: 'failed', outcome: 'retryable' });
+  assert.deepEqual(local.payload, { score: 12 });
+});

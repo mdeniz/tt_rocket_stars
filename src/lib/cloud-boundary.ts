@@ -15,6 +15,8 @@ export type CloudBoundaryStatus =
   | 'conflict'
   | 'failed';
 
+export type CloudOutcome = 'conflict' | 'retryable' | 'permanent';
+
 export interface CloudPilotSummary {
   localId: string;
   name: string;
@@ -26,6 +28,7 @@ export interface CloudPilotSummary {
 
 export interface CloudBoundaryResult {
   status: CloudBoundaryStatus | string;
+  outcome?: CloudOutcome;
   snapshot?: CloudSnapshot;
   pilots?: readonly CloudPilotSummary[];
   error?: unknown;

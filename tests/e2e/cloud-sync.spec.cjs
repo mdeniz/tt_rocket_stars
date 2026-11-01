@@ -207,6 +207,18 @@ test('stale writes create a recovery path and transient provider failures are re
   await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem('tt-rocket-backups-v1') || '[]').length)).toBeGreaterThan(0);
 });
 
+test('retryable cloud failures expose safe manual recovery messaging', async ({ page }) => {
+  const fixture = await installCloudFixture(page, { busyUploads: 100 });
+  await fixture.openCloudSettings();
+  await page.locator('#ttAuthEmail').fill('pilot@example.com');
+  await page.locator('#ttAuthPassword').fill('correct horse battery');
+  await page.locator('#ttAuthForm button[type="submit"]').click();
+  await expect(page.locator('#ttAuthStatus')).toContainText('signed in');
+  await page.locator('#ttCloudSyncNow').click();
+  await expect(page.locator('#ttCloudStatus')).toContainText(/temporarily unavailable|no está disponible temporalmente/i);
+  await expect(page.locator('#ttCloudSyncNow')).toBeEnabled();
+});
+
 test('local-only startup does not require a cloud request', async ({ page }) => {
   const requests = [];
   await page.route('**/auth/v1/**', route => { requests.push(route.request().url()); return route.abort(); });
