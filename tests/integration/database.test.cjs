@@ -245,3 +245,20 @@ test("atomic progress uploads are account-scoped, versioned, and idempotent", as
   await assert.rejects(sync.upload({ userId: 'other-user', accountId: otherSyncAccountId, email: `${otherSyncAccountId}@example.test` }, { version: 1, operationId: 'other-op', pilotId, expectedVersion: 1, payload: {} }), error => error.code === 'not_found');
   await sql`delete from accounts where id in (${syncAccountId}, ${otherSyncAccountId})`;
 });
+
+test("transaction failure after snapshot mutation rolls back and permits the same-operation retry", async () => {
+  const { createSyncService } = await import("../../apps/api/src/sync.ts");
+  const account = `rollback-${randomUUID()}`;
+  const pilotId = randomUUID();
+  const operationId = `rollback-operation-${randomUUID()}`;
+  const identity = { userId: "rollback-user", accountId: account, email: `${account}@example.test` };
+  await sql`insert into accounts (id, email) values (${account}, ${`${account}@example.test`})`;
+  await sql`insert into pilots (id, account_id, local_id, name, avatar) values (${pilotId}, ${account}, 'rollback-pilot', 'Rollback Pilot', 'rocket')`;
+  const failingSync = createSyncService({ client: sql }, { afterSnapshotWrite: () => { throw new Error("injected sync failure"); } });
+  await assert.rejects(failingSync.upload(identity, { version: 1, operationId, pilotId, expectedVersion: 0, payload: { coins: 11 } }), /injected sync failure/);
+  assert.equal(Number((await sql`select count(*)::int as count from progress_snapshots where account_id = ${account}`)[0].count), 0);
+  assert.equal(Number((await sql`select count(*)::int as count from sync_operations where account_id = ${account}`)[0].count), 0);
+  const retry = await createSyncService({ client: sql }).upload(identity, { version: 1, operationId, pilotId, expectedVersion: 0, payload: { coins: 11 } });
+  assert.deepEqual(retry, { operationId, pilotId, version: 1, replayed: false });
+  await sql`delete from accounts where id = ${account}`;
+});

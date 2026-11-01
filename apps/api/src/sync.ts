@@ -11,6 +11,10 @@ export interface SyncDatabase {
   readonly client: { begin<T>(callback: (transaction: SqlTag) => Promise<T>): Promise<T> };
 }
 
+export interface SyncServiceOptions {
+  readonly afterSnapshotWrite?: () => void | Promise<void>;
+}
+
 export interface ProgressUpload {
   readonly version: 1;
   readonly operationId: string;
@@ -69,7 +73,7 @@ export function parseProgressUpload(input: unknown): ProgressUpload {
   };
 }
 
-export function createSyncService(database: SyncDatabase) {
+export function createSyncService(database: SyncDatabase, options: SyncServiceOptions = {}) {
   return {
     async upload(identity: AuthIdentity, input: unknown): Promise<ProgressUploadResult> {
       const upload = parseProgressUpload(input);
@@ -110,6 +114,7 @@ export function createSyncService(database: SyncDatabase) {
             where account_id = ${identity.accountId} and pilot_id = ${upload.pilotId}
           `;
         }
+        await options.afterSnapshotWrite?.();
         await transaction`
           insert into sync_operations (account_id, operation_id, request_hash, result)
           values (${identity.accountId}, ${upload.operationId}, ${hash}, ${JSON.stringify(result)}::jsonb)

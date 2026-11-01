@@ -1,0 +1,3 @@
+name: add-sync-rollback-evidence
+summary: Add deterministic rollback and retry evidence for atomic progress sync
+parent: "#253"
