@@ -1,5 +1,7 @@
 # Changelog
 
+- Added deterministic PostgreSQL rollback and same-operation retry evidence for sync issue #282.
+
 - Added the local account-scoped atomic progress upload service for sync issue #280.
 
 - Reconciled completed cloud-sync implementation and operational documentation tasks with their repository test evidence; external provider and production redirect checks remain explicitly pending.
